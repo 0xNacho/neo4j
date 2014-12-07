@@ -52,6 +52,13 @@ public class HeapLongArray extends HeapNumberArray implements LongArray
     }
 
     @Override
+    public long genericGet( long index )
+    {
+        // Will this copied code actually perform better than than delegating?
+        return array[safeCastLongToInt( index )];
+    }
+
+    @Override
     public void set( long index, long value )
     {
         int intIndex = safeCastLongToInt( index );
@@ -64,6 +71,12 @@ public class HeapLongArray extends HeapNumberArray implements LongArray
         {
             highestSetIndex = index;
         }
+    }
+
+    @Override
+    public void genericSet( long index, long value )
+    {
+        set( index, value );
     }
 
     @Override

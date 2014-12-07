@@ -19,6 +19,7 @@
  */
 package org.neo4j.unsafe.impl.batchimport.cache;
 
+import org.neo4j.array.primitive.MemoryStatsVisitor;
 import org.neo4j.graphdb.Direction;
 
 /**

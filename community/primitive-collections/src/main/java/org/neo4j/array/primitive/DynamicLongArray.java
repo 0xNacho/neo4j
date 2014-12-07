@@ -43,8 +43,23 @@ public class DynamicLongArray extends DynamicNumberArray<LongArray> implements L
     }
 
     @Override
+    public long genericGet( long index )
+    {
+        // Will this copied code actually perform better than than calling get() internally?
+        LongArray chunk = chunkAt( index );
+        return chunk != null ? chunk.get( index( index ) ) : defaultValue;
+    }
+
+    @Override
     public void set( long index, long value )
     {
+        ensureChunkAt( index ).set( index( index ), value );
+    }
+
+    @Override
+    public void genericSet( long index, long value )
+    {
+        // Will this copied code actually perform better than than calling get() internally?
         ensureChunkAt( index ).set( index( index ), value );
     }
 

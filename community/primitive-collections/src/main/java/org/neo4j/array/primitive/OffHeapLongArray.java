@@ -43,6 +43,13 @@ public class OffHeapLongArray extends OffHeapNumberArray implements LongArray
     }
 
     @Override
+    public long genericGet( long index )
+    {
+        // Will this copied code actually perform better than than delegating?
+        return unsafe.getLong( addressOf( index ) );
+    }
+
+    @Override
     public void set( long index, long value )
     {
         long address = addressOf( index );
@@ -55,6 +62,12 @@ public class OffHeapLongArray extends OffHeapNumberArray implements LongArray
         {
             highestSetIndex = index;
         }
+    }
+
+    @Override
+    public void genericSet( long index, long value )
+    {
+        set( index, value );
     }
 
     @Override

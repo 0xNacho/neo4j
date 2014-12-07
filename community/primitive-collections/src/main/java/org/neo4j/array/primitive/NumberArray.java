@@ -36,6 +36,13 @@ public interface NumberArray extends MemoryStatsVisitor.Home, AutoCloseable
      */
     long size();
 
+    /**
+     * Swaps the values of indexes from {@code fromIndex} to {@code toIndex}.
+     *
+     * @param fromIndex one side of the indexes to swap.
+     * @param toIndex the other side of the indexes to swap.
+     * @param numberOfEntries number of entries (indexes) to swap.
+     */
     void swap( long fromIndex, long toIndex, int numberOfEntries );
 
     /**
@@ -53,4 +60,26 @@ public interface NumberArray extends MemoryStatsVisitor.Home, AutoCloseable
      */
     @Override
     public void close();
+
+    /**
+     * For objects there are generics that allow the same class to handle different types of objects.
+     * For primitives there aren't and so this is an attempt to provide a similar facility for primitive numbers,
+     * so that any {@link NumberArray} implementation may be used in generic primitive number code.
+     *
+     * @param index the array index to get the value for.
+     * @return a long representation of getting a primitive number of the type that the particular implementation
+     * of this class handles.
+     */
+    long genericGet( long index );
+
+    /**
+     * For objects there are generics that allow the same class to handle different types of objects.
+     * For primitives there aren't and so this is an attempt to provide a similar facility for primitive numbers,
+     * so that any {@link NumberArray} implementation may be used in generic primitive number code.
+     *
+     * @param index the array index to set the value for.
+     * @param value value to set for the given index. This value needs to be losslessly coerced into
+     * the primitive number type that this particular implementation handles, or throw exception.
+     */
+    void genericSet( long index, long value );
 }

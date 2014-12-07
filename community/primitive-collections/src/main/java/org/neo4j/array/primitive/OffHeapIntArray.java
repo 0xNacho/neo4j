@@ -19,6 +19,8 @@
  */
 package org.neo4j.array.primitive;
 
+import static org.neo4j.collection.primitive.Primitive.safeCastLongToInt;
+
 /**
  * Off-heap version of {@link IntArray} using {@code sun.misc.Unsafe}. Supports arrays with length beyond
  * Integer.MAX_VALUE.
@@ -43,6 +45,13 @@ public class OffHeapIntArray extends OffHeapNumberArray implements IntArray
     }
 
     @Override
+    public long genericGet( long index )
+    {
+        // Will this copied code actually perform better than than delegating?
+        return unsafe.getInt( addressOf( index ) );
+    }
+
+    @Override
     public void set( long index, int value )
     {
         long address = addressOf( index );
@@ -55,6 +64,12 @@ public class OffHeapIntArray extends OffHeapNumberArray implements IntArray
         {
             highestSetIndex = index;
         }
+    }
+
+    @Override
+    public void genericSet( long index, long value )
+    {
+        set( index, safeCastLongToInt( value ) );
     }
 
     @Override

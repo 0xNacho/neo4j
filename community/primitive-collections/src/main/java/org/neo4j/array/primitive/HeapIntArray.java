@@ -52,6 +52,12 @@ public class HeapIntArray extends HeapNumberArray implements IntArray
     }
 
     @Override
+    public long genericGet( long index )
+    {
+        return array[safeCastLongToInt( index )];
+    }
+
+    @Override
     public void set( long index, int value )
     {
         int intIndex = safeCastLongToInt( index );
@@ -64,6 +70,12 @@ public class HeapIntArray extends HeapNumberArray implements IntArray
         {
             highestSetIndex = index;
         }
+    }
+
+    @Override
+    public void genericSet( long index, long value )
+    {
+        set( index, safeCastLongToInt( value ) );
     }
 
     @Override

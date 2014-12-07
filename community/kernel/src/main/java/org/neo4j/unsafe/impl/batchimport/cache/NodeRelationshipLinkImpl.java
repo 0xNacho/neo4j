@@ -20,6 +20,7 @@
 package org.neo4j.unsafe.impl.batchimport.cache;
 
 import org.neo4j.array.primitive.LongArray;
+import org.neo4j.array.primitive.MemoryStatsVisitor;
 import org.neo4j.array.primitive.NumberArrayFactory;
 import org.neo4j.graphdb.Direction;
 
@@ -338,9 +339,9 @@ public class NodeRelationshipLinkImpl implements NodeRelationshipLink
         }
 
         @Override
-        public void visit( MemoryStatsVisitor visitor )
+        public void visitMemoryStats( MemoryStatsVisitor visitor )
         {
-            array.visit( visitor );
+            array.visitMemoryStats( visitor );
         }
     }
 
@@ -358,9 +359,9 @@ public class NodeRelationshipLinkImpl implements NodeRelationshipLink
     }
 
     @Override
-    public void visit( MemoryStatsVisitor visitor )
+    public void visitMemoryStats( MemoryStatsVisitor visitor )
     {
-        array.visit( visitor );
-        relGroupCache.visit( visitor );
+        array.visitMemoryStats( visitor );
+        relGroupCache.visitMemoryStats( visitor );
     }
 }

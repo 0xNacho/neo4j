@@ -21,6 +21,8 @@ package org.neo4j.unsafe.impl.batchimport;
 
 import java.io.IOException;
 
+import org.neo4j.array.primitive.AvailableMemoryCalculator;
+import org.neo4j.array.primitive.GatheringMemoryStatsVisitor;
 import org.neo4j.function.Function;
 import org.neo4j.helpers.Clock;
 import org.neo4j.helpers.Exceptions;
@@ -35,8 +37,6 @@ import org.neo4j.kernel.impl.store.record.RelationshipRecord;
 import org.neo4j.kernel.impl.util.StringLogger;
 import org.neo4j.kernel.logging.Logging;
 import org.neo4j.kernel.monitoring.Monitors;
-import org.neo4j.unsafe.impl.batchimport.cache.AvailableMemoryCalculator;
-import org.neo4j.unsafe.impl.batchimport.cache.GatheringMemoryStatsVisitor;
 import org.neo4j.unsafe.impl.batchimport.cache.NodeLabelsCache;
 import org.neo4j.unsafe.impl.batchimport.cache.NodeRelationshipLink;
 import org.neo4j.unsafe.impl.batchimport.cache.NodeRelationshipLinkImpl;
@@ -249,7 +249,7 @@ public class ParallelBatchImporter implements BatchImporter
     private boolean enoughAvailableMemoryForRemainingProcessors( NodeRelationshipLink nodeRelationshipLink )
     {
         GatheringMemoryStatsVisitor usedMemory = new GatheringMemoryStatsVisitor();
-        nodeRelationshipLink.visit( usedMemory );
+        nodeRelationshipLink.visitMemoryStats( usedMemory );
         long used = usedMemory.getHeapUsage() + usedMemory.getOffHeapUsage();
         long available = memoryCalculator.availableHeapMemory() + memoryCalculator.availableOffHeapMemory();
         return available > used * 2; // to be on the safe side

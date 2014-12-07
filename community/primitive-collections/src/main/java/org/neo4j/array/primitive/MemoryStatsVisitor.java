@@ -24,9 +24,15 @@ package org.neo4j.array.primitive;
  */
 public interface MemoryStatsVisitor
 {
-    interface Home
+    public interface Home
     {
-        void visit( MemoryStatsVisitor visitor );
+        /**
+         * A home for a {@link MemoryStatsVisitor} to visit. Any class expecting a {@link MemoryStatsVisitor}
+         * to come and visit should implement this interface.
+         *
+         * @param visitor {@link MemoryStatsVisitor} to visit.
+         */
+        void visitMemoryStats( MemoryStatsVisitor visitor );
     }
 
     void heapUsage( long bytes );

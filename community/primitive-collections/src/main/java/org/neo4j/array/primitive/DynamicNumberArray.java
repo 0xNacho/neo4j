@@ -82,11 +82,11 @@ abstract class DynamicNumberArray<N extends NumberArray> implements NumberArray
     }
 
     @Override
-    public void visit( MemoryStatsVisitor visitor )
+    public void visitMemoryStats( MemoryStatsVisitor visitor )
     {
         for ( NumberArray chunk : chunks )
         {
-            chunk.visit( visitor );
+            chunk.visitMemoryStats( visitor );
         }
     }
 
