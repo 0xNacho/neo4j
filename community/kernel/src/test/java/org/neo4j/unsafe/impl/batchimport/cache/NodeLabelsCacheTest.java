@@ -21,6 +21,8 @@ package org.neo4j.unsafe.impl.batchimport.cache;
 
 import java.util.Random;
 
+import org.neo4j.array.primitive.NumberArrayFactory;
+
 import org.junit.Test;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;

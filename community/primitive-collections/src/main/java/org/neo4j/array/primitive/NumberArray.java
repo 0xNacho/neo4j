@@ -17,17 +17,40 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.neo4j.unsafe.impl.batchimport.cache;
+package org.neo4j.array.primitive;
 
 /**
- * Abstraction of a {@code int[]} so that different implementations can be plugged in, for example
- * off-heap, dynamically growing, or other implementations.
+ * Abstraction over primitive arrays.
  *
  * @see NumberArrayFactory
  */
-public interface IntArray extends NumberArray
+public interface NumberArray extends MemoryStatsVisitor.Home, AutoCloseable
 {
-    int get( long index );
+    /**
+     * @return length of the array, i.e. the capacity.
+     */
+    long length();
 
-    void set( long index, int value );
+    /**
+     * @return number of indexes occupied, i.e. setting the same index multiple times doesn't increment size.
+     */
+    long size();
+
+    void swap( long fromIndex, long toIndex, int numberOfEntries );
+
+    /**
+     * Sets all values to a default value.
+     */
+    void clear();
+
+    /**
+     * @return highest set index or -1 if no set.
+     */
+    long highestSetIndex();
+
+    /**
+     * Releases any resources that GC won't release automatically.
+     */
+    @Override
+    public void close();
 }

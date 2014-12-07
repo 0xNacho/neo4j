@@ -22,10 +22,10 @@ package org.neo4j.unsafe.impl.batchimport.cache.idmapping.string;
 import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
 
+import org.neo4j.array.primitive.IntArray;
+import org.neo4j.array.primitive.LongArray;
 import org.neo4j.unsafe.impl.batchimport.Utils;
 import org.neo4j.unsafe.impl.batchimport.Utils.CompareType;
-import org.neo4j.unsafe.impl.batchimport.cache.IntArray;
-import org.neo4j.unsafe.impl.batchimport.cache.LongArray;
 
 import static org.neo4j.unsafe.impl.batchimport.cache.idmapping.string.EncodingIdMapper.clearCollision;
 

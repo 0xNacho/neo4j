@@ -26,17 +26,17 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import org.neo4j.array.primitive.IntArray;
+import org.neo4j.array.primitive.LongArray;
+import org.neo4j.array.primitive.MemoryStatsVisitor;
+import org.neo4j.array.primitive.NumberArrayFactory;
 import org.neo4j.collection.primitive.Primitive;
 import org.neo4j.collection.primitive.PrimitiveIntObjectMap;
 import org.neo4j.function.primitive.PrimitiveIntPredicate;
 import org.neo4j.graphdb.ResourceIterable;
 import org.neo4j.graphdb.ResourceIterator;
 import org.neo4j.unsafe.impl.batchimport.Utils.CompareType;
-import org.neo4j.unsafe.impl.batchimport.cache.IntArray;
-import org.neo4j.unsafe.impl.batchimport.cache.LongArray;
 import org.neo4j.unsafe.impl.batchimport.cache.LongBitsManipulator;
-import org.neo4j.unsafe.impl.batchimport.cache.MemoryStatsVisitor;
-import org.neo4j.unsafe.impl.batchimport.cache.NumberArrayFactory;
 import org.neo4j.unsafe.impl.batchimport.cache.idmapping.IdMapper;
 import org.neo4j.unsafe.impl.batchimport.input.Group;
 

@@ -21,6 +21,7 @@ package org.neo4j.unsafe.impl.batchimport.cache;
 
 import static java.lang.Math.max;
 import static java.lang.System.currentTimeMillis;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -34,6 +35,8 @@ import java.util.Random;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InOrder;
+
+import org.neo4j.array.primitive.NumberArrayFactory;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.unsafe.impl.batchimport.cache.NodeRelationshipLink.GroupVisitor;
 

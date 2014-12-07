@@ -77,10 +77,10 @@ import org.neo4j.unsafe.impl.batchimport.store.io.Monitor;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import static org.neo4j.array.primitive.NumberArrayFactory.AUTO;
 import static org.neo4j.function.Functions.constant;
 import static org.neo4j.helpers.collection.IteratorUtil.count;
 import static org.neo4j.unsafe.impl.batchimport.AdditionalInitialIds.EMPTY;
-import static org.neo4j.unsafe.impl.batchimport.cache.NumberArrayFactory.AUTO;
 import static org.neo4j.unsafe.impl.batchimport.cache.idmapping.IdGenerators.fromInput;
 import static org.neo4j.unsafe.impl.batchimport.cache.idmapping.IdGenerators.startingFromTheBeginning;
 import static org.neo4j.unsafe.impl.batchimport.cache.idmapping.IdMappers.actual;

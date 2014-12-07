@@ -170,4 +170,33 @@ public class Primitive
             }
         };
     }
+
+    // TODO for the methods below, use built-in and efficient methods when available (JDK 8?)
+
+    public static int safeCastLongToInt( long value )
+    {
+        if ( value > Integer.MAX_VALUE || value < Integer.MIN_VALUE )
+        {
+            throw new AssertionError( "Tried to cast long value " + value + " to int, but value doesn't fit" );
+        }
+        return (int) value;
+    }
+
+    public static short safeCastLongToShort( long value )
+    {
+        if ( value > Short.MAX_VALUE || value < Short.MIN_VALUE )
+        {
+            throw new AssertionError( "Tried to cast long value " + value + " to short, but value doesn't fit" );
+        }
+        return (short) value;
+    }
+
+    public static byte safeCastLongToByte( long value )
+    {
+        if ( value > Byte.MAX_VALUE || value < Byte.MIN_VALUE )
+        {
+            throw new AssertionError( "Tried to cast long value " + value + " to byte, but value doesn't fit" );
+        }
+        return (byte) value;
+    }
 }

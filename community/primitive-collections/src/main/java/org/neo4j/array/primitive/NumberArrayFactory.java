@@ -17,7 +17,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.neo4j.unsafe.impl.batchimport.cache;
+package org.neo4j.array.primitive;
 
 import java.util.Arrays;
 
@@ -25,8 +25,7 @@ import org.neo4j.helpers.Exceptions;
 
 import static java.lang.String.format;
 
-import static org.neo4j.helpers.Format.bytes;
-import static org.neo4j.unsafe.impl.batchimport.Utils.safeCastLongToInt;
+import static org.neo4j.collection.primitive.Primitive.safeCastLongToInt;
 
 /**
  * Factory of {@link LongArray} and {@link IntArray} instances. Users can select in which type of memory

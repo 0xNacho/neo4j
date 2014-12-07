@@ -17,17 +17,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.neo4j.unsafe.impl.batchimport.cache;
+package org.neo4j.array.primitive;
 
 /**
- * Abstraction of a {@code long[]} so that different implementations can be plugged in, for example
+ * Abstraction of a {@code int[]} so that different implementations can be plugged in, for example
  * off-heap, dynamically growing, or other implementations.
  *
  * @see NumberArrayFactory
  */
-public interface LongArray extends NumberArray
+public interface IntArray extends NumberArray
 {
-    long get( long index );
+    int get( long index );
 
-    void set( long index, long value );
+    void set( long index, int value );
 }

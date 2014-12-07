@@ -17,7 +17,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.neo4j.unsafe.impl.batchimport.cache;
+package org.neo4j.array.primitive;
+
+import org.neo4j.array.primitive.AvailableMemoryCalculator;
+import org.neo4j.array.primitive.DynamicLongArray;
+import org.neo4j.array.primitive.HeapLongArray;
+import org.neo4j.array.primitive.LongArray;
+import org.neo4j.array.primitive.NumberArrayFactory;
+import org.neo4j.array.primitive.OffHeapLongArray;
 
 import org.junit.Test;
 

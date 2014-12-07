@@ -19,9 +19,9 @@
  */
 package org.neo4j.unsafe.impl.batchimport.cache.idmapping;
 
+import org.neo4j.array.primitive.MemoryStatsVisitor;
+import org.neo4j.array.primitive.NumberArrayFactory;
 import org.neo4j.graphdb.ResourceIterable;
-import org.neo4j.unsafe.impl.batchimport.cache.MemoryStatsVisitor;
-import org.neo4j.unsafe.impl.batchimport.cache.NumberArrayFactory;
 import org.neo4j.unsafe.impl.batchimport.cache.idmapping.string.EncodingIdMapper;
 import org.neo4j.unsafe.impl.batchimport.cache.idmapping.string.LongEncoder;
 import org.neo4j.unsafe.impl.batchimport.cache.idmapping.string.Radix;

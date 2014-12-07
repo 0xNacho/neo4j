@@ -17,11 +17,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.neo4j.unsafe.impl.batchimport.cache;
+package org.neo4j.array.primitive;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Random;
+
+import org.neo4j.array.primitive.IntArray;
+import org.neo4j.array.primitive.NumberArrayFactory;
 
 import org.junit.After;
 import org.junit.Test;
@@ -34,15 +37,15 @@ import static java.lang.System.currentTimeMillis;
 import static org.junit.Assert.assertEquals;
 
 @RunWith( Parameterized.class )
-public class LongArrayTest
+public class IntArrayTest
 {
     @Test
     public void shouldHandleSomeRandomSetAndGet() throws Exception
     {
         // GIVEN
         int length = random.nextInt( 100_000 ) + 100;
-        long defaultValue = random.nextInt( 2 ) - 1; // 0 or -1
-        LongArray array = newArray( length, defaultValue );
+        int defaultValue = random.nextInt( 2 ) - 1; // 0 or -1
+        IntArray array = newArray( length, defaultValue );
         long[] expected = new long[length];
         Arrays.fill( expected, defaultValue );
 
@@ -52,7 +55,7 @@ public class LongArrayTest
         {
             // THEN
             int index = random.nextInt( length );
-            long value = random.nextLong();
+            int value = random.nextInt();
             switch ( random.nextInt( 3 ) )
             {
             case 0: // set
@@ -70,19 +73,6 @@ public class LongArrayTest
                 break;
             }
         }
-    }
-
-    @Test
-    public void shouldHandleMultipleCallsToClose() throws Exception
-    {
-        // GIVEN
-        LongArray array = newArray( 10, -1 );
-
-        // WHEN
-        array.close();
-
-        // THEN should also work
-        array.close();
     }
 
     private void swap( long[] expected, int fromIndex, int toIndex, int items )
@@ -104,20 +94,20 @@ public class LongArrayTest
                 );
     }
 
-    public LongArrayTest( NumberArrayFactory factory )
+    public IntArrayTest( NumberArrayFactory factory )
     {
         this.factory = factory;
     }
 
-    private LongArray newArray( int length, long defaultValue )
+    private IntArray newArray( int length, int defaultValue )
     {
-        return array = factory.newLongArray( length, defaultValue );
+        return array = factory.newIntArray( length, defaultValue );
     }
 
     private final NumberArrayFactory factory;
     private final long seed = currentTimeMillis();
     private final Random random = new Random( seed );
-    private LongArray array;
+    private IntArray array;
 
     @After
     public void after()

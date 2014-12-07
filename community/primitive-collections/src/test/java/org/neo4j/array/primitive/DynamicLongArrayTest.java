@@ -17,19 +17,22 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.neo4j.unsafe.impl.batchimport.cache;
+package org.neo4j.array.primitive;
+
+import org.neo4j.array.primitive.LongArray;
+import org.neo4j.array.primitive.NumberArrayFactory;
 
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 
-public class DynamicIntArrayTest
+public class DynamicLongArrayTest
 {
     @Test
     public void shouldWorkOnSingleChunk() throws Exception
     {
         // GIVEN
-        int defaultValue = 0;
-        IntArray array = NumberArrayFactory.AUTO.newDynamicIntArray( 10, defaultValue );
+        long defaultValue = 0;
+        LongArray array = NumberArrayFactory.AUTO.newDynamicLongArray( 10, defaultValue );
         array.set( 4, 5 );
 
         // WHEN
@@ -43,11 +46,11 @@ public class DynamicIntArrayTest
     public void shouldChunksAsNeeded() throws Exception
     {
         // GIVEN
-        IntArray array = NumberArrayFactory.AUTO.newDynamicIntArray( 10, 0 );
+        LongArray array = NumberArrayFactory.AUTO.newDynamicLongArray( 10, 0 );
 
         // WHEN
         long index = 243;
-        int value = 5485748;
+        long value = 5485748;
         array.set( index, value );
 
         // THEN

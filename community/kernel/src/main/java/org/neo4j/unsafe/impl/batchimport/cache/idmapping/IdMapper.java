@@ -19,9 +19,9 @@
  */
 package org.neo4j.unsafe.impl.batchimport.cache.idmapping;
 
+import org.neo4j.array.primitive.MemoryStatsVisitor;
 import org.neo4j.function.primitive.PrimitiveIntPredicate;
 import org.neo4j.graphdb.ResourceIterable;
-import org.neo4j.unsafe.impl.batchimport.cache.MemoryStatsVisitor;
 import org.neo4j.unsafe.impl.batchimport.input.Group;
 import org.neo4j.unsafe.impl.batchimport.input.InputNode;
 import org.neo4j.unsafe.impl.batchimport.input.InputRelationship;

@@ -17,40 +17,40 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.neo4j.unsafe.impl.batchimport.cache;
+package org.neo4j.array.primitive;
 
 /**
- * Off-heap version of {@link LongArray} using {@code sun.misc.Unsafe}. Supports arrays with length beyond
+ * Off-heap version of {@link IntArray} using {@code sun.misc.Unsafe}. Supports arrays with length beyond
  * Integer.MAX_VALUE.
  */
-public class OffHeapLongArray extends OffHeapNumberArray implements LongArray
+public class OffHeapIntArray extends OffHeapNumberArray implements IntArray
 {
-    private final long defaultValue;
+    private final int defaultValue;
     private long highestSetIndex = -1;
     private long size;
 
-    public OffHeapLongArray( long length, long defaultValue )
+    public OffHeapIntArray( long length, int defaultValue )
     {
-        super( length, 3 );
+        super( length, 2 );
         this.defaultValue = defaultValue;
         clear();
     }
 
     @Override
-    public long get( long index )
+    public int get( long index )
     {
-        return unsafe.getLong( addressOf( index ) );
+        return unsafe.getInt( addressOf( index ) );
     }
 
     @Override
-    public void set( long index, long value )
+    public void set( long index, int value )
     {
         long address = addressOf( index );
-        if ( unsafe.getLong( address ) == defaultValue )
+        if ( unsafe.getInt( address ) == defaultValue )
         {
             size++;
         }
-        unsafe.putLong( address, value );
+        unsafe.putInt( address, value );
         if ( index > highestSetIndex )
         {
             highestSetIndex = index;
@@ -80,7 +80,7 @@ public class OffHeapLongArray extends OffHeapNumberArray implements LongArray
         {
             for ( long i = 0, adr = address; i < length; i++, adr += stride )
             {
-                unsafe.putLong( adr, defaultValue );
+                unsafe.putInt( adr, defaultValue );
             }
         }
         highestSetIndex = -1;
@@ -95,9 +95,9 @@ public class OffHeapLongArray extends OffHeapNumberArray implements LongArray
 
         for ( int i = 0; i < numberOfEntries; i++, fromAddress += stride, toAddress += stride )
         {
-            long fromValue = unsafe.getLong( fromAddress );
-            unsafe.putLong( fromAddress, unsafe.getLong( toAddress ) );
-            unsafe.putLong( toAddress, fromValue );
+            int fromValue = unsafe.getInt( fromAddress );
+            unsafe.putInt( fromAddress, unsafe.getInt( toAddress ) );
+            unsafe.putInt( toAddress, fromValue );
         }
     }
 }

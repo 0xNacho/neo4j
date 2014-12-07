@@ -17,25 +17,25 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.neo4j.unsafe.impl.batchimport.cache;
+package org.neo4j.array.primitive;
 
 import java.util.Arrays;
 
-import static org.neo4j.unsafe.impl.batchimport.Utils.safeCastLongToInt;
+import static org.neo4j.collection.primitive.Primitive.safeCastLongToInt;
 
 /**
- * A {@code long[]} on heap, abstracted into a {@link IntArray}.
+ * A {@code long[]} on heap, abstracted into a {@link LongArray}.
  */
-public class HeapIntArray extends HeapNumberArray implements IntArray
+public class HeapLongArray extends HeapNumberArray implements LongArray
 {
-    private final int[] array;
-    private final int defaultValue;
+    private final long[] array;
+    private final long defaultValue;
 
-    public HeapIntArray( int length, int defaultValue )
+    public HeapLongArray( int length, long defaultValue )
     {
-        super( 4 );
+        super( 8 );
         this.defaultValue = defaultValue;
-        this.array = new int[length];
+        this.array = new long[length];
         clear();
     }
 
@@ -46,13 +46,13 @@ public class HeapIntArray extends HeapNumberArray implements IntArray
     }
 
     @Override
-    public int get( long index )
+    public long get( long index )
     {
         return array[safeCastLongToInt( index )];
     }
 
     @Override
-    public void set( long index, int value )
+    public void set( long index, long value )
     {
         int intIndex = safeCastLongToInt( index );
         if ( array[intIndex] == defaultValue )
@@ -78,7 +78,7 @@ public class HeapIntArray extends HeapNumberArray implements IntArray
     {
         for ( int i = 0; i < numberOfEntries; i++ )
         {
-            int fromValue = get( fromIndex+i );
+            long fromValue = get( fromIndex+i );
             set( fromIndex+i, get( toIndex+i ) );
             set( toIndex+i, fromValue );
         }

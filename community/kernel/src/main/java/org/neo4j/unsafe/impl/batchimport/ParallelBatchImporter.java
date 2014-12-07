@@ -58,10 +58,10 @@ import org.neo4j.unsafe.impl.batchimport.store.io.IoMonitor;
 
 import static java.lang.System.currentTimeMillis;
 
+import static org.neo4j.array.primitive.NumberArrayFactory.AUTO;
 import static org.neo4j.unsafe.impl.batchimport.AdditionalInitialIds.EMPTY;
 import static org.neo4j.unsafe.impl.batchimport.Utils.idsOf;
 import static org.neo4j.unsafe.impl.batchimport.WriterFactories.parallel;
-import static org.neo4j.unsafe.impl.batchimport.cache.NumberArrayFactory.AUTO;
 
 /**
  * {@link BatchImporter} which tries to exercise as much of the available resources to gain performance.
