@@ -51,6 +51,15 @@ public interface NumberArray extends MemoryStatsVisitor.Home, AutoCloseable
     void clear();
 
     /**
+     * Removes values spawning from {@code index} and {@code numberOfEntries-1} indexes ahead.
+     * Values in this range will be reset to default value.
+     *
+     * @param index start index to remove.
+     * @param numberOfEntries number of entries to remove.
+     */
+    void remove( long index, int numberOfEntries );
+
+    /**
      * @return highest set index or -1 if no set.
      */
     long highestSetIndex();
@@ -82,4 +91,34 @@ public interface NumberArray extends MemoryStatsVisitor.Home, AutoCloseable
      * the primitive number type that this particular implementation handles, or throw exception.
      */
     void genericSet( long index, long value );
+
+    /**
+     * For objects there are generics that allow the same class to handle different types of objects.
+     * For primitives there aren't and so this is an attempt to provide a similar facility for primitive numbers,
+     * so that any {@link NumberArray} implementation may be used in generic primitive number code.
+     *
+     * @param index the affected index.
+     * @param mask mask to AND the existing value with.
+     */
+    void genericAnd( long index, long mask );
+
+    /**
+     * For objects there are generics that allow the same class to handle different types of objects.
+     * For primitives there aren't and so this is an attempt to provide a similar facility for primitive numbers,
+     * so that any {@link NumberArray} implementation may be used in generic primitive number code.
+     *
+     * @param index the affected index.
+     * @param mask mask to OR the existing value with.
+     */
+    void genericOr( long index, long mask );
+
+    /**
+     * For objects there are generics that allow the same class to handle different types of objects.
+     * For primitives there aren't and so this is an attempt to provide a similar facility for primitive numbers,
+     * so that any {@link NumberArray} implementation may be used in generic primitive number code.
+     *
+     * @param index the affected index.
+     * @param mask mask to XOR the existing value with.
+     */
+    void genericXor( long index, long mask );
 }

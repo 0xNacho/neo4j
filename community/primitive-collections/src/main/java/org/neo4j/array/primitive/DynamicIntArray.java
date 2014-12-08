@@ -19,7 +19,6 @@
  */
 package org.neo4j.array.primitive;
 
-import static org.neo4j.collection.primitive.Primitive.safeCastLongToInt;
 
 /**
  * Dynamically growing {@link LongArray}. Is given a chunk size and chunks are added as higher and higher
@@ -47,7 +46,7 @@ public class DynamicIntArray extends DynamicNumberArray<IntArray> implements Int
     @Override
     public long genericGet( long index )
     {
-        // Will this copied code actually perform better than than delegating?
+        // Will this copied code actually perform better than delegating?
         IntArray chunk = chunkAt( index );
         return chunk != null ? chunk.get( index( index ) ) : defaultValue;
     }
@@ -56,13 +55,6 @@ public class DynamicIntArray extends DynamicNumberArray<IntArray> implements Int
     public void set( long index, int value )
     {
         ensureChunkAt( index ).set( index( index ), value );
-    }
-
-    @Override
-    public void genericSet( long index, long value )
-    {
-        // Will this copied code actually perform better than than delegating?
-        ensureChunkAt( index ).set( index( index ), safeCastLongToInt( value ) );
     }
 
     @Override

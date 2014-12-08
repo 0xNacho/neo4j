@@ -41,6 +41,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
+import static org.neo4j.array.primitive.NumberArrayFactory.HEAP;
 import static org.neo4j.collection.primitive.Primitive.VALUE_MARKER;
 import static org.neo4j.collection.primitive.hopscotch.HopScotchHashingAlgorithm.NO_MONITOR;
 
@@ -54,7 +55,7 @@ public class PrimitiveLongSetTest
     private PrimitiveLongHashSet newSet( int h, Monitor monitor )
     {
         return new PrimitiveLongHashSet(
-                new LongKeyTable<>( h, VALUE_MARKER ), VALUE_MARKER, monitor );
+                new LongKeyTable<>( HEAP, h, VALUE_MARKER ), VALUE_MARKER, monitor );
     }
 
     @Test

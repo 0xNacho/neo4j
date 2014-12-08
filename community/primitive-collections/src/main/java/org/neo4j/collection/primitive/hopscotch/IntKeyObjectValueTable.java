@@ -19,15 +19,17 @@
  */
 package org.neo4j.collection.primitive.hopscotch;
 
+import org.neo4j.array.primitive.NumberArrayFactory;
+
 import static java.util.Arrays.fill;
 
 public class IntKeyObjectValueTable<VALUE> extends IntKeyTable<VALUE>
 {
     private VALUE[] values;
 
-    public IntKeyObjectValueTable( int capacity )
+    public IntKeyObjectValueTable( NumberArrayFactory factory, int capacity )
     {
-        super( capacity, null );
+        super( factory, capacity, null );
     }
 
     @Override
@@ -71,7 +73,7 @@ public class IntKeyObjectValueTable<VALUE> extends IntKeyTable<VALUE>
     @Override
     protected IntKeyObjectValueTable<VALUE> newInstance( int newCapacity )
     {
-        return new IntKeyObjectValueTable<>( newCapacity );
+        return new IntKeyObjectValueTable<>( factory, newCapacity );
     }
 
     @SuppressWarnings( "unchecked" )

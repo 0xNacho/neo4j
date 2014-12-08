@@ -115,4 +115,46 @@ public class OffHeapIntArray extends OffHeapNumberArray implements IntArray
             unsafe.putInt( toAddress, fromValue );
         }
     }
+
+    @Override
+    public void remove( long index, int numberOfEntries )
+    {
+        long address = addressOf( index );
+        for ( int i = 0; i < numberOfEntries; i++ )
+        {
+            if ( unsafe.getInt( address ) != defaultValue )
+            {
+                size--;
+            }
+            unsafe.putInt( address, defaultValue );
+            address += stride;
+        }
+    }
+
+    @Override
+    public void genericAnd( long index, long mask )
+    {
+        long address = addressOf( index );
+        int value = unsafe.getInt( address );
+        value &= mask;
+        unsafe.putInt( address, value );
+    }
+
+    @Override
+    public void genericOr( long index, long mask )
+    {
+        long address = addressOf( index );
+        int value = unsafe.getInt( address );
+        value |= mask;
+        unsafe.putInt( address, value );
+    }
+
+    @Override
+    public void genericXor( long index, long mask )
+    {
+        long address = addressOf( index );
+        int value = unsafe.getInt( address );
+        value ^= mask;
+        unsafe.putInt( address, value );
+    }
 }

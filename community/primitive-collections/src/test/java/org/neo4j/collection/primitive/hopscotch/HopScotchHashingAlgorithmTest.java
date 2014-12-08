@@ -33,6 +33,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import static org.neo4j.array.primitive.NumberArrayFactory.HEAP;
 import static org.neo4j.collection.primitive.Primitive.VALUE_MARKER;
 import static org.neo4j.collection.primitive.hopscotch.HopScotchHashingAlgorithm.DEFAULT_H;
 
@@ -45,7 +46,7 @@ public class HopScotchHashingAlgorithmTest
         int threshold = figureOutGrowthThreshold();
         TableGrowthAwareMonitor monitor = new TableGrowthAwareMonitor();
         PrimitiveLongSet set = new PrimitiveLongHashSet(
-                new LongKeyTable<>( DEFAULT_H, VALUE_MARKER ), VALUE_MARKER, monitor );
+                new LongKeyTable<>( HEAP, DEFAULT_H, VALUE_MARKER ), VALUE_MARKER, monitor );
         Set<Long> added = new HashSet<>();
         for ( int i = 0; i < threshold-1; i++ )
         {
@@ -109,7 +110,7 @@ public class HopScotchHashingAlgorithmTest
             }
         };
         try ( PrimitiveLongSet set = new PrimitiveLongHashSet(
-                new LongKeyTable<>( DEFAULT_H, VALUE_MARKER ), VALUE_MARKER, monitor ) )
+                new LongKeyTable<>( HEAP, DEFAULT_H, VALUE_MARKER ), VALUE_MARKER, monitor ) )
         {
             int i = 0;
             for ( i = 0; !grew.get(); i++ )

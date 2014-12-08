@@ -19,9 +19,8 @@
  */
 package org.neo4j.collection.primitive.hopscotch;
 
-import java.util.Arrays;
-
-import static java.util.Arrays.fill;
+import org.neo4j.array.primitive.IntArray;
+import org.neo4j.array.primitive.NumberArrayFactory;
 
 /**
  * Table implementation for handling primitive int/long keys and hop bits. The quantized unit is int so a
@@ -31,46 +30,48 @@ import static java.util.Arrays.fill;
  */
 public abstract class IntArrayBasedKeyTable<VALUE> extends PowerOfTwoQuantizedTable<VALUE>
 {
-    protected int[] table;
+    protected final NumberArrayFactory factory;
+    protected IntArray table;
     protected final VALUE singleValue;
     private final int itemsPerEntry;
 
-    protected IntArrayBasedKeyTable( int itemsPerEntry, int h, VALUE singleValue )
+    protected IntArrayBasedKeyTable( NumberArrayFactory factory, int itemsPerEntry, int h, VALUE singleValue )
     {
-        this( baseCapacity( h ), itemsPerEntry, h, singleValue );
+        this( factory, baseCapacity( h ), itemsPerEntry, h, singleValue );
     }
 
-    protected IntArrayBasedKeyTable( int capacity, int itemsPerEntry, int h, VALUE singleValue )
+    protected IntArrayBasedKeyTable( NumberArrayFactory factory, int capacity, int itemsPerEntry,
+            int h, VALUE singleValue )
     {
         super( capacity, h );
+        this.factory = factory;
         this.singleValue = singleValue;
         this.itemsPerEntry = itemsPerEntry;
         initializeTable();
-        clearTable();
     }
 
     protected void initializeTable()
     {
-        this.table = new int[capacity*itemsPerEntry];
+        this.table = factory.newIntArray( capacity * itemsPerEntry, -1 );
     }
 
     protected void clearTable()
     {
-        fill( table, -1 );
+        table.clear();
     }
 
     protected long putLong( int actualIndex, long value )
     {
         long previous = getLong( actualIndex );
-        table[actualIndex] = (int)value;
-        table[actualIndex+1] = (int)((value&0xFFFFFFFF00000000L) >>> 32);
+        table.set( actualIndex, (int)value );
+        table.set( actualIndex+1, (int)((value&0xFFFFFFFF00000000L) >>> 32) );
         return previous;
     }
 
     protected long getLong( int actualIndex )
     {
-        long low = table[actualIndex]&0xFFFFFFFFL;
-        long high = table[actualIndex+1]&0xFFFFFFFFL;
+        long low = table.get( actualIndex )&0xFFFFFFFFL;
+        long high = table.get( actualIndex+1 )&0xFFFFFFFFL;
         return (high << 32) | low;
     }
 
@@ -96,20 +97,13 @@ public abstract class IntArrayBasedKeyTable<VALUE> extends PowerOfTwoQuantizedTa
     public long move( int fromIndex, int toIndex )
     {
         long key = key( fromIndex );
-        int actualFromIndex = index( fromIndex );
-        int actualToIndex = index( toIndex );
-        for ( int i = 0; i < itemsPerEntry-1; i++ )
-        {
-            int tempValue = table[actualFromIndex+i];
-            table[actualFromIndex+i] = table[actualToIndex+i];
-            table[actualToIndex+i] = tempValue;
-        }
+        table.swap( index( fromIndex ), index( toIndex ), itemsPerEntry-1 );
         return key;
     }
 
     protected void internalRemove( int actualIndex )
     {
-        Arrays.fill( table, actualIndex, actualIndex + itemsPerEntry - 1 /*leave the hop bits alone*/, -1 );
+        table.remove( actualIndex, itemsPerEntry - 1/*leave the hop bits alone*/ );
     }
 
     protected abstract void internalPut( int actualIndex, long key, VALUE value );
@@ -129,7 +123,7 @@ public abstract class IntArrayBasedKeyTable<VALUE> extends PowerOfTwoQuantizedTa
     @Override
     public long hopBits( int index )
     {
-        return ~(table[index( index )+itemsPerEntry-1] | 0xFFFFFFFF00000000L);
+        return ~(table.get( index( index )+itemsPerEntry-1 ) | 0xFFFFFFFF00000000L);
     }
 
     private int hopBit( int hd )
@@ -140,19 +134,19 @@ public abstract class IntArrayBasedKeyTable<VALUE> extends PowerOfTwoQuantizedTa
     @Override
     public void putHopBit( int index, int hd )
     {
-        table[index( index )+itemsPerEntry-1] &= ~hopBit( hd );
+        table.genericAnd( index( index )+itemsPerEntry-1, ~hopBit( hd ) );
     }
 
     @Override
     public void moveHopBit( int index, int hd, int delta )
     {
-        table[index( index )+itemsPerEntry-1] ^= (hopBit( hd ) | hopBit( hd+delta ));
+        table.genericXor( index( index )+itemsPerEntry-1, (hopBit( hd ) | hopBit( hd+delta )) );
     }
 
     @Override
     public void removeHopBit( int index, int hd )
     {
-        table[index( index )+itemsPerEntry-1] |= hopBit( hd );
+        table.genericOr( index( index )+itemsPerEntry-1, hopBit( hd ) );
     }
 
     protected int index( int index )

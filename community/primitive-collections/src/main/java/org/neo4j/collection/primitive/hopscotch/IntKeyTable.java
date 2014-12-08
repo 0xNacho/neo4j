@@ -19,28 +19,30 @@
  */
 package org.neo4j.collection.primitive.hopscotch;
 
+import org.neo4j.array.primitive.NumberArrayFactory;
+
 public class IntKeyTable<VALUE> extends IntArrayBasedKeyTable<VALUE>
 {
-    public IntKeyTable( int capacity, VALUE singleValue )
+    public IntKeyTable( NumberArrayFactory factory, int capacity, VALUE singleValue )
     {
-        super( capacity, 2, 32, singleValue );
+        super( factory, capacity, 2, 32, singleValue );
     }
 
     @Override
     public long key( int index )
     {
-        return table[index( index )];
+        return table.get( index( index ) );
     }
 
     @Override
     protected void internalPut( int actualIndex, long key, VALUE value )
     {
-        table[actualIndex] = (int)key;
+        table.set( actualIndex, (int)key );
     }
 
     @Override
     protected IntArrayBasedKeyTable<VALUE> newInstance( int newCapacity )
     {
-        return new IntKeyTable<>( newCapacity, singleValue );
+        return new IntKeyTable<>( factory, newCapacity, singleValue );
     }
 }

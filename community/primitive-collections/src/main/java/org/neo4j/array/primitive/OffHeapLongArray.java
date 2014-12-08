@@ -113,4 +113,47 @@ public class OffHeapLongArray extends OffHeapNumberArray implements LongArray
             unsafe.putLong( toAddress, fromValue );
         }
     }
+
+
+    @Override
+    public void remove( long index, int numberOfEntries )
+    {
+        long address = addressOf( index );
+        for ( int i = 0; i < numberOfEntries; i++ )
+        {
+            if ( unsafe.getLong( address ) != defaultValue )
+            {
+                size--;
+            }
+            unsafe.putLong( address, defaultValue );
+            address += stride;
+        }
+    }
+
+    @Override
+    public void genericAnd( long index, long mask )
+    {
+        long address = addressOf( index );
+        long value = unsafe.getLong( address );
+        value &= mask;
+        unsafe.putLong( address, value );
+    }
+
+    @Override
+    public void genericOr( long index, long mask )
+    {
+        long address = addressOf( index );
+        long value = unsafe.getLong( address );
+        value |= mask;
+        unsafe.putLong( address, value );
+    }
+
+    @Override
+    public void genericXor( long index, long mask )
+    {
+        long address = addressOf( index );
+        long value = unsafe.getLong( address );
+        value ^= mask;
+        unsafe.putLong( address, value );
+    }
 }

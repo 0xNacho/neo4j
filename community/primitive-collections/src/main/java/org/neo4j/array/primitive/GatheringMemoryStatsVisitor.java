@@ -19,6 +19,8 @@
  */
 package org.neo4j.array.primitive;
 
+import static org.neo4j.collection.primitive.Primitive.bytes;
+
 /**
  * {@link MemoryStatsVisitor} that can gather stats from multiple sources and give a total.
  */

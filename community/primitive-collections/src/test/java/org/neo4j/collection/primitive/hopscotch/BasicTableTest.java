@@ -19,17 +19,20 @@
  */
 package org.neo4j.collection.primitive.hopscotch;
 
+import java.util.ArrayList;
+import java.util.Collection;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-
-import java.util.ArrayList;
-import java.util.Collection;
 
 import org.neo4j.collection.primitive.Primitive;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assume.assumeTrue;
+
+import static org.neo4j.array.primitive.NumberArrayFactory.HEAP;
+import static org.neo4j.array.primitive.NumberArrayFactory.OFF_HEAP;
 import static org.neo4j.collection.primitive.Primitive.VALUE_MARKER;
 
 @RunWith( Parameterized.class )
@@ -46,7 +49,7 @@ public class BasicTableTest
             @Override
             public Table newTable( int capacity )
             {
-                return new IntKeyTable( capacity, VALUE_MARKER );
+                return new IntKeyTable( HEAP, capacity, VALUE_MARKER );
             }
 
             @Override
@@ -66,7 +69,7 @@ public class BasicTableTest
             @Override
             public Table newTable( int capacity )
             {
-                return new LongKeyTable( capacity, VALUE_MARKER );
+                return new LongKeyTable( HEAP, capacity, VALUE_MARKER );
             }
 
             @Override
@@ -86,7 +89,7 @@ public class BasicTableTest
             @Override
             public Table newTable( int capacity )
             {
-                return new IntKeyUnsafeTable( capacity, VALUE_MARKER );
+                return new IntKeyTable( OFF_HEAP, capacity, VALUE_MARKER );
             }
 
             @Override
@@ -106,7 +109,7 @@ public class BasicTableTest
             @Override
             public Table newTable( int capacity )
             {
-                return new LongKeyUnsafeTable( capacity, VALUE_MARKER );
+                return new LongKeyTable( OFF_HEAP, capacity, VALUE_MARKER );
             }
 
             @Override
@@ -126,7 +129,7 @@ public class BasicTableTest
             @Override
             public Table newTable( int capacity )
             {
-                return new LongKeyIntValueTable( capacity );
+                return new LongKeyIntValueTable( HEAP, capacity );
             }
 
             @Override
@@ -146,7 +149,7 @@ public class BasicTableTest
             @Override
             public Table newTable( int capacity )
             {
-                return new LongKeyObjectValueTable( capacity );
+                return new LongKeyObjectValueTable( HEAP, capacity );
             }
 
             @Override
@@ -166,7 +169,7 @@ public class BasicTableTest
             @Override
             public Table newTable( int capacity )
             {
-                return new LongKeyLongValueUnsafeTable( capacity );
+                return new LongKeyLongValueTable( OFF_HEAP, capacity );
             }
 
             @Override

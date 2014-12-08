@@ -95,4 +95,37 @@ public class HeapIntArray extends HeapNumberArray implements IntArray
             set( toIndex+i, fromValue );
         }
     }
+
+    @Override
+    public void remove( long index, int numberOfEntries )
+    {
+        int intIndex = safeCastLongToInt( index );
+        for ( int i = 0; i < numberOfEntries; i++ )
+        {
+            if ( array[intIndex] != defaultValue )
+            {
+                size--;
+            }
+            array[intIndex] = defaultValue;
+            intIndex++;
+        }
+    }
+
+    @Override
+    public void genericAnd( long index, long mask )
+    {
+        array[safeCastLongToInt( index )] &= mask;
+    }
+
+    @Override
+    public void genericOr( long index, long mask )
+    {
+        array[safeCastLongToInt( index )] |= mask;
+    }
+
+    @Override
+    public void genericXor( long index, long mask )
+    {
+        array[safeCastLongToInt( index )] ^= mask;
+    }
 }

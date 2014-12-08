@@ -21,45 +21,52 @@ package org.neo4j.collection.primitive.hopscotch;
 
 import org.neo4j.array.primitive.NumberArrayFactory;
 
-public class IntKeyLongValueTable extends IntArrayBasedKeyTable<long[]>
+public class LongKeyLongValueTable extends IntArrayBasedKeyTable<long[]>
 {
-    public static final long NULL = -1L;
+    public static final long NULL = -1;
 
-    public IntKeyLongValueTable( NumberArrayFactory factory, int capacity )
+    public LongKeyLongValueTable( NumberArrayFactory factory, int capacity )
     {
-        super( factory, capacity, 3 + 1, 32, new long[] { NULL } );
+        super( factory, capacity, 5, 32, new long[] { NULL } );
     }
 
     @Override
     public long key( int index )
     {
-        return table.get( index( index ) );
+        return getLong( index( index ) );
     }
 
     @Override
-    protected void internalPut( int actualIndex, long key, long[] valueHolder )
+    protected void internalPut( int actualIndex, long key, long[] value )
     {
-        table.set( actualIndex, (int)key ); // we know that key is an int
-        putLong( actualIndex+1, valueHolder[0] );
-    }
-
-    @Override
-    public long[] value( int index )
-    {
-        singleValue[0] = getLong( index( index )+1 );
-        return singleValue;
+        putLong( actualIndex, key );
+        putLong( actualIndex+2, value[0] );
     }
 
     @Override
     public long[] putValue( int index, long[] value )
     {
-        singleValue[0] = putLong( index( index )+1, value[0] );
-        return singleValue;
+        int actualIndex = index( index )+2;
+        int previous = table.get( actualIndex );
+        putLong( actualIndex, value[0] );
+        return pack( previous );
+    }
+
+    @Override
+    public long[] value( int index )
+    {
+        return pack( getLong( index( index )+2 ) );
     }
 
     @Override
     protected Table<long[]> newInstance( int newCapacity )
     {
-        return new IntKeyLongValueTable( factory, newCapacity );
+        return new LongKeyLongValueTable( factory, newCapacity );
+    }
+
+    private long[] pack( long value )
+    {
+        singleValue[0] = value;
+        return singleValue;
     }
 }

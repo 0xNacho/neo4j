@@ -19,12 +19,14 @@
  */
 package org.neo4j.collection.primitive.hopscotch;
 
+import org.neo4j.array.primitive.NumberArrayFactory;
+
 public class LongKeyTable<VALUE>
         extends IntArrayBasedKeyTable<VALUE>
 {
-    public LongKeyTable( int capacity, VALUE singleValue )
+    public LongKeyTable( NumberArrayFactory factory, int capacity, VALUE singleValue )
     {
-        super( capacity, 3, 32, singleValue );
+        super( factory, capacity, 3, 32, singleValue );
     }
 
     @Override
@@ -42,6 +44,6 @@ public class LongKeyTable<VALUE>
     @Override
     protected LongKeyTable<VALUE> newInstance( int newCapacity )
     {
-        return new LongKeyTable<>( newCapacity, singleValue );
+        return new LongKeyTable<>( factory, newCapacity, singleValue );
     }
 }

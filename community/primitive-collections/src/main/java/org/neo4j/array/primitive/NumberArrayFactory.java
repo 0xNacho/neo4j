@@ -25,6 +25,7 @@ import org.neo4j.helpers.Exceptions;
 
 import static java.lang.String.format;
 
+import static org.neo4j.collection.primitive.Primitive.bytes;
 import static org.neo4j.collection.primitive.Primitive.safeCastLongToInt;
 
 /**

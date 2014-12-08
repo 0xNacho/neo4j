@@ -19,15 +19,17 @@
  */
 package org.neo4j.collection.primitive.hopscotch;
 
+import org.neo4j.array.primitive.NumberArrayFactory;
+
 import static java.util.Arrays.fill;
 
 public class LongKeyObjectValueTable<VALUE> extends LongKeyTable<VALUE>
 {
     private VALUE[] values;
 
-    public LongKeyObjectValueTable( int capacity )
+    public LongKeyObjectValueTable( NumberArrayFactory factory, int capacity )
     {
-        super( capacity, null );
+        super( factory, capacity, null );
     }
 
     @Override
@@ -71,7 +73,7 @@ public class LongKeyObjectValueTable<VALUE> extends LongKeyTable<VALUE>
     @Override
     protected LongKeyObjectValueTable<VALUE> newInstance( int newCapacity )
     {
-        return new LongKeyObjectValueTable<>( newCapacity );
+        return new LongKeyObjectValueTable<>( factory, newCapacity );
     }
 
     @SuppressWarnings( "unchecked" )

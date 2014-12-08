@@ -21,6 +21,8 @@ package org.neo4j.array.primitive;
 
 import java.util.Arrays;
 
+import static org.neo4j.collection.primitive.Primitive.safeCastLongToInt;
+
 /**
  * Base class for common functionality for any {@link NumberArray} where the data is dynamically growing,
  * where parts can live inside and parts off-heap.
@@ -127,5 +129,40 @@ abstract class DynamicNumberArray<N extends NumberArray> implements NumberArray
         {
             chunk.close();
         }
+    }
+
+    @Override
+    public void genericAnd( long index, long mask )
+    {
+        ensureChunkAt( index ).genericAnd( index( index ), mask );
+    }
+
+    @Override
+    public void genericOr( long index, long mask )
+    {
+        ensureChunkAt( index ).genericOr( index( index ), mask );
+    }
+
+    @Override
+    public void genericXor( long index, long mask )
+    {
+        ensureChunkAt( index ).genericXor( index( index ), mask );
+    }
+
+    @Override
+    public void remove( long index, int numberOfEntries )
+    {
+        NumberArray chunk = chunkAt( index );
+        if ( chunk != null )
+        {
+            chunk.remove( index( index ), numberOfEntries );
+        }
+    }
+
+    @Override
+    public void genericSet( long index, long value )
+    {
+        // Will this copied code actually perform better than delegating?
+        ensureChunkAt( index ).genericSet( index( index ), safeCastLongToInt( value ) );
     }
 }

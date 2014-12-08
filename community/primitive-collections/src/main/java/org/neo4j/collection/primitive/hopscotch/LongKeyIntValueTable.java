@@ -19,13 +19,15 @@
  */
 package org.neo4j.collection.primitive.hopscotch;
 
+import org.neo4j.array.primitive.NumberArrayFactory;
+
 public class LongKeyIntValueTable extends IntArrayBasedKeyTable<int[]>
 {
     public static final int NULL = -1;
 
-    public LongKeyIntValueTable( int capacity )
+    public LongKeyIntValueTable( NumberArrayFactory factory, int capacity )
     {
-        super( capacity, 3 + 1, 32, new int[] { NULL } );
+        super( factory, capacity, 3 + 1, 32, new int[] { NULL } );
     }
 
     @Override
@@ -38,28 +40,28 @@ public class LongKeyIntValueTable extends IntArrayBasedKeyTable<int[]>
     protected void internalPut( int actualIndex, long key, int[] value )
     {
         putLong( actualIndex, key );
-        table[actualIndex+2] = value[0];
+        table.set( actualIndex+2, value[0] );
     }
 
     @Override
     public int[] putValue( int index, int[] value )
     {
         int actualIndex = index( index )+2;
-        int previous = table[actualIndex];
-        table[actualIndex] = value[0];
+        int previous = table.get( actualIndex );
+        table.set( actualIndex, value[0] );
         return pack( previous );
     }
 
     @Override
     public int[] value( int index )
     {
-        return pack( table[index( index )+2] );
+        return pack( table.get( index( index )+2 ) );
     }
 
     @Override
     protected Table<int[]> newInstance( int newCapacity )
     {
-        return new LongKeyIntValueTable( newCapacity );
+        return new LongKeyIntValueTable( factory, newCapacity );
     }
 
     private int[] pack( int value )

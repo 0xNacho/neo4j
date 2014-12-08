@@ -19,48 +19,46 @@
  */
 package org.neo4j.collection.primitive.hopscotch;
 
-import static java.util.Arrays.fill;
+import org.neo4j.array.primitive.NumberArrayFactory;
 
 public class VersionedLongKeyTable<VALUE> extends IntArrayBasedKeyTable<VALUE>
 {
     private int version;
 
-    public VersionedLongKeyTable( int h, VALUE singleValue )
+    public VersionedLongKeyTable( NumberArrayFactory factory, int h, VALUE singleValue )
     {
-        super( 4, h, singleValue );
+        super( factory, 4, h, singleValue );
     }
 
-    public VersionedLongKeyTable( int capacity, int h, VALUE singleValue, int version )
+    public VersionedLongKeyTable( NumberArrayFactory factory, int capacity, int h, VALUE singleValue, int version )
     {
-        super( capacity, 4, h, singleValue );
+        super( factory, capacity, 4, h, singleValue );
         this.version = version;
     }
 
     @Override
     public long key( int index )
     {
-        int actualIndex = index( index );
-        return (long)table[actualIndex] | (table[actualIndex+1]) << 32;
+        return getLong( index( index ) );
     }
 
     @Override
     protected void internalPut( int actualIndex, long key, VALUE value )
     {
-        table[actualIndex] = (int)key;
-        table[actualIndex+1] = (int)((key&0xFFFFFFFF00000000L) >>> 32);
-        table[actualIndex+2] = version;
+        putLong( actualIndex, key );
+        table.set( actualIndex+2, version );
     }
 
     @Override
     protected void internalRemove( int actualIndex )
     {
-        fill( table, actualIndex, actualIndex+2, -1 );
+        table.remove( actualIndex, 2 );
     }
 
     @Override
     protected VersionedLongKeyTable<VALUE> newInstance( int newCapacity )
     {
-        return new VersionedLongKeyTable<>( newCapacity, h, singleValue, version );
+        return new VersionedLongKeyTable<>( factory, newCapacity, h, singleValue, version );
     }
 
     @Override
@@ -72,6 +70,6 @@ public class VersionedLongKeyTable<VALUE> extends IntArrayBasedKeyTable<VALUE>
     @Override
     public int version( int index )
     {
-        return table[index( index )+2];
+        return table.get( index( index )+2 );
     }
 }
