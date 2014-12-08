@@ -38,16 +38,21 @@ public class ParallelSort
     private final int[] radixIndexCount;
     private final RadixCalculator radixCalculator;
     private final LongArray dataCache;
-    private final IntArray tracker;
+    private final IntArray trackerCache;
     private final int threads;
     private long[][] sortBuckets;
+    private final ArrayStats dataCacheStats;
+    private final ArrayStats trackerStats;
 
-    public ParallelSort( Radix radix, LongArray dataCache, IntArray tracker, int threads )
+    public ParallelSort( Radix radix, LongArray dataCache, ArrayStats dataCacheStats,
+            IntArray trackerCache, ArrayStats trackerStats, int threads )
     {
+        this.dataCacheStats = dataCacheStats;
+        this.trackerStats = trackerStats;
         this.radixIndexCount = radix.getRadixIndexCounts();
         this.radixCalculator = radix.calculator();
         this.dataCache = dataCache;
-        this.tracker = tracker;
+        this.trackerCache = trackerCache;
         this.threads = threads;
     }
 
@@ -92,7 +97,7 @@ public class ParallelSort
         int[][] rangeParams = new int[threads][2];
         int[] bucketRange = new int[threads];
         sortBuckets = new long[threads][2];
-        int bucketSize = (int) (dataCache.size() / threads);
+        int bucketSize = (int) (dataCacheStats.size() / threads);
         int count = 0, fullCount = 0 + 0;
         rangeParams[0][0] = 0;
         bucketRange[0] = 0;
@@ -123,7 +128,7 @@ public class ParallelSort
             {
                 bucketRange[threadIndex] = radixIndexCount.length;
                 rangeParams[threadIndex][0] = fullCount;
-                rangeParams[threadIndex][1] = (int) dataCache.size() - fullCount;
+                rangeParams[threadIndex][1] = (int) dataCacheStats.size() - fullCount;
                 break;
             }
         }
@@ -132,7 +137,7 @@ public class ParallelSort
         {
             bucketIndex[i] = 0;
         }
-        for ( long i = 0; i < dataCache.size(); i++ )
+        for ( long i = 0; i < dataCacheStats.size(); i++ )
         {
             int rIndex = radixCalculator.radixOf( dataCache.get( i ) );
             for ( int k = 0; k < threads; k++ )
@@ -141,9 +146,10 @@ public class ParallelSort
                 if ( rIndex <= bucketRange[k] )
                 {
                     long temp = (rangeParams[k][0] + bucketIndex[k]++);
-                    assert tracker.get( temp ) == -1 : "Overlapping buckets i:" + i + ", k:" + k + "\n" +
+                    assert trackerCache.get( temp ) == -1 : "Overlapping buckets i:" + i + ", k:" + k + "\n" +
                             dumpBuckets( rangeParams, bucketRange, bucketIndex );
-                    tracker.set( temp, (int) i );
+                    trackerCache.set( temp, (int) i );
+                    trackerStats.itemSet( temp );
                     if ( bucketIndex[k] == rangeParams[k][1] )
                     {
                         sortBuckets[k][0] = bucketRange[k];
@@ -180,14 +186,14 @@ public class ParallelSort
     private int partition( int leftIndex, int rightIndex, int pivotIndex )
     {
         int li = leftIndex, ri = rightIndex - 2, pi = pivotIndex;
-        long pivot = clearCollision( dataCache.get( tracker.get( pi ) ) );
+        long pivot = clearCollision( dataCache.get( trackerCache.get( pi ) ) );
         //save pivot in last index
-        swapElement( tracker, pi, rightIndex - 1 );
+        swapElement( trackerCache, pi, rightIndex - 1 );
         long left = 0, right = 0;
         while ( li < ri )
         {
-            left = clearCollision( dataCache.get( tracker.get( li ) ) );
-            right = clearCollision( dataCache.get( tracker.get( ri ) ) );
+            left = clearCollision( dataCache.get( trackerCache.get( li ) ) );
+            right = clearCollision( dataCache.get( trackerCache.get( ri ) ) );
             if ( Utils.unsignedCompare( left, pivot, CompareType.LT ) )
             {
                 //increment left to find the greater element than the pivot
@@ -201,17 +207,17 @@ public class ParallelSort
             else
             {
                 //if right index is greater then only swap
-                swapElement( tracker, li, ri );
+                swapElement( trackerCache, li, ri );
             }
         }
         int partingIndex = ri;
-        right = clearCollision( dataCache.get( tracker.get( ri ) ) );
+        right = clearCollision( dataCache.get( trackerCache.get( ri ) ) );
         if ( Utils.unsignedCompare( right, pivot, CompareType.LT ) )
         {
             partingIndex++;
         }
         //restore pivot
-        swapElement( tracker, rightIndex - 1, partingIndex );
+        swapElement( trackerCache, rightIndex - 1, partingIndex );
         return partingIndex;
     }
 

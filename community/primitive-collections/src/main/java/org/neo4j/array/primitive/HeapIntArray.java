@@ -60,16 +60,7 @@ public class HeapIntArray extends HeapNumberArray implements IntArray
     @Override
     public void set( long index, int value )
     {
-        int intIndex = safeCastLongToInt( index );
-        if ( array[intIndex] == defaultValue )
-        {
-            size++;
-        }
-        array[intIndex] = value;
-        if ( index > highestSetIndex )
-        {
-            highestSetIndex = index;
-        }
+        array[safeCastLongToInt( index )] = value;
     }
 
     @Override
@@ -82,7 +73,6 @@ public class HeapIntArray extends HeapNumberArray implements IntArray
     public void clear()
     {
         Arrays.fill( array, defaultValue );
-        super.clear();
     }
 
     @Override
@@ -100,15 +90,7 @@ public class HeapIntArray extends HeapNumberArray implements IntArray
     public void remove( long index, int numberOfEntries )
     {
         int intIndex = safeCastLongToInt( index );
-        for ( int i = 0; i < numberOfEntries; i++ )
-        {
-            if ( array[intIndex] != defaultValue )
-            {
-                size--;
-            }
-            array[intIndex] = defaultValue;
-            intIndex++;
-        }
+        Arrays.fill( array, intIndex, intIndex+numberOfEntries, defaultValue );
     }
 
     @Override

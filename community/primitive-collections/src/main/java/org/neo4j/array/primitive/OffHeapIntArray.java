@@ -28,8 +28,6 @@ import static org.neo4j.collection.primitive.Primitive.safeCastLongToInt;
 public class OffHeapIntArray extends OffHeapNumberArray implements IntArray
 {
     private final int defaultValue;
-    private long highestSetIndex = -1;
-    private long size;
 
     public OffHeapIntArray( long length, int defaultValue )
     {
@@ -54,34 +52,13 @@ public class OffHeapIntArray extends OffHeapNumberArray implements IntArray
     @Override
     public void set( long index, int value )
     {
-        long address = addressOf( index );
-        if ( unsafe.getInt( address ) == defaultValue )
-        {
-            size++;
-        }
-        unsafe.putInt( address, value );
-        if ( index > highestSetIndex )
-        {
-            highestSetIndex = index;
-        }
+        unsafe.putInt( addressOf( index ), value );
     }
 
     @Override
     public void genericSet( long index, long value )
     {
         set( index, safeCastLongToInt( value ) );
-    }
-
-    @Override
-    public long highestSetIndex()
-    {
-        return highestSetIndex;
-    }
-
-    @Override
-    public long size()
-    {
-        return size;
     }
 
     @Override
@@ -98,8 +75,6 @@ public class OffHeapIntArray extends OffHeapNumberArray implements IntArray
                 unsafe.putInt( adr, defaultValue );
             }
         }
-        highestSetIndex = -1;
-        size = 0;
     }
 
     @Override
@@ -122,10 +97,6 @@ public class OffHeapIntArray extends OffHeapNumberArray implements IntArray
         long address = addressOf( index );
         for ( int i = 0; i < numberOfEntries; i++ )
         {
-            if ( unsafe.getInt( address ) != defaultValue )
-            {
-                size--;
-            }
             unsafe.putInt( address, defaultValue );
             address += stride;
         }

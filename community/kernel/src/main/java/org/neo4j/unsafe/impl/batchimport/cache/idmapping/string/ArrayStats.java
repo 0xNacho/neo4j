@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2002-2015 "Neo Technology,"
+ * Copyright (c) 2002-2014 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This file is part of Neo4j.
@@ -17,28 +17,29 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.neo4j.array.primitive;
+package org.neo4j.unsafe.impl.batchimport.cache.idmapping.string;
 
-/**
- * Base class for common functionality for any {@link NumberArray} where the data lives inside heap.
- */
-abstract class HeapNumberArray implements NumberArray
+public class ArrayStats
 {
-    private final int itemSize;
+    private long size;
+    private long highestSetIndex;
 
-    protected HeapNumberArray( int itemSize )
+    public void itemSet( long index )
     {
-        this.itemSize = itemSize;
+        size++;
+        if ( index > highestSetIndex )
+        {
+            highestSetIndex = index;
+        }
     }
 
-    @Override
-    public void visitMemoryStats( MemoryStatsVisitor visitor )
+    public long size()
     {
-        visitor.heapUsage( length() * itemSize ); // roughly
+        return size;
     }
 
-    @Override
-    public void close()
-    {   // Nothing to close
+    public long highestSetIndex()
+    {
+        return highestSetIndex;
     }
 }

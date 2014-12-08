@@ -75,6 +75,8 @@ public class EncodingIdMapper implements IdMapper
     // Each index in trackerCache points to a dataCache index, where the value in dataCache contains the
     // encoded input id, used to match against the input id that is looked up during binary search.
     private final IntArray trackerCache;
+    private final ArrayStats trackerCacheStats = new ArrayStats();
+    private final ArrayStats dataCacheStats = new ArrayStats();
     private final Encoder encoder;
     private final Radix radix;
     private final int processorsForSorting;
@@ -148,6 +150,7 @@ public class EncodingIdMapper implements IdMapper
         // Encode and add the input id
         long code = encoder.encode( inputId );
         dataCache.set( id, code );
+        dataCacheStats.itemSet( id );
         radix.registerRadixOf( code );
         size++;
 
@@ -158,7 +161,7 @@ public class EncodingIdMapper implements IdMapper
             {
                 idGroups = Arrays.copyOf( idGroups, idGroups.length*2 );
             }
-            idGroups[idGroupsCursor++] = currentIdGroup = new IdGroup( group, dataCache.highestSetIndex() );
+            idGroups[idGroupsCursor++] = currentIdGroup = new IdGroup( group, dataCacheStats.highestSetIndex() );
         }
     }
 
@@ -166,7 +169,7 @@ public class EncodingIdMapper implements IdMapper
     {
         if ( idGroupsCursor > 0 )
         {
-            idGroups[idGroupsCursor - 1].setHighDataIndex( dataCache.highestSetIndex() );
+            idGroups[idGroupsCursor - 1].setHighDataIndex( dataCacheStats.highestSetIndex() );
         }
     }
 
@@ -184,7 +187,8 @@ public class EncodingIdMapper implements IdMapper
         {
             // Synchronized since there's this concern that a couple of other threads are changing trackerCache
             // and it's nice to go through a memory barrier afterwards to ensure this CPU see correct data.
-            sortBuckets = new ParallelSort( radix, dataCache, trackerCache, processorsForSorting ).run();
+            sortBuckets = new ParallelSort( radix, dataCache, dataCacheStats, trackerCache, trackerCacheStats,
+                    processorsForSorting ).run();
         }
         if ( detectAndMarkCollisions() > 0 )
         {
@@ -204,7 +208,7 @@ public class EncodingIdMapper implements IdMapper
     private long binarySearch( Object inputId, PrimitiveIntPredicate inGroup )
     {
         long low = 0;
-        long highestSetTrackerIndex = trackerCache.highestSetIndex();
+        long highestSetTrackerIndex = trackerCacheStats.highestSetIndex();
         long high = highestSetTrackerIndex;
         long x = encoder.encode( inputId );
         int rIndex = radixOf( x );
@@ -213,7 +217,7 @@ public class EncodingIdMapper implements IdMapper
             if ( rIndex <= sortBuckets[k][0] )//bucketRange[k] > rIndex )
             {
                 low = sortBuckets[k][1];
-                high = (k == sortBuckets.length - 1) ? trackerCache.size() - 1 : sortBuckets[k + 1][1];
+                high = (k == sortBuckets.length - 1) ? trackerCacheStats.size() - 1 : sortBuckets[k + 1][1];
                 break;
             }
         }
@@ -222,7 +226,7 @@ public class EncodingIdMapper implements IdMapper
         if ( returnVal == -1 )
         {
             low = 0;
-            high = trackerCache.size() - 1;
+            high = trackerCacheStats.size() - 1;
             returnVal = binarySearch( x, inputId, low, high, inGroup );
         }
         return returnVal;
@@ -246,7 +250,7 @@ public class EncodingIdMapper implements IdMapper
     private int detectAndMarkCollisions()
     {
         int numCollisions = 0;
-        for ( int i = 0; i < trackerCache.size() - 1; i++ )
+        for ( int i = 0; i < trackerCacheStats.size() - 1; i++ )
         {
             if ( compareDataCache( dataCache, trackerCache, i, i + 1, CompareType.GE ) )
             {
@@ -407,7 +411,7 @@ public class EncodingIdMapper implements IdMapper
             index--;
         }
         long fromIndex = index;
-        while ( index < trackerCache.highestSetIndex() &&
+        while ( index < trackerCacheStats.highestSetIndex() &&
                 unsignedCompare( val, clearCollision( dataCache.get( trackerCache.get( index + 1 ) ) ), CompareType.EQ ) )
         {
             index++;

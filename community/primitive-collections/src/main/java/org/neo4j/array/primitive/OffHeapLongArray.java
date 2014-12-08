@@ -26,8 +26,6 @@ package org.neo4j.array.primitive;
 public class OffHeapLongArray extends OffHeapNumberArray implements LongArray
 {
     private final long defaultValue;
-    private long highestSetIndex = -1;
-    private long size;
 
     public OffHeapLongArray( long length, long defaultValue )
     {
@@ -52,34 +50,13 @@ public class OffHeapLongArray extends OffHeapNumberArray implements LongArray
     @Override
     public void set( long index, long value )
     {
-        long address = addressOf( index );
-        if ( unsafe.getLong( address ) == defaultValue )
-        {
-            size++;
-        }
-        unsafe.putLong( address, value );
-        if ( index > highestSetIndex )
-        {
-            highestSetIndex = index;
-        }
+        unsafe.putLong( addressOf( index ), value );
     }
 
     @Override
     public void genericSet( long index, long value )
     {
         set( index, value );
-    }
-
-    @Override
-    public long highestSetIndex()
-    {
-        return highestSetIndex;
-    }
-
-    @Override
-    public long size()
-    {
-        return size;
     }
 
     @Override
@@ -96,8 +73,6 @@ public class OffHeapLongArray extends OffHeapNumberArray implements LongArray
                 unsafe.putLong( adr, defaultValue );
             }
         }
-        highestSetIndex = -1;
-        size = 0;
     }
 
     @Override
@@ -121,10 +96,6 @@ public class OffHeapLongArray extends OffHeapNumberArray implements LongArray
         long address = addressOf( index );
         for ( int i = 0; i < numberOfEntries; i++ )
         {
-            if ( unsafe.getLong( address ) != defaultValue )
-            {
-                size--;
-            }
             unsafe.putLong( address, defaultValue );
             address += stride;
         }

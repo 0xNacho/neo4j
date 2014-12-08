@@ -32,11 +32,6 @@ public interface NumberArray extends MemoryStatsVisitor.Home, AutoCloseable
     long length();
 
     /**
-     * @return number of indexes occupied, i.e. setting the same index multiple times doesn't increment size.
-     */
-    long size();
-
-    /**
      * Swaps the values of indexes from {@code fromIndex} to {@code toIndex}.
      *
      * @param fromIndex one side of the indexes to swap.
@@ -58,11 +53,6 @@ public interface NumberArray extends MemoryStatsVisitor.Home, AutoCloseable
      * @param numberOfEntries number of entries to remove.
      */
     void remove( long index, int numberOfEntries );
-
-    /**
-     * @return highest set index or -1 if no set.
-     */
-    long highestSetIndex();
 
     /**
      * Releases any resources that GC won't release automatically.
