@@ -25,7 +25,6 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import org.neo4j.collection.primitive.Primitive;
@@ -37,7 +36,7 @@ import org.neo4j.test.randomized.TestResource;
 import static java.lang.System.currentTimeMillis;
 import static java.lang.Thread.sleep;
 
-@Ignore( "Not a test. A benchmark" )
+//@Ignore( "Not a test. A benchmark" )
 public class PrimitiveCollectionBenchmark
 {
     /* A tuesday afternoon run on MPs machine:
@@ -100,7 +99,7 @@ public class PrimitiveCollectionBenchmark
             @Override
             public MapInterface newInstance()
             {
-                return new HopScotchSet();
+                return new ToTheMetalHopScotchSet();
             }
         };
         performanceTest( "neo4j hop-scotch set, random", factory, RANDOM_DATA );
@@ -136,7 +135,7 @@ public class PrimitiveCollectionBenchmark
 //        performanceTest( "colt long->int map, random", factory, RANDOM_DATA );
 //        performanceTest( "colt long->int map, seq", factory, SEQUENTIAL_DATA );
 //    }
-
+//
 //    @Test
 //    public void performanceTestTroveLongSet() throws Exception
 //    {
@@ -406,6 +405,28 @@ public class PrimitiveCollectionBenchmark
         public void close()
         {
             map.close();
+        }
+    }
+
+    private static class ToTheMetalHopScotchSet implements MapInterface
+    {
+        private final ToTheMetalHopScotchHashingAlgorithmLongSet set = new ToTheMetalHopScotchHashingAlgorithmLongSet();
+
+        @Override
+        public void close()
+        {
+        }
+
+        @Override
+        public void put( long key, int value )
+        {
+            set.add( key );
+        }
+
+        @Override
+        public void get( long key )
+        {
+            set.contains( key );
         }
     }
 
