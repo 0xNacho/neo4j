@@ -24,8 +24,8 @@ import java.util.Arrays;
 import org.neo4j.collection.primitive.hopscotch.HopScotchHashingAlgorithm.HashFunction;
 import org.neo4j.collection.primitive.hopscotch.HopScotchHashingAlgorithm.ResizeMonitor;
 
-import static java.lang.Integer.highestOneBit;
-import static java.lang.Integer.numberOfTrailingZeros;
+import static java.lang.Long.highestOneBit;
+import static java.lang.Long.numberOfTrailingZeros;
 
 /**
  * <p>
@@ -67,10 +67,12 @@ public class ToTheMetalHopScotchHashingAlgorithmLongSet
      */
     public static final int DEFAULT_H = 32;
 
-    private final HashFunction hashFunction = HopScotchHashingAlgorithm.DEFAULT_HASHING;
-    private int[] array;
+    private final HashFunction hashFunction = HopScotchHashingAlgorithm.JUL_HASHING;
+    private long[] array;
     private int tableMask;
-    private final int nullKey = -1;
+    private final long nullKey = -1;
+    private final int shift = 1;
+    private final int hopBitsOffset = 1;
 
     public ToTheMetalHopScotchHashingAlgorithmLongSet()
     {
@@ -79,26 +81,26 @@ public class ToTheMetalHopScotchHashingAlgorithmLongSet
 
     private void newArray( int logicalCapacity )
     {
-        array = new int[logicalCapacity << 1];
+        array = new long[logicalCapacity << shift];
         Arrays.fill( array, nullKey );
-        tableMask = highestOneBit( logicalCapacity ) - 1;
+        tableMask = (int) (highestOneBit( logicalCapacity ) - 1);
     }
 
     public boolean contains( long key )
     {
         int index = indexOf( key );
-        int existingKey = array[index << 1];
+        long existingKey = array[index << shift];
         if ( existingKey == key )
         {   // Bulls eye
             return true;
         }
 
         // Look in its neighborhood
-        int hopBits = array[(index << 1)+1];
+        long hopBits = array[(index << shift)+hopBitsOffset];
         while ( hopBits > 0 )
         {
             int hopIndex = nextIndex( index, numberOfTrailingZeros( hopBits )+1 );
-            if ( array[hopIndex << 1] == key )
+            if ( array[hopIndex << shift] == key )
             {   // There it is
                 return true;
             }
@@ -111,10 +113,10 @@ public class ToTheMetalHopScotchHashingAlgorithmLongSet
     public boolean add( long key )
     {
         int index = indexOf( key );
-        long keyAtIndex = array[index << 1];
+        long keyAtIndex = array[index << shift];
         if ( keyAtIndex == nullKey )
         {   // this index is free, just place it there
-            array[index << 1] = (int) key;
+            array[index << shift] = (int) key;
             return true;
         }
         else if ( keyAtIndex == key )
@@ -123,11 +125,11 @@ public class ToTheMetalHopScotchHashingAlgorithmLongSet
         }
         else
         {   // look at the neighbors of this entry to see if any is the requested key
-            int hopBits = array[(index << 1) + 1];
+            long hopBits = array[(index << shift) + hopBitsOffset];
             while ( hopBits > 0 )
             {
                 int hopIndex = nextIndex( index, numberOfTrailingZeros( hopBits )+1 );
-                if ( array[hopIndex << 1] == key )
+                if ( array[hopIndex << shift] == key )
                 {   // this index is occupied with the same key
                     return false;
                 }
@@ -157,7 +159,7 @@ public class ToTheMetalHopScotchHashingAlgorithmLongSet
         // linear probe for finding a free slot in ASC index direction
         while ( freeIndex != index ) // one round is enough, albeit far, but at the same time very unlikely
         {
-            if ( array[freeIndex << 1] == nullKey )
+            if ( array[freeIndex << shift] == nullKey )
             {   // free slot found
                 foundFreeSpot = true;
                 break;
@@ -182,8 +184,8 @@ public class ToTheMetalHopScotchHashingAlgorithmLongSet
             boolean swapped = false;
             for ( int d = 0; d < (DEFAULT_H >> 1) && !swapped; d++ )
             {   // examine hop information (i.e. is there's someone in the neighborhood here to swap with 'hopIndex'?)
-                final int neighborHopBitsFixed = array[(neighborIndex << 1)+1];
-                int neighborHopBits = neighborHopBitsFixed;
+                final long neighborHopBitsFixed = array[(neighborIndex << shift)+hopBitsOffset];
+                long neighborHopBits = neighborHopBitsFixed;
                 while ( neighborHopBits > 0 && !swapped )
                 {
                     int hd = numberOfTrailingZeros( neighborHopBits );
@@ -197,11 +199,11 @@ public class ToTheMetalHopScotchHashingAlgorithmLongSet
                     // OK, here's a neighbor, let's examine it's neighbors (candidates to move)
                     //  - move the candidate entry (incl. updating its hop bits) to the free index
                     int distance = (freeIndex-candidateIndex)&tableMask;
-                    int candidateKey = array[candidateIndex << 1];
-                    array[candidateKey << 1] = array[freeIndex << 1];
-                    array[freeIndex << 1] = candidateKey;
+                    long candidateKey = array[candidateIndex << shift];
+                    array[candidateIndex << shift] = array[freeIndex << shift];
+                    array[freeIndex << shift] = candidateKey;
                     //  - update the neighbor entry with the move of the candidate entry
-                    array[(neighborIndex << 1)+1] ^= ((1 << hd) | (1 << (hd+distance)));
+                    array[(neighborIndex << shift)+hopBitsOffset] ^= ((1 << hd) | (1 << (hd+distance)));
                     freeIndex = candidateIndex;
                     swapped = true;
                     totalHd -= distance;
@@ -219,9 +221,9 @@ public class ToTheMetalHopScotchHashingAlgorithmLongSet
         }
 
         // OK, now we're within distance to just place it there. Do it
-        array[freeIndex << 1] = (int)key;
+        array[freeIndex << shift] = (int)key;
         // and update the hop bits of "index"
-        array[(index << 1)+1] &= ~(1 << totalHd);
+        array[(index << shift)+hopBitsOffset] &= ~(1 << totalHd);
 
         return true;
     }
@@ -238,14 +240,14 @@ public class ToTheMetalHopScotchHashingAlgorithmLongSet
 
     private void growTable()
     {
-        int[] oldArray = array;
-        int oldCapacity = oldArray.length >> 1;
-        newArray( oldCapacity << 1 );
+        long[] oldArray = array;
+        int oldCapacity = oldArray.length >> shift;
+        newArray( oldCapacity * 2 );
 
         // place all entries in the new table
         for ( int i = 0; i < oldCapacity; i++ )
         {
-            int key = array[i << 1];
+            long key = array[i << shift];
             if ( key != nullKey )
             {
                 if ( !add( key ) )
