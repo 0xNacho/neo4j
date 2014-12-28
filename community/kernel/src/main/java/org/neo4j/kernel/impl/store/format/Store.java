@@ -98,4 +98,6 @@ public interface Store<RECORD, CURSOR extends Store.RecordCursor> extends Lifecy
         @Override
         void close();
     }
+
+    int numberOfReservedIds();
 }
