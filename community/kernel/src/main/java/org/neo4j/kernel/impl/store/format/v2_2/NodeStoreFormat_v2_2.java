@@ -48,9 +48,10 @@ public class NodeStoreFormat_v2_2 extends FixedSizeRecordStoreFormat<NodeRecord,
     }
 
     @Override
-    public NodeStoreFormat_v2_2.NodeRecordCursor createCursor( PagedFile file, StoreToolkit toolkit, int flags )
+    public NodeStoreFormat_v2_2.NodeRecordCursor createCursor( PagedFile file, StoreToolkit toolkit, int flags,
+            long initialId )
     {
-        return new NodeRecordCursor( file, toolkit, recordFormat, flags );
+        return new NodeRecordCursor( file, toolkit, recordFormat, flags, initialId );
     }
 
     @Override
@@ -168,9 +169,10 @@ public class NodeStoreFormat_v2_2 extends FixedSizeRecordStoreFormat<NodeRecord,
      */
     public static class NodeRecordCursor extends BaseRecordCursor<NodeRecord, NodeRecordFormat>
     {
-        public NodeRecordCursor( PagedFile file, StoreToolkit toolkit, NodeRecordFormat format, int flags )
+        public NodeRecordCursor( PagedFile file, StoreToolkit toolkit, NodeRecordFormat format, int flags,
+                long initialId )
         {
-            super( file, toolkit, format, flags );
+            super( file, toolkit, format, flags, initialId );
         }
 
         /** Read the first rel id from the record the cursor currently points at. */

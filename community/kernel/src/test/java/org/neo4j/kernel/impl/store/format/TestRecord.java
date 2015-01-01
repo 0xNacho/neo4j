@@ -19,7 +19,9 @@
  */
 package org.neo4j.kernel.impl.store.format;
 
-public class TestRecord
+import org.neo4j.kernel.impl.store.record.AbstractBaseRecord;
+
+public class TestRecord extends AbstractBaseRecord
 {
     public long id;
     public long value;
@@ -71,5 +73,11 @@ public class TestRecord
                 "id=" + id +
                 ", value=" + value +
                 '}';
+    }
+
+    @Override
+    public long getLongId()
+    {
+        return id;
     }
 }

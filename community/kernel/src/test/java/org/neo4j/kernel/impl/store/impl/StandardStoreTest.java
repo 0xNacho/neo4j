@@ -24,9 +24,10 @@ import java.io.File;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+
 import org.neo4j.io.pagecache.PageCache;
-import org.neo4j.io.pagecache.monitoring.PageCacheMonitor;
 import org.neo4j.io.pagecache.impl.muninn.MuninnPageCache;
+import org.neo4j.io.pagecache.monitoring.PageCacheMonitor;
 import org.neo4j.kernel.impl.store.format.Store;
 import org.neo4j.kernel.impl.store.format.TestCursor;
 import org.neo4j.kernel.impl.store.format.TestFormatWithHeader;
@@ -38,8 +39,12 @@ import org.neo4j.kernel.lifecycle.LifeSupport;
 import org.neo4j.test.EphemeralFileSystemRule;
 
 import static java.util.Arrays.asList;
+
 import static org.hamcrest.Matchers.equalTo;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 public class StandardStoreTest
 {
@@ -94,7 +99,7 @@ public class StandardStoreTest
     public void shouldAllowStoresWithHeaders() throws Throwable
     {
         // Given
-        Store<TestRecord, TestCursor> store = life.add(new StandardStore<>( new TestFormatWithHeader(14), new File("/store"),
+        Store<TestRecord, Store.RecordCursor<TestRecord>> store = life.add(new StandardStore<>( new TestFormatWithHeader(14), new File("/store"),
                 new TestStoreIdGenerator(), pageCache, fsRule.get(), StringLogger.DEV_NULL ));
 
         long recordId = store.allocate();
@@ -148,5 +153,3 @@ public class StandardStoreTest
         assertFalse(cursor.next());
     }
 }
-
-

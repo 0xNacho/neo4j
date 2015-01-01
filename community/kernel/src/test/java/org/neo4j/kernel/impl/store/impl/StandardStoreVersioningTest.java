@@ -25,11 +25,12 @@ import java.io.IOException;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+
 import org.neo4j.io.fs.StoreChannel;
 import org.neo4j.io.pagecache.PageCache;
-import org.neo4j.io.pagecache.monitoring.PageCacheMonitor;
 import org.neo4j.io.pagecache.PagedFile;
 import org.neo4j.io.pagecache.impl.muninn.MuninnPageCache;
+import org.neo4j.io.pagecache.monitoring.PageCacheMonitor;
 import org.neo4j.kernel.impl.store.NotCurrentStoreVersionException;
 import org.neo4j.kernel.impl.store.format.Store;
 import org.neo4j.kernel.impl.store.standard.StandardStore;
@@ -40,7 +41,7 @@ import org.neo4j.test.EphemeralFileSystemRule;
 
 import static junit.framework.TestCase.fail;
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertThat;
 
 public class StandardStoreVersioningTest
 {
@@ -94,7 +95,7 @@ class VersionedStoreFormat implements StoreFormat<Object, Store.RecordCursor<Obj
     }
 
     @Override
-    public Store.RecordCursor<Object> createCursor( PagedFile file, StoreToolkit toolkit, int flags )
+    public Store.RecordCursor<Object> createCursor( PagedFile file, StoreToolkit toolkit, int flags, long initialId )
     {
         return null;
     }

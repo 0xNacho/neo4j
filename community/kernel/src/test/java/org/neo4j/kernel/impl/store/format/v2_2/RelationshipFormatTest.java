@@ -20,9 +20,10 @@
 package org.neo4j.kernel.impl.store.format.v2_2;
 
 import org.junit.Test;
+
 import org.neo4j.kernel.IdType;
-import org.neo4j.kernel.impl.store.record.RelationshipRecord;
 import org.neo4j.kernel.impl.store.format.Store;
+import org.neo4j.kernel.impl.store.record.RelationshipRecord;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -47,7 +48,7 @@ public class RelationshipFormatTest extends RecordFormatTest<RelationshipStoreFo
     public void testCursorFieldReading() throws Exception
     {
         // Given
-        RelationshipStoreFormat_v2_2.RelationshipRecordCursor cursor = format.createCursor( pagedFile, storeToolkit, Store.SF_NO_FLAGS );
+        RelationshipStoreFormat_v2_2.RelationshipRecordCursor cursor = format.createCursor( pagedFile, storeToolkit, Store.SF_NO_FLAGS, 0 );
         RelationshipRecord record = new RelationshipRecord( 12, true, 1,2,3,4,5,6,7, true, false);
         writeToPagedFile( record );
 

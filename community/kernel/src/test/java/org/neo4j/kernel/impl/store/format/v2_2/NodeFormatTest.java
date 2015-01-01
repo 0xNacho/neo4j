@@ -20,12 +20,13 @@
 package org.neo4j.kernel.impl.store.format.v2_2;
 
 import org.junit.Test;
+
 import org.neo4j.kernel.IdType;
-import org.neo4j.kernel.impl.store.record.NodeRecord;
 import org.neo4j.kernel.impl.store.format.Store;
+import org.neo4j.kernel.impl.store.record.NodeRecord;
 
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertThat;
 
 public class NodeFormatTest extends RecordFormatTest<NodeStoreFormat_v2_2, NodeRecord, NodeStoreFormat_v2_2.NodeRecordCursor>
 {
@@ -50,7 +51,7 @@ public class NodeFormatTest extends RecordFormatTest<NodeStoreFormat_v2_2, NodeR
     public void testCursorFieldReading() throws Exception
     {
         // Given
-        NodeStoreFormat_v2_2.NodeRecordCursor cursor = format.createCursor( pagedFile, storeToolkit, Store.SF_NO_FLAGS );
+        NodeStoreFormat_v2_2.NodeRecordCursor cursor = format.createCursor( pagedFile, storeToolkit, Store.SF_NO_FLAGS, 0 );
 
         NodeRecord record = new NodeRecord( 12, true, true, 1, 2, 3 );
         writeToPagedFile( record );

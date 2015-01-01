@@ -57,20 +57,23 @@ public class StandardStore<RECORD, CURSOR extends Store.RecordCursor> extends Li
      * open must be done via {@link #file}.
      */
     private StoreChannel channel;
+    private int numberOfReservedIds;
 
     public StandardStore( StoreFormat<RECORD, CURSOR> format, File dbFileName, StoreIdGenerator idGenerator,
                          PageCache pageCache, FileSystemAbstraction fs, StringLogger log )
     {
-        this(format, dbFileName, idGenerator, pageCache, fs,
+        this( format, dbFileName, idGenerator, pageCache, fs,
                 new IdGeneratorRebuilder.FindHighestInUseRebuilderFactory(),
-                new StoreOpenCloseCycle( log, dbFileName, format, fs ) );
+                new StoreOpenCloseCycle( log, dbFileName, format, fs ), 0 );
     }
 
     public StandardStore( StoreFormat<RECORD, CURSOR> format, File dbFileName, StoreIdGenerator idGenerator,
                           PageCache pageCache, FileSystemAbstraction fs,
-                          IdGeneratorRebuilder.Factory idGeneratorRebuilding, StoreOpenCloseCycle openCloseCycle )
+                          IdGeneratorRebuilder.Factory idGeneratorRebuilding, StoreOpenCloseCycle openCloseCycle,
+                          int numberOfReservedIds )
     {
         this.storeFormat = format;
+        this.numberOfReservedIds = numberOfReservedIds;
         this.recordFormat = format.recordFormat();
         this.dbFileName = dbFileName;
         this.idGenerator = idGenerator;
@@ -83,7 +86,7 @@ public class StandardStore<RECORD, CURSOR extends Store.RecordCursor> extends Li
     @Override
     public CURSOR cursor( int flags )
     {
-        return storeFormat.createCursor(file, toolkit, flags);
+        return storeFormat.createCursor( file, toolkit, flags, numberOfReservedIds );
     }
 
     @Override
@@ -221,5 +224,11 @@ public class StandardStore<RECORD, CURSOR extends Store.RecordCursor> extends Li
         int pageSize = pageCache.pageSize() - pageCache.pageSize() % recordSize;
 
         toolkit = new StoreToolkit( recordSize, pageSize, firstRecordId, channel, idGenerator );
+    }
+
+    @Override
+    public int numberOfReservedIds()
+    {
+        return numberOfReservedIds;
     }
 }

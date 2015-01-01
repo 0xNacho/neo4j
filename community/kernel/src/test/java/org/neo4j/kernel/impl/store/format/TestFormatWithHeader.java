@@ -27,7 +27,7 @@ import org.neo4j.io.pagecache.PagedFile;
 import org.neo4j.kernel.impl.store.standard.StoreFormat;
 import org.neo4j.kernel.impl.store.standard.StoreToolkit;
 
-public class TestFormatWithHeader implements StoreFormat<TestRecord, TestCursor>
+public class TestFormatWithHeader implements StoreFormat<TestRecord, Store.RecordCursor<TestRecord>>
 {
     private final int configuredRecordSize;
     private final TestRecordFormat recordFormat;
@@ -39,9 +39,9 @@ public class TestFormatWithHeader implements StoreFormat<TestRecord, TestCursor>
     }
 
     @Override
-    public TestCursor createCursor( PagedFile file, StoreToolkit toolkit, int flags )
+    public TestCursor createCursor( PagedFile file, StoreToolkit toolkit, int flags, long initialId )
     {
-        return new TestCursor( file, toolkit, recordFormat, flags );
+        return new TestCursor( file, toolkit, recordFormat, flags, initialId );
     }
 
     @Override

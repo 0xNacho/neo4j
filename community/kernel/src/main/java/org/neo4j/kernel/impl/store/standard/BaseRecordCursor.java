@@ -59,17 +59,17 @@ public class BaseRecordCursor<RECORD, FORMAT extends RecordFormat<RECORD>> imple
     private final int pageCacheFlags;
 
     protected PageCursor pageCursor;
-    protected long currentRecordId = -1;
+    protected long currentRecordId;
     protected int  currentRecordOffset = -1;
     protected RECORD record;
 
-    public BaseRecordCursor( PagedFile file, StoreToolkit toolkit, FORMAT format, int flags )
+    public BaseRecordCursor( PagedFile file, StoreToolkit toolkit, FORMAT format, int flags, long initialId )
     {
         this.file = file;
         this.toolkit = toolkit;
         this.format = format;
         this.pageCacheFlags = pageCursorFlags( flags );
-        if((flags & SF_REVERSE_CURSOR) == 0)
+        if ( (flags & SF_REVERSE_CURSOR) == 0 )
         {
             this.currentRecordId = toolkit.firstRecordId() - 1;
             this.stepSize = 1;
@@ -80,6 +80,7 @@ public class BaseRecordCursor<RECORD, FORMAT extends RecordFormat<RECORD>> imple
             this.stepSize = -1;
         }
         this.record = format.newRecord( -1 );
+        this.currentRecordId = initialId - 1;
     }
 
     @Override
