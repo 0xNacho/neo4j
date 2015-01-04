@@ -65,7 +65,7 @@ public interface IdGeneratorRebuilder
                 @Override
                 public void rebuildIdGenerator() throws IOException
                 {
-                    try(Store.RecordCursor<?> cursor = store.cursor( SF_REVERSE_CURSOR | SF_SCAN ))
+                    try(Store.RecordCursor<?> cursor = store.cursor( SF_REVERSE_CURSOR | SF_SCAN, true ))
                     {
                         cursor.position( (toolkit.fileSize() / toolkit.recordSize()) + 1 );
                         cursor.next(); // Moves to the next (backwards!) record in use
@@ -97,7 +97,7 @@ public interface IdGeneratorRebuilder
                     long highId = idGenerator.highestIdInUse();
 
                     // Then, scan the full store from the beginning and find each unused record
-                    try(Store.RecordCursor<?> cursor = store.cursor( SF_SCAN ))
+                    try(Store.RecordCursor<?> cursor = store.cursor( SF_SCAN, true ))
                     {
                         long currentId = toolkit.firstRecordId();
 

@@ -51,7 +51,8 @@ public class NodeFormatTest extends RecordFormatTest<NodeStoreFormat_v2_2, NodeR
     public void testCursorFieldReading() throws Exception
     {
         // Given
-        NodeStoreFormat_v2_2.NodeRecordCursor cursor = format.createCursor( pagedFile, storeToolkit, Store.SF_NO_FLAGS, 0 );
+        NodeStoreFormat_v2_2.NodeRecordCursor cursor = format.createCursor(
+                pagedFile, storeToolkit, Store.SF_NO_FLAGS, 0, true );
 
         NodeRecord record = new NodeRecord( 12, true, true, 1, 2, 3 );
         writeToPagedFile( record );

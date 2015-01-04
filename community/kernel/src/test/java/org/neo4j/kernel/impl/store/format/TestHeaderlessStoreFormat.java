@@ -34,9 +34,10 @@ public class TestHeaderlessStoreFormat extends FixedSizeRecordStoreFormat<TestRe
     }
 
     @Override
-    public TestCursor createCursor( PagedFile file, StoreToolkit toolkit, int flags, long initialId )
+    public TestCursor createCursor( PagedFile file, StoreToolkit toolkit, int flags, long initialId,
+            boolean filterUnused )
     {
-        return new TestCursor( file, toolkit, recordFormat, flags, initialId );
+        return new TestCursor( file, toolkit, recordFormat, flags, initialId, filterUnused );
     }
 
     @Override

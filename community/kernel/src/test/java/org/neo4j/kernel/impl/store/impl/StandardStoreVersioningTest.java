@@ -95,7 +95,8 @@ class VersionedStoreFormat implements StoreFormat<Object, Store.RecordCursor<Obj
     }
 
     @Override
-    public Store.RecordCursor<Object> createCursor( PagedFile file, StoreToolkit toolkit, int flags, long initialId )
+    public Store.RecordCursor<Object> createCursor( PagedFile file, StoreToolkit toolkit, int flags, long initialId,
+            boolean filterUnused )
     {
         return null;
     }

@@ -141,7 +141,7 @@ public class StandardStoreTest
         store.write( new TestRecord( fourthId, 1338) );
 
         // When
-        TestCursor cursor = store.cursor(Store.SF_REVERSE_CURSOR);
+        TestCursor cursor = store.cursor( Store.SF_REVERSE_CURSOR, true );
 
         // Then
         assertTrue(cursor.next());

@@ -41,7 +41,7 @@ class LiteralsTest extends ParserTest[Any, Any] with Literals {
     implicit val parserToTest = Identifier
 
     parsing("aé") shouldGive ast.Identifier("aé")(t)
-    parsing("⁔") shouldGive ast.Identifier("⁔")(t)
+    parsing("�?�") shouldGive ast.Identifier("�?�")(t)
     parsing("＿test") shouldGive ast.Identifier("＿test")(t)
     parsing("a＿test") shouldGive ast.Identifier("a＿test")(t)
   }

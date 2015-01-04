@@ -62,12 +62,15 @@ public class BaseRecordCursor<RECORD, FORMAT extends RecordFormat<RECORD>> imple
     protected long currentRecordId;
     protected int  currentRecordOffset = -1;
     protected RECORD record;
+    private final boolean filterUnused;
 
-    public BaseRecordCursor( PagedFile file, StoreToolkit toolkit, FORMAT format, int flags, long initialId )
+    public BaseRecordCursor( PagedFile file, StoreToolkit toolkit, FORMAT format, int flags, long initialId,
+            boolean filterUnused )
     {
         this.file = file;
         this.toolkit = toolkit;
         this.format = format;
+        this.filterUnused = filterUnused;
         this.pageCacheFlags = pageCursorFlags( flags );
         if ( (flags & SF_REVERSE_CURSOR) == 0 )
         {
@@ -136,9 +139,9 @@ public class BaseRecordCursor<RECORD, FORMAT extends RecordFormat<RECORD>> imple
     @Override
     public boolean next()
     {
-        while( position( currentRecordId + stepSize ) )
+        while ( position( currentRecordId + stepSize ) )
         {
-            if( inUse() )
+            if ( filterUnused && inUse() )
             {
                 return true;
             }

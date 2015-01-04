@@ -26,8 +26,9 @@ import org.neo4j.kernel.impl.store.standard.StoreToolkit;
 
 public class TestCursor extends BaseRecordCursor<TestRecord, StoreFormat.RecordFormat<TestRecord>>
 {
-    TestCursor( PagedFile file, StoreToolkit toolkit, TestRecordFormat format, int flags, long initialId )
+    TestCursor( PagedFile file, StoreToolkit toolkit, TestRecordFormat format, int flags, long initialId,
+            boolean filterUnused )
     {
-        super( file, toolkit, format, flags, initialId );
+        super( file, toolkit, format, flags, initialId, filterUnused );
     }
 }

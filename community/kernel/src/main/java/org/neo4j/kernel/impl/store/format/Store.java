@@ -46,7 +46,7 @@ public interface Store<RECORD, CURSOR extends Store.RecordCursor> extends Lifecy
      * the {@link org.neo4j.kernel.impl.store.format.Store.RecordCursor} interface, but most stores are expected to provide
      * richer cursor interfaces that allow reading individual fields of whatever record you are currently positioned at.
      */
-    CURSOR cursor(int flags);
+    CURSOR cursor(int flags, boolean filterUnused);
 
     /** Read the specified record. */
     RECORD read(long id) throws IOException;

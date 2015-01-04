@@ -30,6 +30,7 @@ public class TestRecord extends AbstractBaseRecord
     {
         this.id = id;
         this.value = value;
+        setInUse( value != -1 );
     }
 
     @Override
@@ -44,13 +45,13 @@ public class TestRecord extends AbstractBaseRecord
             return false;
         }
 
-        TestRecord myRecord = (TestRecord) o;
+        TestRecord other = (TestRecord) o;
 
-        if ( id != myRecord.id )
+        if ( id != other.id )
         {
             return false;
         }
-        if ( value != myRecord.value )
+        if ( value != other.value )
         {
             return false;
         }
@@ -69,7 +70,7 @@ public class TestRecord extends AbstractBaseRecord
     @Override
     public String toString()
     {
-        return "MyRecord{" +
+        return getClass().getSimpleName() + "{" +
                 "id=" + id +
                 ", value=" + value +
                 '}';

@@ -84,9 +84,9 @@ public class StandardStore<RECORD, CURSOR extends Store.RecordCursor> extends Li
     }
 
     @Override
-    public CURSOR cursor( int flags )
+    public CURSOR cursor( int flags, boolean filterUnused )
     {
-        return storeFormat.createCursor( file, toolkit, flags, numberOfReservedIds );
+        return storeFormat.createCursor( file, toolkit, flags, numberOfReservedIds, filterUnused );
     }
 
     @Override

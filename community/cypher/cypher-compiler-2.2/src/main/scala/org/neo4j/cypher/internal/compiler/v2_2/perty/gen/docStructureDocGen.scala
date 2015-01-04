@@ -37,7 +37,7 @@ case object docStructureDocGen extends CustomDocGen[Doc] {
 
     case TextDoc(value)        => Pretty(quoteString(value))
     case BreakDoc              => Pretty(breakWith("·"))
-    case BreakWith(value)      => Pretty(breakWith( if (value.size == 0) "⁃" else s"·$value·" ))
+    case BreakWith(value)      => Pretty(breakWith( if (value.size == 0) "�?�" else s"·$value·" ))
 
     case GroupDoc(doc)         => Pretty(group("[" :: pretty(doc) :: "]"))
     case NestDoc(doc)          => Pretty(nest("<" :: pretty(doc) :: ">"))

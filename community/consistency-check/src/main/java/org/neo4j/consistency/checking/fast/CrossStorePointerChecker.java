@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2002-2014 "Neo Technology,"
+ * Copyright (c) 2002-2015 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This file is part of Neo4j.
@@ -20,7 +20,6 @@
 package org.neo4j.consistency.checking.fast;
 
 import org.neo4j.function.primitive.FunctionToPrimitiveLong;
-import org.neo4j.io.pagecache.PagedFile;
 import org.neo4j.kernel.impl.store.format.Store;
 import org.neo4j.kernel.impl.store.format.Store.RecordCursor;
 import org.neo4j.kernel.impl.store.record.AbstractBaseRecord;
@@ -37,13 +36,13 @@ public class CrossStorePointerChecker<FROM extends AbstractBaseRecord,TO extends
     private final FunctionToPrimitiveLong<FROM> fromKey;
     private final Store<TO,RecordCursor<TO>> to;
     private final FunctionToPrimitiveLong<TO> toKey;
-    private final ValueChecker checker;
+    private final ValueChecker<FROM> checker;
     private final LongArray cache;
 
     public CrossStorePointerChecker(
             Store<FROM,RecordCursor<FROM>> from, FunctionToPrimitiveLong<FROM> fromKey,
             Store<TO,RecordCursor<TO>> to, FunctionToPrimitiveLong<TO> toKey,
-            ValueChecker checker )
+            ValueChecker<FROM> checker )
     {
         this.from = from;
         this.fromKey = fromKey;
@@ -60,7 +59,7 @@ public class CrossStorePointerChecker<FROM extends AbstractBaseRecord,TO extends
         long toHighId = 20; // TODO use later for multi-passing if memory is low
 
         // cache "to" side
-        RecordCursor<TO> toCursor = to.cursor( PagedFile.PF_READ_AHEAD );
+        RecordCursor<TO> toCursor = to.cursor( Store.SF_SCAN, true );
         toCursor.position( toLowId );
         while ( toCursor.next() )
         {
@@ -69,11 +68,14 @@ public class CrossStorePointerChecker<FROM extends AbstractBaseRecord,TO extends
             {
                 break;
             }
-            cache.set( offset( toLowId, toRecord.getLongId() ), toKey.apply( toRecord ) );
+            if ( toRecord.inUse() )
+            {
+                cache.set( offset( toLowId, toRecord.getLongId() ), toKey.apply( toRecord ) );
+            }
         }
 
         // verify "from" side
-        RecordCursor<FROM> fromCursor = from.cursor( PagedFile.PF_READ_AHEAD );
+        RecordCursor<FROM> fromCursor = from.cursor( Store.SF_SCAN, false );
         long fromHighId = 20;
         while ( fromCursor.next() )
         {
@@ -83,10 +85,10 @@ public class CrossStorePointerChecker<FROM extends AbstractBaseRecord,TO extends
                 break;
             }
             long toId = fromKey.apply( fromRecord );
-            if ( toId >= toLowId && toId <= toHighId )
+            if ( toId >= toLowId && toId <= toHighId && fromRecord.inUse() )
             {
                 long to = cache.get( offset( toLowId, toId ) );
-                checker.check( fromRecord.getLongId(), toId, to );
+                checker.check( fromRecord, toId, to );
             }
         }
     }

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2002-2014 "Neo Technology,"
+ * Copyright (c) 2002-2015 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This file is part of Neo4j.
@@ -19,14 +19,55 @@
  */
 package org.neo4j.consistency.checking.fast;
 
+import org.neo4j.function.primitive.FunctionToPrimitiveLong;
+import org.neo4j.kernel.impl.store.format.Store;
+import org.neo4j.kernel.impl.store.format.Store.RecordCursor;
+import org.neo4j.kernel.impl.store.record.AbstractBaseRecord;
+
 /**
  * Checks consistency of pointers within a store, chains of pointers.
  */
-public class StoreChainChecker implements Checker
+public class StoreChainChecker<RECORD extends AbstractBaseRecord> implements Checker
 {
+    private final Store<RECORD,RecordCursor<RECORD>> store;
+
+    // for example node id
+    private final FunctionToPrimitiveLong<RECORD> key;
+
+    // for example first node next
+    private final FunctionToPrimitiveLong<RECORD> next;
+
+    private final ValueChecker<RECORD> checker;
+
+    public StoreChainChecker( Store<RECORD,Store.RecordCursor<RECORD>> store,
+            FunctionToPrimitiveLong<RECORD> key,
+            FunctionToPrimitiveLong<RECORD> next,
+            ValueChecker<RECORD> checker )
+    {
+        this.store = store;
+        this.key = key;
+        this.next = next;
+        this.checker = checker;
+    }
 
     @Override
     public void check()
     {
+        long toLowId = store.numberOfReservedIds();
+        long toHighId = 20; // TODO use later for multi-passing if memory is low
+
+        RecordCursor<RECORD> cursor = store.cursor( Store.SF_SCAN, false );
+        cursor.position( toLowId );
+        while ( cursor.next() )
+        {
+            RECORD record = cursor.record();
+            if ( record.getLongId() >= toHighId )
+            {
+                break;
+            }
+
+            long key = this.key.apply( record );
+            checker.check( record, next.apply( record ), key );
+        }
     }
 }

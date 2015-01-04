@@ -39,47 +39,40 @@ import org.neo4j.kernel.impl.util.StringLogger;
 import org.neo4j.kernel.lifecycle.LifeSupport;
 import org.neo4j.unsafe.impl.batchimport.store.BatchingPageCache;
 
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
-
 import static org.neo4j.unsafe.impl.batchimport.store.BatchingPageCache.SYNCHRONOUS;
 import static org.neo4j.unsafe.impl.batchimport.store.BatchingPageCache.Mode.UPDATE;
 import static org.neo4j.unsafe.impl.batchimport.store.io.Monitor.NO_MONITOR;
 
-public class CrossStorePointerCheckerTest
+public class StoreChainCheckerTest
 {
     @Test
     public void shouldDoShit() throws Exception
     {
         // GIVEN
         Store<TestRecord,RecordCursor<TestRecord>> store1 = newStore( "store1", 5, -1, 3, 10 );
-        Store<TestRecord,RecordCursor<TestRecord>> store2 = newStore( "store2", -1, -1, -1, 1, -1, 1, -1, -1, -1, -1, 1 );
-        ValueChecker<TestRecord> verifier = spy( new Verifier() );
-        Checker checker = new CrossStorePointerChecker<>(
-                store1, TEST_RECORD_KEY,
-                store2, TEST_RECORD_KEY, verifier );
+        Checker checker = new StoreChainChecker<>( store1, KEY, NEXT, null );
 
         // WHEN
         checker.check();
 
         // THEN
-        verify( verifier ).check( record( 0L, 1L ), 5L, 1L );
-        verify( verifier ).check( record( 2L, 1L ), 3L, 1L );
-        verify( verifier ).check( record( 3L, 1L ), 10L, 1L );
     }
 
-    private TestRecord record( long id, long value )
-    {
-        return new TestRecord( id, value );
-    }
-
-    private static final FunctionToPrimitiveLong<TestRecord> TEST_RECORD_KEY = new FunctionToPrimitiveLong<TestRecord>()
+    private static final FunctionToPrimitiveLong<TestRecord> KEY = new FunctionToPrimitiveLong<TestRecord>()
     {
         @Override
         public long apply( TestRecord value )
         {
-            return value.value;
+            return (int) value.value; // least significant int
+        }
+    };
+
+    private static final FunctionToPrimitiveLong<TestRecord> NEXT = new FunctionToPrimitiveLong<TestRecord>()
+    {
+        @Override
+        public long apply( TestRecord value )
+        {
+            return (int) (value.value >> 32); // most significant int
         }
     };
 
@@ -101,19 +94,6 @@ public class CrossStorePointerCheckerTest
         }
 
         return store;
-    }
-
-    private static class Verifier implements ValueChecker<TestRecord>
-    {
-        @Override
-        public boolean check( TestRecord atRecord, long toId, long toValue )
-        {
-            if ( atRecord.id != -1 )
-            {
-                assertEquals( 1L, toValue );
-            }
-            return false;
-        }
     }
 
     private EphemeralFileSystemAbstraction fs;

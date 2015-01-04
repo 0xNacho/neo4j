@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2002-2014 "Neo Technology,"
+ * Copyright (c) 2002-2015 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This file is part of Neo4j.
@@ -19,7 +19,9 @@
  */
 package org.neo4j.consistency.checking.fast;
 
-public interface ValueChecker
+import org.neo4j.kernel.impl.store.record.AbstractBaseRecord;
+
+public interface ValueChecker<RECORD extends AbstractBaseRecord>
 {
-    void check( long fromId, long toId, long toValue );
+    boolean check( RECORD atRecord, long toId, long value );
 }

@@ -41,9 +41,10 @@ public interface StoreFormat<RECORD, CURSOR extends Store.RecordCursor>
      * @param file
      * @param toolkit
      * @param sf_flags
+     * @param filterUnused
      * @return
      */
-    CURSOR createCursor( PagedFile file, StoreToolkit toolkit, int sf_flags, long initialId );
+    CURSOR createCursor( PagedFile file, StoreToolkit toolkit, int sf_flags, long initialId, boolean filterUnused );
 
     /** Access the format for reading individual records. */
     RecordFormat<RECORD> recordFormat();
