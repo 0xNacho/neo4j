@@ -54,20 +54,31 @@ public class StoreChainChecker<RECORD extends AbstractBaseRecord> implements Che
     public void check()
     {
         long toLowId = store.numberOfReservedIds();
-        long toHighId = 20; // TODO use later for multi-passing if memory is low
-
+        long toHighId = Long.MAX_VALUE; // TODO use later for multi-passing if memory is low
         RecordCursor<RECORD> cursor = store.cursor( Store.SF_SCAN, false );
-        cursor.position( toLowId );
-        while ( cursor.next() )
-        {
-            RECORD record = cursor.record();
-            if ( record.getLongId() >= toHighId )
-            {
-                break;
-            }
 
-            long key = this.key.apply( record );
-            checker.check( record, next.apply( record ), key );
+        boolean chainsAreTraversed = true;
+        while ( chainsAreTraversed )
+        {
+            cursor.position( toLowId );
+
+            chainsAreTraversed = false;
+            while ( cursor.next() )
+            {
+                RECORD record = cursor.record();
+                if ( record.getLongId() >= toHighId )
+                {
+                    break;
+                }
+
+                long key = this.key.apply( record );
+                if ( checker.check( record, next.apply( record ), key ) )
+                {
+                    chainsAreTraversed = true;
+                }
+            }
         }
+
+        // TODO extra verification here, like if there are uncompleted chains and what not
     }
 }

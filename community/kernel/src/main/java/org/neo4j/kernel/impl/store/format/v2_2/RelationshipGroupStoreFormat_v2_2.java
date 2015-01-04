@@ -43,9 +43,9 @@ public class RelationshipGroupStoreFormat_v2_2 extends FixedSizeRecordStoreForma
 
     @Override
     public RelationshipGroupRecordCursor createCursor( PagedFile file, StoreToolkit toolkit, int flags,
-            long initialId, boolean filterUnused )
+            long initialId, long highId, boolean filterUnused )
     {
-        return new RelationshipGroupRecordCursor( file, toolkit, recordFormat, flags, initialId, filterUnused );
+        return new RelationshipGroupRecordCursor( file, toolkit, recordFormat, flags, initialId, highId, filterUnused );
     }
 
     @Override
@@ -162,9 +162,9 @@ public class RelationshipGroupStoreFormat_v2_2 extends FixedSizeRecordStoreForma
     public static class RelationshipGroupRecordCursor extends BaseRecordCursor<RelationshipGroupRecord, RelationshipGroupRecordFormat>
     {
         public RelationshipGroupRecordCursor( PagedFile file, StoreToolkit toolkit, RelationshipGroupRecordFormat format,
-                                              int flags, long initialId, boolean filterUnused )
+                                              int flags, long initialId, long highId, boolean filterUnused )
         {
-            super( file, toolkit, format, flags, initialId, filterUnused );
+            super( file, toolkit, format, flags, initialId, highId, filterUnused );
         }
 
         // TODO: Add field-reading methods here to allow traversing rels without creating relationship record objects

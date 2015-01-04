@@ -81,4 +81,10 @@ public class TestRecord extends AbstractBaseRecord
     {
         return id;
     }
+
+    @Override
+    public TestRecord clone()
+    {
+        return new TestRecord( id, value );
+    }
 }

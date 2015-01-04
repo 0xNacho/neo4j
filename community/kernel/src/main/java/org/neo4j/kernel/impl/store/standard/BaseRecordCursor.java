@@ -63,13 +63,15 @@ public class BaseRecordCursor<RECORD, FORMAT extends RecordFormat<RECORD>> imple
     protected int  currentRecordOffset = -1;
     protected RECORD record;
     private final boolean filterUnused;
+    private final long highId;
 
     public BaseRecordCursor( PagedFile file, StoreToolkit toolkit, FORMAT format, int flags, long initialId,
-            boolean filterUnused )
+            long highId, boolean filterUnused )
     {
         this.file = file;
         this.toolkit = toolkit;
         this.format = format;
+        this.highId = highId;
         this.filterUnused = filterUnused;
         this.pageCacheFlags = pageCursorFlags( flags );
         if ( (flags & SF_REVERSE_CURSOR) == 0 )
@@ -110,7 +112,7 @@ public class BaseRecordCursor<RECORD, FORMAT extends RecordFormat<RECORD>> imple
     {
         try
         {
-            if(id < 0)
+            if ( id < 0 || id >= highId )
             {
                 return false;
             }
@@ -130,7 +132,7 @@ public class BaseRecordCursor<RECORD, FORMAT extends RecordFormat<RECORD>> imple
                 return pageId == pageCursor.getCurrentPageId() || pageCursor.next( pageId );
             }
         }
-        catch(IOException e)
+        catch ( IOException e )
         {
             throw new UnderlyingStorageException( "Failed to read record " + id + ".", e );
         }
@@ -141,10 +143,12 @@ public class BaseRecordCursor<RECORD, FORMAT extends RecordFormat<RECORD>> imple
     {
         while ( position( currentRecordId + stepSize ) )
         {
-            if ( filterUnused && inUse() )
+            if ( filterUnused && !inUse() )
             {
-                return true;
+                continue;
             }
+
+            return true;
         }
         return false;
     }

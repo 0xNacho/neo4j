@@ -21,6 +21,8 @@ package org.neo4j.consistency.checking.fast;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.junit.After;
 import org.junit.Before;
@@ -28,6 +30,7 @@ import org.junit.Test;
 
 import org.neo4j.function.primitive.FunctionToPrimitiveLong;
 import org.neo4j.graphdb.mockfs.EphemeralFileSystemAbstraction;
+import org.neo4j.helpers.Triplet;
 import org.neo4j.io.pagecache.PageCache;
 import org.neo4j.kernel.impl.store.format.Store;
 import org.neo4j.kernel.impl.store.format.Store.RecordCursor;
@@ -40,8 +43,7 @@ import org.neo4j.kernel.lifecycle.LifeSupport;
 import org.neo4j.unsafe.impl.batchimport.store.BatchingPageCache;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
+import static org.junit.Assert.fail;
 
 import static org.neo4j.unsafe.impl.batchimport.store.BatchingPageCache.SYNCHRONOUS;
 import static org.neo4j.unsafe.impl.batchimport.store.BatchingPageCache.Mode.UPDATE;
@@ -55,7 +57,7 @@ public class CrossStorePointerCheckerTest
         // GIVEN
         Store<TestRecord,RecordCursor<TestRecord>> store1 = newStore( "store1", 5, -1, 3, 10 );
         Store<TestRecord,RecordCursor<TestRecord>> store2 = newStore( "store2", -1, -1, -1, 1, -1, 1, -1, -1, -1, -1, 1 );
-        ValueChecker<TestRecord> verifier = spy( new Verifier() );
+        Verifier verifier = new Verifier();
         Checker checker = new CrossStorePointerChecker<>(
                 store1, TEST_RECORD_KEY,
                 store2, TEST_RECORD_KEY, verifier );
@@ -64,9 +66,9 @@ public class CrossStorePointerCheckerTest
         checker.check();
 
         // THEN
-        verify( verifier ).check( record( 0L, 1L ), 5L, 1L );
-        verify( verifier ).check( record( 2L, 1L ), 3L, 1L );
-        verify( verifier ).check( record( 3L, 1L ), 10L, 1L );
+        verifier.verifyCalled( record( 0L, 5L ), 5L, 1L );
+        verifier.verifyCalled( record( 2L, 3L ), 3L, 1L );
+        verifier.verifyCalled( record( 3L, 10L ), 10L, 1L );
     }
 
     private TestRecord record( long id, long value )
@@ -105,14 +107,35 @@ public class CrossStorePointerCheckerTest
 
     private static class Verifier implements ValueChecker<TestRecord>
     {
+        private final List<Triplet<TestRecord,Long,Long>> calls = new ArrayList<>();
+
         @Override
         public boolean check( TestRecord atRecord, long toId, long toValue )
         {
+            calls.add( entry( atRecord.clone(), toId, toValue ) );
             if ( atRecord.id != -1 )
             {
                 assertEquals( 1L, toValue );
             }
             return false;
+        }
+
+        private Triplet<TestRecord,Long,Long> entry( TestRecord atRecord, long toId, long toValue )
+        {
+            return Triplet.of( atRecord, toId, toValue );
+        }
+
+        void verifyCalled( TestRecord record, long toId, long toValue )
+        {
+            Triplet<TestRecord,Long,Long> entry = entry( record, toId, toValue );
+            for ( Triplet<TestRecord,Long,Long> call : calls )
+            {
+                if ( call.equals( entry ) )
+                {
+                    return;
+                }
+            }
+            fail( "Not called with " + entry );
         }
     }
 

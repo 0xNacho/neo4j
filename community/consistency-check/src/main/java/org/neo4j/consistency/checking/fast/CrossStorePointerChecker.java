@@ -56,7 +56,7 @@ public class CrossStorePointerChecker<FROM extends AbstractBaseRecord,TO extends
     public void check()
     {
         long toLowId = to.numberOfReservedIds();
-        long toHighId = 20; // TODO use later for multi-passing if memory is low
+        long toHighId = Long.MAX_VALUE; // TODO use later for multi-passing if memory is low
 
         // cache "to" side
         RecordCursor<TO> toCursor = to.cursor( Store.SF_SCAN, true );
@@ -76,7 +76,7 @@ public class CrossStorePointerChecker<FROM extends AbstractBaseRecord,TO extends
 
         // verify "from" side
         RecordCursor<FROM> fromCursor = from.cursor( Store.SF_SCAN, false );
-        long fromHighId = 20;
+        long fromHighId = Long.MAX_VALUE;
         while ( fromCursor.next() )
         {
             FROM fromRecord = fromCursor.record();

@@ -52,7 +52,7 @@ public class NodeFormatTest extends RecordFormatTest<NodeStoreFormat_v2_2, NodeR
     {
         // Given
         NodeStoreFormat_v2_2.NodeRecordCursor cursor = format.createCursor(
-                pagedFile, storeToolkit, Store.SF_NO_FLAGS, 0, true );
+                pagedFile, storeToolkit, Store.SF_NO_FLAGS, 0, 13, true );
 
         NodeRecord record = new NodeRecord( 12, true, true, 1, 2, 3 );
         writeToPagedFile( record );

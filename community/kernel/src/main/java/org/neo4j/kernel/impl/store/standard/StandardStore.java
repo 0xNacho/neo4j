@@ -86,7 +86,8 @@ public class StandardStore<RECORD, CURSOR extends Store.RecordCursor> extends Li
     @Override
     public CURSOR cursor( int flags, boolean filterUnused )
     {
-        return storeFormat.createCursor( file, toolkit, flags, numberOfReservedIds, filterUnused );
+        return storeFormat.createCursor( file, toolkit, flags, numberOfReservedIds, idGenerator.highestIdInUse()+1,
+                filterUnused );
     }
 
     @Override
@@ -107,10 +108,7 @@ public class StandardStore<RECORD, CURSOR extends Store.RecordCursor> extends Li
 
                 return record;
             }
-            else
-            {
-                throw new InvalidRecordException( recordFormat.recordName() + "[" + id + "] not in use" );
-            }
+            throw new InvalidRecordException( recordFormat.recordName() + "[" + id + "] not in use" );
         }
     }
 
@@ -129,6 +127,7 @@ public class StandardStore<RECORD, CURSOR extends Store.RecordCursor> extends Li
                 {
                     recordFormat.serialize( cursor, offset, record );
                 } while ( cursor.shouldRetry() );
+                idGenerator.setHighestIdInUse( id );
             }
         }
     }

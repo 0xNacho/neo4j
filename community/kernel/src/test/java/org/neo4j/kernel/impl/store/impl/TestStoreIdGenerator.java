@@ -48,7 +48,10 @@ public class TestStoreIdGenerator implements StoreIdGenerator
     @Override
     public void setHighestIdInUse( long highId )
     {
-        next.set( highId );
+        if ( highId > next.get() )
+        {
+            next.set( highId );
+        }
     }
 
     @Override

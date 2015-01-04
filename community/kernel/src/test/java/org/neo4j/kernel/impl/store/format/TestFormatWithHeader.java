@@ -40,9 +40,9 @@ public class TestFormatWithHeader implements StoreFormat<TestRecord, Store.Recor
 
     @Override
     public TestCursor createCursor( PagedFile file, StoreToolkit toolkit, int flags, long initialId,
-            boolean filterUnused )
+            long highId, boolean filterUnused )
     {
-        return new TestCursor( file, toolkit, recordFormat, flags, initialId, filterUnused );
+        return new TestCursor( file, toolkit, recordFormat, flags, initialId, highId, filterUnused );
     }
 
     @Override

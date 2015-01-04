@@ -49,7 +49,7 @@ public class RelationshipFormatTest extends RecordFormatTest<RelationshipStoreFo
     {
         // Given
         RelationshipStoreFormat_v2_2.RelationshipRecordCursor cursor = format.createCursor(
-                pagedFile, storeToolkit, Store.SF_NO_FLAGS, 0, true );
+                pagedFile, storeToolkit, Store.SF_NO_FLAGS, 0, 13, true );
         RelationshipRecord record = new RelationshipRecord( 12, true, 1,2,3,4,5,6,7, true, false);
         writeToPagedFile( record );
 
