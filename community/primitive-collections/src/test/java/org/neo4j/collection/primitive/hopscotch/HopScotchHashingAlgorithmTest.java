@@ -27,7 +27,6 @@ import org.junit.Test;
 
 import org.neo4j.collection.primitive.PrimitiveLongIterator;
 import org.neo4j.collection.primitive.PrimitiveLongSet;
-import org.neo4j.collection.primitive.hopscotch.HopScotchHashingAlgorithm.Monitor;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;

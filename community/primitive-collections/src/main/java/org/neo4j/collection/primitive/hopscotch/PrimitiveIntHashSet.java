@@ -22,7 +22,6 @@ package org.neo4j.collection.primitive.hopscotch;
 import org.neo4j.collection.primitive.PrimitiveIntIterator;
 import org.neo4j.collection.primitive.PrimitiveIntSet;
 import org.neo4j.collection.primitive.PrimitiveIntVisitor;
-import org.neo4j.collection.primitive.hopscotch.HopScotchHashingAlgorithm.Monitor;
 
 import static org.neo4j.collection.primitive.hopscotch.HopScotchHashingAlgorithm.DEFAULT_HASHING;
 

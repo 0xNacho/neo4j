@@ -19,18 +19,7 @@
  */
 package org.neo4j.collection.primitive.hopscotch;
 
-import org.neo4j.collection.primitive.PrimitiveLongIterator;
-
-public class VersionedPrimitiveLongHashSet extends PrimitiveLongHashSet
+public interface ResizeMonitor<VALUE>
 {
-    public VersionedPrimitiveLongHashSet( Table<Object> table, Object valueMarker, Monitor monitor )
-    {
-        super( table, valueMarker, monitor );
-    }
-
-    @Override
-    public PrimitiveLongIterator iterator()
-    {
-        return new VersionedTableIterator<>( table, this );
-    }
+    void tableGrew( Table<VALUE> newTable );
 }

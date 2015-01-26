@@ -30,7 +30,6 @@ import org.neo4j.collection.primitive.PrimitiveIntSet;
 import org.neo4j.collection.primitive.PrimitiveIntVisitor;
 import org.neo4j.collection.primitive.PrimitiveLongSet;
 import org.neo4j.collection.primitive.PrimitiveLongVisitor;
-import org.neo4j.collection.primitive.hopscotch.HopScotchHashingAlgorithm.Monitor;
 
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;

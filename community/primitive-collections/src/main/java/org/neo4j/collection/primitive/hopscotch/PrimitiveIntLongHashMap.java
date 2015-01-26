@@ -21,7 +21,6 @@ package org.neo4j.collection.primitive.hopscotch;
 
 import org.neo4j.collection.primitive.PrimitiveIntLongMap;
 import org.neo4j.collection.primitive.PrimitiveIntLongVisitor;
-import org.neo4j.collection.primitive.hopscotch.HopScotchHashingAlgorithm.Monitor;
 
 import static org.neo4j.collection.primitive.hopscotch.HopScotchHashingAlgorithm.DEFAULT_HASHING;
 

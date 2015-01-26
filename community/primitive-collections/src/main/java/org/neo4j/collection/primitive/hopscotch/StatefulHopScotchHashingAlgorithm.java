@@ -19,6 +19,9 @@
  */
 package org.neo4j.collection.primitive.hopscotch;
 
+import org.neo4j.array.primitive.IntArray;
+import org.neo4j.array.primitive.NumberArrayFactory;
+
 import static java.lang.Long.numberOfLeadingZeros;
 import static java.lang.Long.numberOfTrailingZeros;
 
@@ -55,14 +58,23 @@ import static java.lang.Long.numberOfTrailingZeros;
  * object, merely use its static methods. Also, all essential state is managed by {@link Table}.
  * </p>
  */
-public class HopScotchHashingAlgorithm
+public class StatefulHopScotchHashingAlgorithm<VALUE>
 {
-    /**
-     * Default number of hop bits per index, i.e. size of neighborhood.
-     */
-    public static final int DEFAULT_H = 32;
+    private static final int DEFAULT_VALUE = -1;
+    private final NumberArrayFactory factory;
+    private final IntArray data;
+    private final int itemsPerEntry;
+    private final HashFunction hashFunction;
 
-    public static <VALUE> VALUE get( Table<VALUE> table, Monitor monitor, HashFunction hashFunction, long key )
+    public StatefulHopScotchHashingAlgorithm( NumberArrayFactory factory, int itemsPerEntry, HashFunction hashFunction )
+    {
+        this.factory = factory;
+        this.itemsPerEntry = itemsPerEntry;
+        this.hashFunction = hashFunction;
+        this.data = factory.newIntArray( 0, DEFAULT_VALUE );
+    }
+
+    public VALUE get( long key )
     {
         int tableMask = table.mask();
         int index = indexOf( hashFunction, key, tableMask );
@@ -91,7 +103,7 @@ public class HopScotchHashingAlgorithm
     {
         int tableMask = table.mask();
         int index = indexOf( hashFunction, key, tableMask );
-        int freedIndex = -1;
+        int freedIndex = DEFAULT_VALUE;
         VALUE result = null;
         if ( table.key( index ) == key )
         {   // Bulls eye
@@ -116,7 +128,7 @@ public class HopScotchHashingAlgorithm
 
         // reversed hop-scotching, i.e. pull in the most distant neighbor, iteratively as long as the
         // pulled index has neighbors of its own
-        while ( freedIndex != -1 )
+        while ( freedIndex != DEFAULT_VALUE )
         {
             long freedHopBits = table.hopBits( freedIndex );
             if ( freedHopBits > 0 )
@@ -133,7 +145,7 @@ public class HopScotchHashingAlgorithm
             }
             else
             {
-                freedIndex = -1;
+                freedIndex = DEFAULT_VALUE;
             }
         }
 

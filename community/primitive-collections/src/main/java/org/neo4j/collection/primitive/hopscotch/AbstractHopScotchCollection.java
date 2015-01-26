@@ -20,7 +20,6 @@
 package org.neo4j.collection.primitive.hopscotch;
 
 import org.neo4j.collection.primitive.PrimitiveCollection;
-import org.neo4j.collection.primitive.hopscotch.HopScotchHashingAlgorithm.ResizeMonitor;
 
 /**
  * Typical design of a hop scotch collection holding a table and communicating with

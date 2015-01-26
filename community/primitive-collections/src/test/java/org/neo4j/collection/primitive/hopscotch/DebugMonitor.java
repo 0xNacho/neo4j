@@ -22,8 +22,6 @@ package org.neo4j.collection.primitive.hopscotch;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.neo4j.collection.primitive.hopscotch.HopScotchHashingAlgorithm.Monitor;
-
 import static java.lang.String.format;
 
 class DebugMonitor extends Monitor.Adapter

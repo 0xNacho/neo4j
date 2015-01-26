@@ -99,7 +99,7 @@ public class PrimitiveCollectionBenchmark
             @Override
             public MapInterface newInstance()
             {
-                return new ToTheMetalHopScotchSet();
+                return new HopScotchSet();
             }
         };
         performanceTest( "neo4j hop-scotch set, random", factory, RANDOM_DATA );
@@ -405,28 +405,6 @@ public class PrimitiveCollectionBenchmark
         public void close()
         {
             map.close();
-        }
-    }
-
-    private static class ToTheMetalHopScotchSet implements MapInterface
-    {
-        private final ToTheMetalHopScotchHashingAlgorithmLongSet set = new ToTheMetalHopScotchHashingAlgorithmLongSet();
-
-        @Override
-        public void close()
-        {
-        }
-
-        @Override
-        public void put( long key, int value )
-        {
-            set.add( key );
-        }
-
-        @Override
-        public void get( long key )
-        {
-            set.contains( key );
         }
     }
 
