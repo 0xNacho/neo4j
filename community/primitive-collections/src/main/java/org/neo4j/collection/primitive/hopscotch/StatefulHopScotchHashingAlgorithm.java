@@ -58,7 +58,7 @@ import static java.lang.Long.numberOfTrailingZeros;
  * object, merely use its static methods. Also, all essential state is managed by {@link Table}.
  * </p>
  */
-public class StatefulHopScotchHashingAlgorithm<VALUE>
+public class StatefulHopScotchHashingAlgorithm<VALUE
 {
     private static final int DEFAULT_VALUE = -1;
     private final NumberArrayFactory factory;

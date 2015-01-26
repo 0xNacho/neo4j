@@ -36,7 +36,7 @@ import org.neo4j.collection.primitive.hopscotch.PrimitiveLongObjectHashMap;
 
 import static org.neo4j.array.primitive.NumberArrayFactory.HEAP;
 import static org.neo4j.array.primitive.NumberArrayFactory.OFF_HEAP;
-import static org.neo4j.collection.primitive.hopscotch.HopScotchHashingAlgorithm.NO_MONITOR;
+import static org.neo4j.collection.primitive.hopscotch.Monitor.NO_MONITOR;
 
 /**
  * Convenient factory for common primitive sets and maps.
