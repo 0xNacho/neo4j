@@ -19,77 +19,87 @@
  */
 package org.neo4j.collection.primitive.hopscotch;
 
-import org.neo4j.array.primitive.IntArray;
-import org.neo4j.array.primitive.NumberArrayFactory;
 import org.neo4j.collection.primitive.PrimitiveIntLongMap;
 import org.neo4j.collection.primitive.PrimitiveIntLongVisitor;
 
 import static org.neo4j.collection.primitive.hopscotch.HashFunction.DEFAULT_HASHING;
 
-public class PrimitiveIntLongHashMap extends HopScotchHashingIntCollection<long[]> implements PrimitiveIntLongMap
+public class OldPrimitiveIntLongHashMap extends AbstractIntHopScotchCollection<long[]>
+        implements PrimitiveIntLongMap
 {
-    private static final long[] NULL = new long[] {-1};
-
     private final long[] transport = new long[1];
+    private final Monitor monitor;
 
-    public PrimitiveIntLongHashMap( NumberArrayFactory factory )
+    public OldPrimitiveIntLongHashMap( Table<long[]> table, Monitor monitor )
     {
-        super( factory, 4, 1, NULL );
+        super( table );
+        this.monitor = monitor;
     }
 
     @Override
     public long put( int key, long value )
     {
-        transport[0] = value;
-        return _put( key, NULL )[0];
+        return unpack( OldHopScotchHashingAlgorithm.put( table, monitor, DEFAULT_HASHING, key, pack( value ), this ) );
     }
 
     @Override
     public boolean containsKey( int key )
     {
-        return contains( key );
+        return OldHopScotchHashingAlgorithm.get( table, monitor, DEFAULT_HASHING, key ) != null;
     }
 
-    @Override
-    protected long[] getValue( IntArray array, int index, int absIndex )
-    {
-        transport[0] = getLong( array, absIndex+2 );
-        return transport;
-    }
-
-    @Override
-    protected void putValue( IntArray array, int index, int absIndex, long[] value )
-    {
-        putLong( array, absIndex+2, value[0] );
-    }
-
-    /**
-     * Overridden for performance reasons only
-     */
     @Override
     public long get( int key )
     {
-        return _get( key )[0];
+        return unpack( OldHopScotchHashingAlgorithm.get( table, monitor, DEFAULT_HASHING, key ) );
     }
 
     @Override
     public long remove( int key )
     {
-        return _remove( key )[0];
+        return unpack( OldHopScotchHashingAlgorithm.remove( table, monitor, DEFAULT_HASHING, key ) );
+    }
+
+    @Override
+    public int size()
+    {
+        return table.size();
+    }
+
+    @Override
+    public String toString()
+    {
+        return table.toString();
     }
 
     @Override
     public <E extends Exception> void visitEntries( PrimitiveIntLongVisitor<E> visitor ) throws E
     {
-        int capacity = capacity();
-        for ( int i = 0, k = 0; i < capacity; i++, k += itemsPerEntry )
+        long nullKey = table.nullKey();
+        int capacity = table.capacity();
+        for ( int i = 0; i < capacity; i++ )
         {
-            long key = getKey( array, k );
-            if ( isVisible( i, key ) && visitor.visited( (int) key, getValue( array, i, k )[0] ) )
+            int key = (int) table.key( i );
+            if ( key != nullKey )
             {
-                return;
+                long[] value = table.value( i );
+                if ( value != null && visitor.visited( key, value[0] ) )
+                {
+                    return;
+                }
             }
         }
+    }
+
+    private long[] pack( long value )
+    {
+        transport[0] = value;
+        return transport;
+    }
+
+    private long unpack( long[] result )
+    {
+        return result != null ? result[0] : IntKeyLongValueTable.NULL;
     }
 
     @SuppressWarnings( "EqualsWhichDoesntCheckParameterClass" ) // yes it does

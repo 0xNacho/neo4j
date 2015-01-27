@@ -20,7 +20,7 @@
 package org.neo4j.collection.primitive.hopscotch;
 
 /**
- * Monitor for what how a {@link HopScotchHashingAlgorithm} changes the items in a {@link Table}.
+ * Monitor for what how a {@link OldHopScotchHashingAlgorithm} changes the items in a {@link Table}.
  */
 public interface Monitor
 {

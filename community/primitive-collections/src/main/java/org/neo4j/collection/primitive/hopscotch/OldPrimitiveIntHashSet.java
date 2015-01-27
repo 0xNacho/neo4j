@@ -19,51 +19,58 @@
  */
 package org.neo4j.collection.primitive.hopscotch;
 
-import org.neo4j.array.primitive.NumberArrayFactory;
 import org.neo4j.collection.primitive.PrimitiveIntIterator;
 import org.neo4j.collection.primitive.PrimitiveIntSet;
 import org.neo4j.collection.primitive.PrimitiveIntVisitor;
 
-public class PrimitiveIntHashSet extends HopScotchHashingIntCollection<Void> implements PrimitiveIntSet
-{
-    public PrimitiveIntHashSet( NumberArrayFactory factory )
-    {
-        super( factory, 2, 1, null );
-    }
+import static org.neo4j.collection.primitive.hopscotch.HashFunction.DEFAULT_HASHING;
 
-    @Override
-    public boolean accept( int value )
+public class OldPrimitiveIntHashSet extends AbstractIntHopScotchCollection<Object> implements PrimitiveIntSet
+{
+    private final Object valueMarker;
+    private final Monitor monitor;
+
+    public OldPrimitiveIntHashSet( Table<Object> table, Object valueMarker, Monitor monitor )
     {
-        return contains( (long) value );
+        super( table );
+        this.valueMarker = valueMarker;
+        this.monitor = monitor;
     }
 
     @Override
     public boolean add( int value )
     {
-        return add( (long) value );
+        return OldHopScotchHashingAlgorithm.put( table, monitor, DEFAULT_HASHING, value, valueMarker, this ) == null;
     }
 
     @Override
     public boolean addAll( PrimitiveIntIterator values )
     {
-        boolean result = false;
+        boolean changed = false;
         while ( values.hasNext() )
         {
-            result |= add( (long) values.next() );
+            changed |= OldHopScotchHashingAlgorithm.put( table, monitor, DEFAULT_HASHING, values.next(),
+                    valueMarker, this ) == null;
         }
-        return result;
+        return changed;
     }
 
     @Override
     public boolean contains( int value )
     {
-        return contains( (long) value );
+        return OldHopScotchHashingAlgorithm.get( table, monitor, DEFAULT_HASHING, value ) == valueMarker;
+    }
+
+    @Override
+    public boolean accept( int value )
+    {
+        return OldHopScotchHashingAlgorithm.get( table, monitor, DEFAULT_HASHING, value ) == valueMarker;
     }
 
     @Override
     public boolean remove( int value )
     {
-        return _remove( value ) != null;
+        return OldHopScotchHashingAlgorithm.remove( table, monitor, DEFAULT_HASHING, value ) == valueMarker;
     }
 
     @SuppressWarnings( "EqualsWhichDoesntCheckParameterClass" ) // yes it does
@@ -118,7 +125,7 @@ public class PrimitiveIntHashSet extends HopScotchHashingIntCollection<Void> imp
         @Override
         public boolean visited( int value ) throws RuntimeException
         {
-            hash += HashFunction.DEFAULT_HASHING.hash( value );
+            hash += DEFAULT_HASHING.hash( value );
             return false;
         }
 

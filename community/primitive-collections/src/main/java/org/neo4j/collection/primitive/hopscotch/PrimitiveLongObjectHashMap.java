@@ -19,67 +19,74 @@
  */
 package org.neo4j.collection.primitive.hopscotch;
 
+import org.neo4j.array.primitive.IntArray;
+import org.neo4j.array.primitive.NumberArrayFactory;
 import org.neo4j.collection.primitive.PrimitiveLongObjectMap;
 import org.neo4j.collection.primitive.PrimitiveLongObjectVisitor;
 
-import static org.neo4j.collection.primitive.hopscotch.HopScotchHashingAlgorithm.DEFAULT_HASHING;
+import static org.neo4j.collection.primitive.hopscotch.HashFunction.DEFAULT_HASHING;
 
-public class PrimitiveLongObjectHashMap<VALUE> extends AbstractLongHopScotchCollection<VALUE>
-        implements PrimitiveLongObjectMap<VALUE>
+public class PrimitiveLongObjectHashMap<VALUE> extends HopScotchHashingLongCollection<VALUE> implements PrimitiveLongObjectMap<VALUE>
 {
-    private final Monitor monitor;
+    private VALUE[] values;
 
-    public PrimitiveLongObjectHashMap( Table<VALUE> table, Monitor monitor )
+    public PrimitiveLongObjectHashMap( NumberArrayFactory factory )
     {
-        super( table );
-        this.monitor = monitor;
+        super( factory, 3, 2, null );
+    }
+
+    @SuppressWarnings( "unchecked" )
+    @Override
+    protected void newArray( int logicalCapacity )
+    {
+        super.newArray( logicalCapacity );
+        values = (VALUE[]) new Object[logicalCapacity];
+    }
+
+    @Override
+    protected VALUE getValue( IntArray array, int index, int absIndex )
+    {
+        return values[index];
+    }
+
+    @Override
+    protected void putValue( IntArray array, int index, int absIndex, VALUE value )
+    {
+        values[index] = value;
     }
 
     @Override
     public VALUE put( long key, VALUE value )
     {
-        return HopScotchHashingAlgorithm.put( table, monitor, DEFAULT_HASHING, key, value, this );
+        return _put( key, value );
     }
 
     @Override
     public boolean containsKey( long key )
     {
-        return HopScotchHashingAlgorithm.get( table, monitor, DEFAULT_HASHING, key ) != null;
+        return contains( key );
     }
 
     @Override
     public VALUE get( long key )
     {
-        return HopScotchHashingAlgorithm.get( table, monitor, DEFAULT_HASHING, key );
+        return _get( key );
     }
 
     @Override
     public VALUE remove( long key )
     {
-        return HopScotchHashingAlgorithm.remove( table, monitor, DEFAULT_HASHING, key );
+        return _remove( key );
     }
 
     @Override
-    public int size()
+    public <E extends Exception> void visitEntries( PrimitiveLongObjectVisitor<VALUE,E> visitor ) throws E
     {
-        return table.size();
-    }
-
-    @Override
-    public String toString()
-    {
-        return table.toString();
-    }
-
-    @Override
-    public <E extends Exception> void visitEntries( PrimitiveLongObjectVisitor<VALUE, E> visitor ) throws E
-    {
-        long nullKey = table.nullKey();
-        int capacity = table.capacity();
-        for ( int i = 0; i < capacity; i++ )
+        int capacity = capacity();
+        for ( int i = 0, k = 0; i < capacity; i++, k += itemsPerEntry )
         {
-            long key = table.key( i );
-            if ( key != nullKey && visitor.visited( key, table.value( i ) ) )
+            long key = getKey( array, k );
+            if ( isVisible( i, key ) && visitor.visited( key, getValue( array, i, k ) ) )
             {
                 return;
             }
@@ -102,7 +109,7 @@ public class PrimitiveLongObjectHashMap<VALUE> extends AbstractLongHopScotchColl
 
     private static class LongObjEquality<T> implements PrimitiveLongObjectVisitor<T,RuntimeException>
     {
-        private PrimitiveLongObjectHashMap other;
+        private final PrimitiveLongObjectHashMap other;
         private boolean equal = true;
 
         public LongObjEquality( PrimitiveLongObjectHashMap that )

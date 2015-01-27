@@ -19,71 +19,84 @@
  */
 package org.neo4j.collection.primitive.hopscotch;
 
-import org.neo4j.array.primitive.IntArray;
-import org.neo4j.array.primitive.NumberArrayFactory;
 import org.neo4j.collection.primitive.PrimitiveLongIntMap;
 import org.neo4j.collection.primitive.PrimitiveLongIntVisitor;
 
 import static org.neo4j.collection.primitive.hopscotch.HashFunction.DEFAULT_HASHING;
 
-public class PrimitiveLongIntHashMap extends HopScotchHashingLongCollection<int[]> implements PrimitiveLongIntMap
+public class OldPrimitiveLongIntHashMap extends AbstractLongHopScotchCollection<int[]> implements PrimitiveLongIntMap
 {
-    private static final int[] NULL = new int[] {-1};
     private final int[] transport = new int[1];
+    private final Monitor monitor;
 
-    public PrimitiveLongIntHashMap( NumberArrayFactory factory )
+    public OldPrimitiveLongIntHashMap( Table<int[]> table, Monitor monitor )
     {
-        super( factory, 4, 2, NULL );
+        super( table );
+        this.monitor = monitor;
     }
 
     @Override
     public int put( long key, int value )
     {
-        transport[0] = value;
-        return _put( key,transport )[0];
-    }
-
-    @Override
-    protected int[] getValue( IntArray array, int index, int absIndex )
-    {
-        transport[0] = array.get( absIndex+3 );
-        return transport;
-    }
-
-    @Override
-    protected void putValue( IntArray array, int index, int absIndex, int[] value )
-    {
-        array.set( absIndex+3, value[0] );
+        return unpack( OldHopScotchHashingAlgorithm.put( table, monitor, DEFAULT_HASHING, key, pack( value ), this ) );
     }
 
     @Override
     public boolean containsKey( long key )
     {
-        return contains( key );
+        return OldHopScotchHashingAlgorithm.get( table, monitor, DEFAULT_HASHING, key ) != null;
     }
 
     @Override
     public int get( long key )
     {
-        return _get( key )[0];
+        return unpack( OldHopScotchHashingAlgorithm.get( table, monitor, DEFAULT_HASHING, key ) );
     }
 
     @Override
     public int remove( long key )
     {
-        return _remove( key )[0];
+        return unpack( OldHopScotchHashingAlgorithm.remove( table, monitor, DEFAULT_HASHING, key ) );
+    }
+
+    @Override
+    public int size()
+    {
+        return table.size();
+    }
+
+    @Override
+    public String toString()
+    {
+        return table.toString();
+    }
+
+    private int[] pack( int value )
+    {
+        transport[0] = value;
+        return transport;
+    }
+
+    private int unpack( int[] result )
+    {
+        return result != null ? result[0] : LongKeyIntValueTable.NULL;
     }
 
     @Override
     public <E extends Exception> void visitEntries( PrimitiveLongIntVisitor<E> visitor ) throws E
     {
-        int capacity = capacity();
-        for ( int i = 0, k = 0; i < capacity; i++, k += itemsPerEntry )
+        long nullKey = table.nullKey();
+        int capacity = table.capacity();
+        for ( int i = 0; i < capacity; i++ )
         {
-            long key = getKey( array, k );
-            if ( isVisible( i, key ) && visitor.visited( key, getValue( array, i, k )[0] ) )
+            int[] value = table.value( i );
+            if ( value != null )
             {
-                return;
+                long key = table.key( i );
+                if ( key != nullKey && visitor.visited( key, value[0] ) )
+                {
+                    return;
+                }
             }
         }
     }

@@ -62,14 +62,14 @@ import static java.lang.Long.numberOfTrailingZeros;
  * object, merely use its static methods. Also, all essential state is managed by {@link Table}.
  * </p>
  */
-public abstract class CloseToTheMetalHopScotchHashingAlgorithm<VALUE>
+public abstract class HopScotchHashingCollection<VALUE>
 {
     /**
      * Default number of hop bits per index, i.e. size of neighborhood.
      */
     public static final int DEFAULT_H = 32;
 
-    private final HashFunction hashFunction = HashFunction.JUL_HASHING;
+    private final HashFunction hashFunction;
     protected IntArray array;
     private int tableMask;
     protected final long nullKey = -1;
@@ -79,14 +79,21 @@ public abstract class CloseToTheMetalHopScotchHashingAlgorithm<VALUE>
     private int size;
     private final VALUE nullValue;
 
-    public CloseToTheMetalHopScotchHashingAlgorithm( NumberArrayFactory factory, int itemsPerEntry, int itemsPerKey,
-            VALUE nullValue )
+    public HopScotchHashingCollection( NumberArrayFactory factory,
+            int itemsPerEntry, int itemsPerKey, VALUE nullValue )
     {
+        this( HashFunction.DEFAULT_HASHING, factory, itemsPerEntry, itemsPerKey, nullValue, 1 << 4 );
+    }
+
+    public HopScotchHashingCollection( HashFunction hashFunction, NumberArrayFactory factory,
+            int itemsPerEntry, int itemsPerKey, VALUE nullValue, int initialCapacity )
+    {
+        this.hashFunction = hashFunction;
         this.factory = factory;
         this.itemsPerEntry = itemsPerEntry;
         this.itemsPerKey = itemsPerKey;
         this.nullValue = nullValue;
-        newArray( 1 << 4 );
+        newArray( initialCapacity );
     }
 
     public boolean contains( long key )
@@ -121,7 +128,7 @@ public abstract class CloseToTheMetalHopScotchHashingAlgorithm<VALUE>
         long existingKey = getKey( array, absIndex );
         if ( existingKey == key )
         {   // Bulls eye
-            return getValue( array, absIndex );
+            return getValue( array, index, absIndex );
         }
 
         // Look in its neighborhood
@@ -131,7 +138,7 @@ public abstract class CloseToTheMetalHopScotchHashingAlgorithm<VALUE>
             int hopIndex = nextIndex( index, numberOfTrailingZeros( hopBits )+1 );
             if ( array.get( index( hopIndex )) == key )
             {   // There it is
-                return getValue( array, absIndex );
+                return getValue( array, index, absIndex );
             }
             hopBits &= hopBits-1;
         }
@@ -195,8 +202,8 @@ public abstract class CloseToTheMetalHopScotchHashingAlgorithm<VALUE>
         }
         else if ( keyAtIndex == key )
         {   // this index is occupied with the same key
-            VALUE prev = getValue( array, absIndex );
-            putValue( array, absIndex, value );
+            VALUE prev = getValue( array, index, absIndex );
+            putValue( array, index, absIndex, value );
             return prev;
         }
         else
@@ -205,10 +212,11 @@ public abstract class CloseToTheMetalHopScotchHashingAlgorithm<VALUE>
             while ( hopBits > 0 )
             {
                 int hopIndex = nextIndex( index, numberOfTrailingZeros( hopBits )+1 );
-                if ( getKey( array, index( hopIndex ) ) == key )
+                int absHopIndex = index( hopIndex );
+                if ( getKey( array, absHopIndex ) == key )
                 {   // this index is occupied with the same key
-                    VALUE prev = getValue( array, absIndex );
-                    putValue( array, absIndex, value );
+                    VALUE prev = getValue( array, hopIndex, absHopIndex );
+                    putValue( array, hopIndex, absHopIndex, value );
                     return prev;
                 }
                 hopBits &= hopBits-1;
@@ -299,7 +307,7 @@ public abstract class CloseToTheMetalHopScotchHashingAlgorithm<VALUE>
         // OK, now we're within distance to just place it there. Do it
         int absIndex = index( freeIndex );
         putKey( array, absIndex, key );
-        putValue( array, absIndex, value );
+        putValue( array, index, absIndex, value );
         // and update the hop bits of "index"
         array.genericAnd( index( index )+itemsPerKey, ~(1 << totalHd) );
 
@@ -360,7 +368,7 @@ public abstract class CloseToTheMetalHopScotchHashingAlgorithm<VALUE>
 
 
 
-    private void newArray( int logicalCapacity )
+    protected void newArray( int logicalCapacity )
     {
         array = factory.newIntArray( index( logicalCapacity ), -1 );
         tableMask = highestOneBit( logicalCapacity ) - 1;
@@ -399,7 +407,7 @@ public abstract class CloseToTheMetalHopScotchHashingAlgorithm<VALUE>
             long key = getKey( array, absIndex );
             if ( key != nullKey )
             {
-                VALUE value = getValue( oldArray, absIndex );
+                VALUE value = getValue( oldArray, i, absIndex );
                 if ( _put( key, value ) != null )
                 {
                     throw new IllegalStateException( "Couldn't add " + key + " when growing table" );
@@ -441,6 +449,12 @@ public abstract class CloseToTheMetalHopScotchHashingAlgorithm<VALUE>
         return (high << 32) | low;
     }
 
+    protected void putLong( IntArray array, int absIndex, long value )
+    {
+        array.set( absIndex, (int)value );
+        array.set( absIndex+1, (int)((value&0xFFFFFFFF00000000L) >>> 32) );
+    }
+
     protected PrimitiveLongIterator longKeyIterator()
     {
         return new PrimitiveLongCollections.PrimitiveLongBaseIterator()
@@ -470,14 +484,31 @@ public abstract class CloseToTheMetalHopScotchHashingAlgorithm<VALUE>
         };
     }
 
+    protected final boolean typeAndSizeEqual( Object other )
+    {
+        if ( this.getClass() == other.getClass() )
+        {
+            HopScotchHashingCollection that = (HopScotchHashingCollection) other;
+            if ( this.size() == that.size() )
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
     // ========================================================
     // Methods for sub-classes to implement to change behavior,
     // mostly regarding how keys/values are stored in the array
     // ========================================================
 
-    protected VALUE getValue( IntArray array, int absIndex )
+    protected VALUE getValue( IntArray array, int index, int absIndex )
     {
         return nullValue;
+    }
+
+    protected void putValue( IntArray array, int index, int absIndex, VALUE value )
+    {
     }
 
     protected long getKey( IntArray array, int absIndex )
@@ -488,10 +519,6 @@ public abstract class CloseToTheMetalHopScotchHashingAlgorithm<VALUE>
     protected void putKey( IntArray array, int absIndex, long key )
     {
         array.set( absIndex, (int) key );
-    }
-
-    protected void putValue( IntArray array, int absIndex, VALUE value )
-    {
     }
 
     protected VALUE removeKey( IntArray array, int absIndex )

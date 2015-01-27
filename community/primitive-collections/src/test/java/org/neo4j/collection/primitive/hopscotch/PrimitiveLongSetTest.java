@@ -42,7 +42,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import static org.neo4j.array.primitive.NumberArrayFactory.HEAP;
 import static org.neo4j.collection.primitive.Primitive.VALUE_MARKER;
-import static org.neo4j.collection.primitive.hopscotch.HopScotchHashingAlgorithm.NO_MONITOR;
+import static org.neo4j.collection.primitive.hopscotch.OldHopScotchHashingAlgorithm.NO_MONITOR;
 
 public class PrimitiveLongSetTest
 {

@@ -443,7 +443,7 @@ public class PrimitiveCollectionBenchmark
     {
 //        private final PrimitiveLongSet set = new Blaaa( NumberArrayFactory.HEAP );
 //        private final PrimitiveIntSet set = new CloseToTheMetalIntSet( NumberArrayFactory.HEAP );
-        private final PrimitiveLongIntMap set = new CloseToTheMetalLongIntMap( NumberArrayFactory.HEAP );
+        private final PrimitiveLongIntMap set = new PrimitiveLongIntHashMap( NumberArrayFactory.HEAP );
 
         @Override
         public void put( long key, int value )

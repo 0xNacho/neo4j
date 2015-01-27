@@ -20,23 +20,23 @@
 package org.neo4j.collection.primitive.hopscotch;
 
 import org.neo4j.array.primitive.NumberArrayFactory;
-import org.neo4j.collection.primitive.PrimitiveLongCollection;
-import org.neo4j.collection.primitive.PrimitiveLongCollections;
-import org.neo4j.collection.primitive.PrimitiveLongIterator;
-import org.neo4j.collection.primitive.PrimitiveLongVisitor;
+import org.neo4j.collection.primitive.PrimitiveIntCollection;
+import org.neo4j.collection.primitive.PrimitiveIntCollections;
+import org.neo4j.collection.primitive.PrimitiveIntIterator;
+import org.neo4j.collection.primitive.PrimitiveIntVisitor;
 
-public abstract class CloseToTheMetalLongCollection<VALUE> extends CloseToTheMetalHopScotchHashingAlgorithm<VALUE>
-        implements PrimitiveLongCollection
+public abstract class HopScotchHashingIntCollection<VALUE> extends HopScotchHashingCollection<VALUE>
+        implements PrimitiveIntCollection
 {
-    public CloseToTheMetalLongCollection( NumberArrayFactory factory, int itemsPerEntry, int itemsPerKey, VALUE nullValue )
+    public HopScotchHashingIntCollection( NumberArrayFactory factory, int itemsPerEntry, int itemsPerKey, VALUE nullValue )
     {
         super( factory, itemsPerEntry, itemsPerKey, nullValue );
     }
 
     @Override
-    public PrimitiveLongIterator iterator()
+    public PrimitiveIntIterator iterator()
     {
-        return new PrimitiveLongCollections.PrimitiveLongBaseIterator()
+        return new PrimitiveIntCollections.PrimitiveIntBaseIterator()
         {
             private final int max = capacity();
             private int i;
@@ -50,7 +50,7 @@ public abstract class CloseToTheMetalLongCollection<VALUE> extends CloseToTheMet
                     long key = getKey( array, index );
                     if ( isVisible( index, key ) )
                     {
-                        return next( key );
+                        return next( (int) key ); // TODO safe cast
                     }
                 }
                 return false;
@@ -64,13 +64,13 @@ public abstract class CloseToTheMetalLongCollection<VALUE> extends CloseToTheMet
     }
 
     @Override
-    public <E extends Exception> void visitKeys( PrimitiveLongVisitor<E> visitor ) throws E
+    public <E extends Exception> void visitKeys( PrimitiveIntVisitor<E> visitor ) throws E
     {
         int capacity = capacity();
         for ( int i = 0, k = 0; i < capacity; i++, k += itemsPerEntry )
         {
             long key = getKey( array, k );
-            if ( isVisible( i, key ) && visitor.visited( key ) )
+            if ( isVisible( i, key ) && visitor.visited( (int) key ) )
             {
                 return;
             }

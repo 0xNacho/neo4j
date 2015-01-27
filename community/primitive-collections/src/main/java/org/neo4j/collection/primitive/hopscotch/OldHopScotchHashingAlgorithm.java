@@ -55,7 +55,7 @@ import static java.lang.Long.numberOfTrailingZeros;
  * object, merely use its static methods. Also, all essential state is managed by {@link Table}.
  * </p>
  */
-public class HopScotchHashingAlgorithm
+public class OldHopScotchHashingAlgorithm
 {
     /**
      * Default number of hop bits per index, i.e. size of neighborhood.

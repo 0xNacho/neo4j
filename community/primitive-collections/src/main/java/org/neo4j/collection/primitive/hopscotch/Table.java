@@ -20,7 +20,7 @@
 package org.neo4j.collection.primitive.hopscotch;
 
 /**
- * Table for storing and retrieving all entries managed by the {@link HopScotchHashingAlgorithm}.
+ * Table for storing and retrieving all entries managed by the {@link OldHopScotchHashingAlgorithm}.
  * A table is responsible for storing and retrieving:
  * <ol>
  *   <li>keys: a primitive long key</li>
@@ -29,7 +29,7 @@ package org.neo4j.collection.primitive.hopscotch;
  *       important, e.g. a set</li>
  * </ol>
  *
- * The {@link HopScotchHashingAlgorithm} contains all hashing logic and a {@link Table} is a dump, straight
+ * The {@link OldHopScotchHashingAlgorithm} contains all hashing logic and a {@link Table} is a dump, straight
  * forward data keeper. Optimizations for special keys or key/value combinations can be captured in
  * implementations of this. The only restriction is that keys must be decimal type numbers, f.ex. {@code short},
  * {@code int} or {@code long}. Where the key "carrier" between the algorithm and the table is always going to be
@@ -78,7 +78,7 @@ public interface Table<VALUE> extends AutoCloseable
 
     /**
      * Puts (key/value) at the given {@code index}. This index must contractually be free at the point where the
-     * {@link HopScotchHashingAlgorithm algorithm} calls this method.
+     * {@link OldHopScotchHashingAlgorithm algorithm} calls this method.
      * @param index the index to put this key/value in.
      * @param key the key to put.
      * @param value the value to put.
@@ -87,7 +87,7 @@ public interface Table<VALUE> extends AutoCloseable
 
     /**
      * Puts, actually overwrites, the value at the given {@code index}. This index will contractually be occupied
-     * at the point where the {@link HopScotchHashingAlgorithm algorithm} calls this method. This new {@code value}
+     * at the point where the {@link OldHopScotchHashingAlgorithm algorithm} calls this method. This new {@code value}
      * replaces the existing value at this index.
      * @param index the index to put this value in.
      * @param value the value to put at this index.

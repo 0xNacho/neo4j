@@ -19,55 +19,58 @@
  */
 package org.neo4j.collection.primitive.hopscotch;
 
-import org.neo4j.array.primitive.IntArray;
-import org.neo4j.array.primitive.NumberArrayFactory;
 import org.neo4j.collection.primitive.PrimitiveLongIterator;
 import org.neo4j.collection.primitive.PrimitiveLongSet;
 import org.neo4j.collection.primitive.PrimitiveLongVisitor;
 
 import static org.neo4j.collection.primitive.hopscotch.HashFunction.DEFAULT_HASHING;
 
-public class PrimitiveLongHashSet extends HopScotchHashingLongCollection<Void> implements PrimitiveLongSet
+public class OldPrimitiveLongHashSet extends AbstractLongHopScotchCollection<Object> implements PrimitiveLongSet
 {
-    public PrimitiveLongHashSet( NumberArrayFactory factory )
+    private final Object valueMarker;
+    private final Monitor monitor;
+
+    public OldPrimitiveLongHashSet( Table<Object> table, Object valueMarker, Monitor monitor )
     {
-        super( factory, 3, 2, null );
+        super( table );
+        this.valueMarker = valueMarker;
+        this.monitor = monitor;
     }
 
     @Override
-    protected long getKey( IntArray array, int absIndex )
+    public boolean add( long value )
     {
-        return getLong( array, absIndex );
-    }
-
-    @Override
-    protected void putKey( IntArray array, int absIndex, long key )
-    {
-        array.set( absIndex, (int)key );
-        array.set( absIndex+1, (int)((key&0xFFFFFFFF00000000L) >>> 32) );
-    }
-
-    @Override
-    public boolean accept( long value )
-    {
-        return contains( value );
+        return OldHopScotchHashingAlgorithm.put( table, monitor, DEFAULT_HASHING, value, valueMarker, this ) == null;
     }
 
     @Override
     public boolean addAll( PrimitiveLongIterator values )
     {
-        boolean result = false;
+        boolean changed = false;
         while ( values.hasNext() )
         {
-            result |= add( values.next() );
+            changed |= OldHopScotchHashingAlgorithm.put( table, monitor, DEFAULT_HASHING, values.next(),
+                    valueMarker, this ) == null;
         }
-        return result;
+        return changed;
+    }
+
+    @Override
+    public boolean contains( long value )
+    {
+        return OldHopScotchHashingAlgorithm.get( table, monitor, DEFAULT_HASHING, value ) == valueMarker;
+    }
+
+    @Override
+    public boolean accept( long value )
+    {
+        return OldHopScotchHashingAlgorithm.get( table, monitor, DEFAULT_HASHING, value ) == valueMarker;
     }
 
     @Override
     public boolean remove( long value )
     {
-        return _remove( value ) != null;
+        return OldHopScotchHashingAlgorithm.remove( table, monitor, DEFAULT_HASHING, value ) == valueMarker;
     }
 
     @SuppressWarnings( "EqualsWhichDoesntCheckParameterClass" ) // yes it does

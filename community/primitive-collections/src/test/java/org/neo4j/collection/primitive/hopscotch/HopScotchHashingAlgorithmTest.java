@@ -34,7 +34,7 @@ import static org.junit.Assert.assertTrue;
 
 import static org.neo4j.array.primitive.NumberArrayFactory.HEAP;
 import static org.neo4j.collection.primitive.Primitive.VALUE_MARKER;
-import static org.neo4j.collection.primitive.hopscotch.HopScotchHashingAlgorithm.DEFAULT_H;
+import static org.neo4j.collection.primitive.hopscotch.OldHopScotchHashingAlgorithm.DEFAULT_H;
 
 public class HopScotchHashingAlgorithmTest
 {

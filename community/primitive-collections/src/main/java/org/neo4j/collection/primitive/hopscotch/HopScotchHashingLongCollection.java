@@ -19,33 +19,58 @@
  */
 package org.neo4j.collection.primitive.hopscotch;
 
+import org.neo4j.array.primitive.NumberArrayFactory;
 import org.neo4j.collection.primitive.PrimitiveLongCollection;
+import org.neo4j.collection.primitive.PrimitiveLongCollections;
 import org.neo4j.collection.primitive.PrimitiveLongIterator;
 import org.neo4j.collection.primitive.PrimitiveLongVisitor;
 
-public abstract class AbstractLongHopScotchCollection<VALUE> extends AbstractHopScotchCollection<VALUE>
+public abstract class HopScotchHashingLongCollection<VALUE> extends HopScotchHashingCollection<VALUE>
         implements PrimitiveLongCollection
 {
-    public AbstractLongHopScotchCollection( Table<VALUE> table )
+    public HopScotchHashingLongCollection( NumberArrayFactory factory, int itemsPerEntry, int itemsPerKey, VALUE nullValue )
     {
-        super( table );
+        super( factory, itemsPerEntry, itemsPerKey, nullValue );
     }
 
     @Override
     public PrimitiveLongIterator iterator()
     {
-        return new TableKeyIterator<>( table, this );
+        return new PrimitiveLongCollections.PrimitiveLongBaseIterator()
+        {
+            private final int max = capacity();
+            private int i;
+
+            @Override
+            protected boolean fetchNext()
+            {
+                while ( i < max )
+                {
+                    int index = i++;
+                    long key = getKey( array, index );
+                    if ( isVisible( index, key ) )
+                    {
+                        return next( key );
+                    }
+                }
+                return false;
+            }
+        };
+    }
+
+    protected boolean isVisible( int index, long key )
+    {
+        return key != nullKey;
     }
 
     @Override
     public <E extends Exception> void visitKeys( PrimitiveLongVisitor<E> visitor ) throws E
     {
-        int capacity = table.capacity();
-        long nullKey = table.nullKey();
-        for ( int i = 0; i < capacity; i++ )
+        int capacity = capacity();
+        for ( int i = 0, k = 0; i < capacity; i++, k += itemsPerEntry )
         {
-            long key = table.key( i );
-            if ( key != nullKey && visitor.visited( key ) )
+            long key = getKey( array, k );
+            if ( isVisible( i, key ) && visitor.visited( key ) )
             {
                 return;
             }
