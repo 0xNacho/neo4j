@@ -26,9 +26,9 @@ import org.neo4j.collection.primitive.PrimitiveIntVisitor;
 
 public class PrimitiveIntHashSet extends HopScotchHashingIntCollection<Void> implements PrimitiveIntSet
 {
-    public PrimitiveIntHashSet( NumberArrayFactory factory )
+    public PrimitiveIntHashSet( HashFunction hashFunction, NumberArrayFactory factory, int initialCapacity )
     {
-        super( factory, 2, 1, null );
+        super( hashFunction, factory, 2, 1, null, initialCapacity );
     }
 
     @Override

@@ -28,9 +28,10 @@ import org.neo4j.collection.primitive.PrimitiveIntVisitor;
 public abstract class HopScotchHashingIntCollection<VALUE> extends HopScotchHashingCollection<VALUE>
         implements PrimitiveIntCollection
 {
-    public HopScotchHashingIntCollection( NumberArrayFactory factory, int itemsPerEntry, int itemsPerKey, VALUE nullValue )
+    public HopScotchHashingIntCollection( HashFunction hashFunction, NumberArrayFactory factory,
+            int itemsPerEntry, int itemsPerKey, VALUE nullValue, int initialCapacity )
     {
-        super( factory, itemsPerEntry, itemsPerKey, nullValue );
+        super( hashFunction, factory, itemsPerEntry, itemsPerKey, nullValue, initialCapacity );
     }
 
     @Override

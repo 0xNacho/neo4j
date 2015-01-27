@@ -28,9 +28,10 @@ import org.neo4j.collection.primitive.PrimitiveLongVisitor;
 public abstract class HopScotchHashingLongCollection<VALUE> extends HopScotchHashingCollection<VALUE>
         implements PrimitiveLongCollection
 {
-    public HopScotchHashingLongCollection( NumberArrayFactory factory, int itemsPerEntry, int itemsPerKey, VALUE nullValue )
+    public HopScotchHashingLongCollection( HashFunction hashFunction, NumberArrayFactory factory,
+            int itemsPerEntry, int itemsPerKey, VALUE nullValue, int initialCapacity )
     {
-        super( factory, itemsPerEntry, itemsPerKey, nullValue );
+        super( hashFunction, factory, itemsPerEntry, itemsPerKey, nullValue, initialCapacity );
     }
 
     @Override

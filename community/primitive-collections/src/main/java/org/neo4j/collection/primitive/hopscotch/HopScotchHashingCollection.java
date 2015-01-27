@@ -79,12 +79,6 @@ public abstract class HopScotchHashingCollection<VALUE>
     private int size;
     private final VALUE nullValue;
 
-    public HopScotchHashingCollection( NumberArrayFactory factory,
-            int itemsPerEntry, int itemsPerKey, VALUE nullValue )
-    {
-        this( HashFunction.DEFAULT_HASHING, factory, itemsPerEntry, itemsPerKey, nullValue, 1 << 4 );
-    }
-
     public HopScotchHashingCollection( HashFunction hashFunction, NumberArrayFactory factory,
             int itemsPerEntry, int itemsPerKey, VALUE nullValue, int initialCapacity )
     {

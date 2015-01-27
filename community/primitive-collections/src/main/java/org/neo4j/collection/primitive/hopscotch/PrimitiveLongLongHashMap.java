@@ -31,9 +31,9 @@ public class PrimitiveLongLongHashMap extends HopScotchHashingLongCollection<lon
     private static final long[] NULL = new long[] {-1};
     private final long[] transport = new long[1];
 
-    public PrimitiveLongLongHashMap( NumberArrayFactory factory )
+    public PrimitiveLongLongHashMap( HashFunction hashFunction, NumberArrayFactory factory, int initialCapacity )
     {
-        super( factory, 5, 2, NULL );
+        super( hashFunction, factory, 5, 2, NULL, initialCapacity );
     }
 
     @Override
