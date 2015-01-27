@@ -21,32 +21,30 @@ package org.neo4j.collection.primitive.hopscotch;
 
 import org.neo4j.array.primitive.IntArray;
 import org.neo4j.array.primitive.NumberArrayFactory;
-import org.neo4j.collection.primitive.PrimitiveLongIntMap;
-import org.neo4j.collection.primitive.PrimitiveLongIntVisitor;
+import org.neo4j.collection.primitive.PrimitiveLongLongMap;
+import org.neo4j.collection.primitive.PrimitiveLongLongVisitor;
 
-import static java.lang.Integer.numberOfTrailingZeros;
-
-public class CloseToTheMetalLongIntMap extends CloseToTheMetalLongCollection<int[]> implements PrimitiveLongIntMap
+public class CloseToTheMetalLongLongMap extends CloseToTheMetalLongCollection<long[]> implements PrimitiveLongLongMap
 {
-    private static final int[] NULL = new int[] {-1};
-    private final int[] transport = new int[1];
+    private static final long[] NULL = new long[] {-1};
+    private final long[] transport = new long[1];
 
-    public CloseToTheMetalLongIntMap( NumberArrayFactory factory )
+    public CloseToTheMetalLongLongMap( NumberArrayFactory factory )
     {
-        super( factory, 4, 2, NULL );
+        super( factory, 5, 2, NULL );
     }
 
     @Override
-    public int put( long key, int value )
+    public long put( long key, long value )
     {
         transport[0] = value;
-        return _put( key,transport )[0];
+        return _put( key, transport )[0];
     }
 
     @Override
-    protected int[] getValue( IntArray array, int absIndex )
+    protected long[] getValue( IntArray array, int absIndex )
     {
-        transport[0] = array.get( absIndex+3 );
+        transport[0] = getLong( array, absIndex+3 );
         return transport;
     }
 
@@ -57,39 +55,19 @@ public class CloseToTheMetalLongIntMap extends CloseToTheMetalLongCollection<int
     }
 
     @Override
-    public int get( long key )
+    public long get( long key )
     {
-        int index = indexOf( key );
-        int absIndex = index( index );
-        long existingKey = getKey( array, absIndex );
-        if ( existingKey == key )
-        {   // Bulls eye
-            return array.get( absIndex+3 );
-        }
-
-        // Look in its neighborhood
-        int hopBits = array.get( absIndex+itemsPerKey );
-        while ( hopBits > 0 )
-        {
-            int hopIndex = nextIndex( index, numberOfTrailingZeros( hopBits )+1 );
-            if ( array.get( index( hopIndex )) == key )
-            {   // There it is
-                return array.get( absIndex+3 );
-            }
-            hopBits &= hopBits-1;
-        }
-
-        return -1;
+        return _get( key )[0];
     }
 
     @Override
-    public int remove( long key )
+    public long remove( long key )
     {
         return _remove( key )[0];
     }
 
     @Override
-    public <E extends Exception> void visitEntries( PrimitiveLongIntVisitor<E> visitor ) throws E
+    public <E extends Exception> void visitEntries( PrimitiveLongLongVisitor<E> visitor ) throws E
     {
         int capacity = capacity();
         for ( int i = 0, k = 0; i < capacity; i++, k += itemsPerEntry )

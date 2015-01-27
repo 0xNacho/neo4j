@@ -21,9 +21,13 @@ package org.neo4j.collection.primitive.hopscotch;
 
 import org.neo4j.array.primitive.IntArray;
 import org.neo4j.array.primitive.NumberArrayFactory;
+import org.neo4j.collection.primitive.PrimitiveLongCollections;
+import org.neo4j.collection.primitive.PrimitiveLongIterator;
 
 import static java.lang.Integer.highestOneBit;
 import static java.lang.Integer.numberOfTrailingZeros;
+import static java.lang.Long.numberOfLeadingZeros;
+import static java.lang.Long.numberOfTrailingZeros;
 
 /**
  * <p>
@@ -66,19 +70,21 @@ public abstract class CloseToTheMetalHopScotchHashingAlgorithm<VALUE>
     public static final int DEFAULT_H = 32;
 
     private final HashFunction hashFunction = HashFunction.JUL_HASHING;
-    private IntArray array;
+    protected IntArray array;
     private int tableMask;
-    private final long nullKey = -1;
-    private final int hopBitsOffset = 1;
+    protected final long nullKey = -1;
+    protected final int itemsPerKey;
     private final NumberArrayFactory factory;
-    private final int itemsPerEntry;
+    protected final int itemsPerEntry;
     private int size;
     private final VALUE nullValue;
 
-    public CloseToTheMetalHopScotchHashingAlgorithm( NumberArrayFactory factory, int itemsPerEntry, VALUE nullValue )
+    public CloseToTheMetalHopScotchHashingAlgorithm( NumberArrayFactory factory, int itemsPerEntry, int itemsPerKey,
+            VALUE nullValue )
     {
         this.factory = factory;
         this.itemsPerEntry = itemsPerEntry;
+        this.itemsPerKey = itemsPerKey;
         this.nullValue = nullValue;
         newArray( 1 << 4 );
     }
@@ -94,7 +100,7 @@ public abstract class CloseToTheMetalHopScotchHashingAlgorithm<VALUE>
         }
 
         // Look in its neighborhood
-        int hopBits = array.get( absIndex+hopBitsOffset );
+        int hopBits = array.get( absIndex+itemsPerKey );
         while ( hopBits > 0 )
         {
             int hopIndex = nextIndex( index, numberOfTrailingZeros( hopBits )+1 );
@@ -119,7 +125,7 @@ public abstract class CloseToTheMetalHopScotchHashingAlgorithm<VALUE>
         }
 
         // Look in its neighborhood
-        int hopBits = array.get( absIndex+hopBitsOffset );
+        int hopBits = array.get( absIndex+itemsPerKey );
         while ( hopBits > 0 )
         {
             int hopIndex = nextIndex( index, numberOfTrailingZeros( hopBits )+1 );
@@ -150,7 +156,7 @@ public abstract class CloseToTheMetalHopScotchHashingAlgorithm<VALUE>
         }
         else
         {   // look at the neighbors of this entry to see if any is the requested key
-            int hopBits = array.get( absIndex + hopBitsOffset );
+            int hopBits = array.get( absIndex + itemsPerKey );
             while ( hopBits > 0 )
             {
                 int hopIndex = nextIndex( index, numberOfTrailingZeros( hopBits )+1 );
@@ -195,7 +201,7 @@ public abstract class CloseToTheMetalHopScotchHashingAlgorithm<VALUE>
         }
         else
         {   // look at the neighbors of this entry to see if any is the requested key
-            int hopBits = array.get( absIndex + hopBitsOffset );
+            int hopBits = array.get( absIndex + itemsPerKey );
             while ( hopBits > 0 )
             {
                 int hopIndex = nextIndex( index, numberOfTrailingZeros( hopBits )+1 );
@@ -257,7 +263,7 @@ public abstract class CloseToTheMetalHopScotchHashingAlgorithm<VALUE>
             boolean swapped = false;
             for ( int d = 0; d < (DEFAULT_H >> 1) && !swapped; d++ )
             {   // examine hop information (i.e. is there's someone in the neighborhood here to swap with 'hopIndex'?)
-                int neighborHopBits = array.get( index( neighborIndex )+hopBitsOffset );
+                int neighborHopBits = array.get( index( neighborIndex )+itemsPerKey );
                 while ( neighborHopBits > 0 && !swapped )
                 {
                     int hd = numberOfTrailingZeros( neighborHopBits );
@@ -273,7 +279,7 @@ public abstract class CloseToTheMetalHopScotchHashingAlgorithm<VALUE>
                     int distance = (freeIndex-candidateIndex)&tableMask;
                     array.swap( index( candidateIndex ), index( freeIndex ), 1 );
                     //  - update the neighbor entry with the move of the candidate entry
-                    array.genericXor( index( neighborIndex )+hopBitsOffset, ((1 << hd) | (1 << (hd+distance))) );
+                    array.genericXor( index( neighborIndex )+itemsPerKey, ((1 << hd) | (1 << (hd+distance))) );
                     freeIndex = candidateIndex;
                     swapped = true;
                     totalHd -= distance;
@@ -295,10 +301,64 @@ public abstract class CloseToTheMetalHopScotchHashingAlgorithm<VALUE>
         putKey( array, absIndex, key );
         putValue( array, absIndex, value );
         // and update the hop bits of "index"
-        array.genericAnd( index( index )+hopBitsOffset, ~(1 << totalHd) );
+        array.genericAnd( index( index )+itemsPerKey, ~(1 << totalHd) );
 
         return true;
     }
+
+    public VALUE _remove( long key )
+    {
+        int index = indexOf( key );
+        int absIndex = index( index );
+        int freedIndex = -1;
+        VALUE result = null;
+        if ( getKey( array, absIndex ) == key )
+        {   // Bulls eye
+            freedIndex = index;
+            result = removeKey( array, absIndex );
+        }
+
+        // Look in its neighborhood
+        long hopBits = array.get( absIndex+itemsPerKey );
+        while ( hopBits > 0 )
+        {
+            int hd = numberOfTrailingZeros( hopBits );
+            int hopIndex = nextIndex( index, hd+1 );
+            int absHopIndex = index( hopIndex );
+            if ( getKey( array, absHopIndex ) == key )
+            {   // there it is
+                freedIndex = hopIndex;
+                result = removeKey( array, absHopIndex );
+                array.genericOr( absHopIndex+itemsPerKey, (1 << hd) );
+            }
+            hopBits &= hopBits-1;
+        }
+
+        // reversed hop-scotching, i.e. pull in the most distant neighbor, iteratively as long as the
+        // pulled index has neighbors of its own
+        while ( freedIndex != -1 )
+        {
+            int freedHopBits = array.get( index( freedIndex )+itemsPerKey );
+            if ( freedHopBits > 0 )
+            {   // It's got a neighbor, go ahead and move it here
+                int hd = 63-numberOfLeadingZeros( freedHopBits );
+                int candidateIndex = nextIndex( freedIndex, hd+1 );
+                // move key/value
+                array.swap( index( candidateIndex ), index( freedIndex ), 1 );
+                // remove that hop bit, since that one is no longer a neighbor, it's "the one" at the index
+                array.genericOr( index( freedIndex )+itemsPerKey, (1 << hd) );
+                freedIndex = candidateIndex;
+            }
+            else
+            {
+                freedIndex = -1;
+            }
+        }
+
+        return result;
+    }
+
+
 
     private void newArray( int logicalCapacity )
     {
@@ -306,25 +366,30 @@ public abstract class CloseToTheMetalHopScotchHashingAlgorithm<VALUE>
         tableMask = highestOneBit( logicalCapacity ) - 1;
     }
 
-    private int index( int logicalIndex )
+    protected int index( int logicalIndex )
     {
         return logicalIndex * itemsPerEntry;
     }
 
-    private int nextIndex( int index, int delta )
+    protected int nextIndex( int index, int delta )
     {
         return (index+delta)&tableMask;
     }
 
-    private int indexOf( long key )
+    protected int indexOf( long key )
     {
         return hashFunction.hash( key ) & tableMask;
+    }
+
+    protected int capacity()
+    {
+        return (int) (array.length() / itemsPerEntry); // TODO safe cast
     }
 
     private void growTable()
     {
         IntArray oldArray = array;
-        int oldCapacity = (int) oldArray.length() / itemsPerEntry; // TODO safe cast
+        int oldCapacity = capacity();
         newArray( oldCapacity * 2 );
 
         // place all entries in the new table
@@ -369,6 +434,42 @@ public abstract class CloseToTheMetalHopScotchHashingAlgorithm<VALUE>
         return size;
     }
 
+    protected long getLong( IntArray array, int absIndex )
+    {
+        long low = array.get( absIndex )&0xFFFFFFFFL;
+        long high = array.get( absIndex+1 )&0xFFFFFFFFL;
+        return (high << 32) | low;
+    }
+
+    protected PrimitiveLongIterator longKeyIterator()
+    {
+        return new PrimitiveLongCollections.PrimitiveLongBaseIterator()
+        {
+            private final int max = capacity();
+            private int i;
+
+            @Override
+            protected boolean fetchNext()
+            {
+                while ( i < max )
+                {
+                    int index = i++;
+                    long key = getKey( array, index );
+                    if ( isVisible( index, key ) )
+                    {
+                        return next( key );
+                    }
+                }
+                return false;
+            }
+
+            private boolean isVisible( int index, long key )
+            {
+                return key != nullKey;
+            }
+        };
+    }
+
     // ========================================================
     // Methods for sub-classes to implement to change behavior,
     // mostly regarding how keys/values are stored in the array
@@ -391,5 +492,11 @@ public abstract class CloseToTheMetalHopScotchHashingAlgorithm<VALUE>
 
     protected void putValue( IntArray array, int absIndex, VALUE value )
     {
+    }
+
+    protected VALUE removeKey( IntArray array, int absIndex )
+    {
+        array.remove( absIndex, itemsPerKey );
+        return null;
     }
 }

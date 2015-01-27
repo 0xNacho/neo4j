@@ -19,51 +19,52 @@
  */
 package org.neo4j.collection.primitive.hopscotch;
 
-import org.neo4j.array.primitive.IntArray;
 import org.neo4j.array.primitive.NumberArrayFactory;
-import org.neo4j.collection.primitive.PrimitiveLongIterator;
-import org.neo4j.collection.primitive.PrimitiveLongSet;
+import org.neo4j.collection.primitive.PrimitiveLongObjectMap;
+import org.neo4j.collection.primitive.PrimitiveLongObjectVisitor;
 
-public class CloseToTheMetalLongSet extends CloseToTheMetalLongCollection<Void> implements PrimitiveLongSet
+public class CloseToTheMetalLongObjectMap<VALUE> extends CloseToTheMetalLongCollection<VALUE> implements PrimitiveLongObjectMap<VALUE>
 {
-    public CloseToTheMetalLongSet( NumberArrayFactory factory )
+    public CloseToTheMetalLongObjectMap( NumberArrayFactory factory )
     {
         super( factory, 3, 2, null );
     }
 
     @Override
-    protected long getKey( IntArray array, int absIndex )
+    public VALUE put( long key, VALUE value )
     {
-        return getLong( array, absIndex );
+        return _put( key, value );
     }
 
     @Override
-    protected void putKey( IntArray array, int absIndex, long key )
+    public boolean containsKey( long key )
     {
-        array.set( absIndex, (int)key );
-        array.set( absIndex+1, (int)((key&0xFFFFFFFF00000000L) >>> 32) );
+        return contains( key );
     }
 
     @Override
-    public boolean accept( long value )
+    public VALUE get( long key )
     {
-        return contains( value );
+        return _get( key );
     }
 
     @Override
-    public boolean addAll( PrimitiveLongIterator values )
+    public VALUE remove( long key )
     {
-        boolean result = false;
-        while ( values.hasNext() )
+        return _remove( key );
+    }
+
+    @Override
+    public <E extends Exception> void visitEntries( PrimitiveLongObjectVisitor<VALUE,E> visitor ) throws E
+    {
+        int capacity = capacity();
+        for ( int i = 0, k = 0; i < capacity; i++, k += itemsPerEntry )
         {
-            result |= add( values.next() );
+            long key = getKey( array, k );
+            if ( isVisible( i, key ) && visitor.visited( key, getValue( array, k ) ) )
+            {
+                return;
+            }
         }
-        return result;
-    }
-
-    @Override
-    public boolean remove( long value )
-    {
-        return _remove( value ) != null;
     }
 }
