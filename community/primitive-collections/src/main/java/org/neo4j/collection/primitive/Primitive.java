@@ -47,7 +47,7 @@ public class Primitive
     public static final Object VALUE_MARKER = new Object();
     public static final int DEFAULT_HEAP_CAPACITY = 1 << 8;
     public static final int DEFAULT_OFFHEAP_CAPACITY = 1 << 20;
-    public static final HashFunction DEFAULT_HASH_FUNCTION = HashFunction.DEFAULT_HASHING;
+    public static final HashFunction DEFAULT_HASH_FUNCTION = HashFunction.JUL_HASHING;
 
     // Some example would be...
     public static PrimitiveLongSet longSet()

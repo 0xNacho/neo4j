@@ -27,10 +27,9 @@ import java.util.Set;
 
 import org.junit.Test;
 
-import org.neo4j.array.primitive.NumberArrayFactory;
 import org.neo4j.collection.primitive.Primitive;
+import org.neo4j.collection.primitive.PrimitiveIntSet;
 import org.neo4j.collection.primitive.PrimitiveLongIntMap;
-import org.neo4j.collection.primitive.PrimitiveLongSet;
 import org.neo4j.test.randomized.RandomizedTester.TargetFactory;
 import org.neo4j.test.randomized.TestResource;
 
@@ -120,21 +119,6 @@ public class PrimitiveCollectionBenchmark
         };
         performanceTest( "neo4j to the metal hop-scotch set, random", factory, RANDOM_DATA );
         performanceTest( "neo4j to the metal hop-scotch set, seq", factory, SEQUENTIAL_DATA );
-    }
-
-    @Test
-    public void performanceTestCloseToTheMetalPrimitiveLongSet() throws Exception
-    {
-        TargetFactory<MapInterface> factory = new TargetFactory<MapInterface>()
-        {
-            @Override
-            public MapInterface newInstance()
-            {
-                return new CloseToTheMetalHopScotchSet();
-            }
-        };
-        performanceTest( "neo4j close to the metal hop-scotch set, random", factory, RANDOM_DATA );
-        performanceTest( "neo4j close to the metal hop-scotch set, seq", factory, SEQUENTIAL_DATA );
     }
 
     @Test
@@ -383,18 +367,18 @@ public class PrimitiveCollectionBenchmark
 
     private static class HopScotchSet implements MapInterface
     {
-        private final PrimitiveLongSet set = Primitive.offHeapLongSet();
+        private final PrimitiveIntSet set = Primitive.intSet();
 
         @Override
         public void put( long key, int value )
         {
-            set.add( key );
+            set.add( (int) key );
         }
 
         @Override
         public void get( long key )
         {
-            set.contains( key );
+            set.contains( (int) key );
         }
 
         @Override
@@ -425,38 +409,6 @@ public class PrimitiveCollectionBenchmark
         public void get( long key )
         {
             set.contains( key );
-        }
-
-        @Override
-        public String toString()
-        {
-            return set.toString();
-        }
-
-        @Override
-        public void close()
-        {
-        }
-    }
-
-    private static class CloseToTheMetalHopScotchSet implements MapInterface
-    {
-//        private final PrimitiveLongSet set = new Blaaa( NumberArrayFactory.HEAP );
-//        private final PrimitiveIntSet set = new CloseToTheMetalIntSet( NumberArrayFactory.HEAP );
-        private final PrimitiveLongIntMap set = new PrimitiveLongIntHashMap( NumberArrayFactory.HEAP );
-
-        @Override
-        public void put( long key, int value )
-        {
-//            set.add( (int)key );
-            set.put( key, value );
-        }
-
-        @Override
-        public void get( long key )
-        {
-//            set.contains( (int)key );
-            set.get( key );
         }
 
         @Override
