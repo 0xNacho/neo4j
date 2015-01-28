@@ -27,11 +27,16 @@ import org.neo4j.collection.primitive.PrimitiveLongVisitor;
 
 import static org.neo4j.collection.primitive.hopscotch.HashFunction.DEFAULT_HASHING;
 
-public class PrimitiveLongHashSet extends HopScotchHashingLongCollection<Void> implements PrimitiveLongSet
+/**
+ * add:    change -> true
+ * remove: change -> true
+ *
+ */
+public class PrimitiveLongHashSet extends HopScotchHashingLongCollection<Boolean> implements PrimitiveLongSet
 {
     public PrimitiveLongHashSet( HashFunction hashFunction, NumberArrayFactory factory, int initialCapacity )
     {
-        super( hashFunction, factory, 3, 2, null, initialCapacity );
+        super( hashFunction, factory, 3, 2, Boolean.TRUE, initialCapacity );
     }
 
     @Override
@@ -67,7 +72,7 @@ public class PrimitiveLongHashSet extends HopScotchHashingLongCollection<Void> i
     @Override
     public boolean remove( long value )
     {
-        return _remove( value ) != null;
+        return _remove( value );
     }
 
     @SuppressWarnings( "EqualsWhichDoesntCheckParameterClass" ) // yes it does

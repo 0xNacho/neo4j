@@ -19,10 +19,17 @@
  */
 package org.neo4j.test.randomized;
 
-public interface TestResource extends AutoCloseable
+public class Printables
 {
-    @Override
-    void close();
-
-    Printable given();
+    public static Printable line( final String line )
+    {
+        return new Printable()
+        {
+            @Override
+            public void print( LinePrinter out )
+            {
+                out.println( line );
+            }
+        };
+    }
 }

@@ -22,21 +22,19 @@ package org.neo4j.test.randomized;
 import java.io.PrintStream;
 import java.util.List;
 
-import org.neo4j.test.randomized.RandomizedTester.TargetFactory;
+import org.neo4j.function.Factory;
 
-public class TestCaseWriter<T,F>
+public class TestCaseWriter<T extends TestResource,F>
 {
     private final String testName;
-    private final Printable given;
     private final List<Action<T,F>> actions;
     private final Action<T,F> failingAction;
-    private final TargetFactory<T> targetFactory;
+    private final Factory<T> targetFactory;
 
-    TestCaseWriter( String testName, Printable given, TargetFactory<T> targetFactory,
+    TestCaseWriter( String testName, Factory<T> targetFactory,
             List<Action<T,F>> actions, Action<T,F> failingAction )
     {
         this.testName = testName;
-        this.given = given;
         this.targetFactory = targetFactory;
         this.actions = actions;
         this.failingAction = failingAction;
@@ -52,7 +50,7 @@ public class TestCaseWriter<T,F>
 
         LinePrinter codePrinter = baseLinePrinter.indent();
         codePrinter.println( "// GIVEN" );
-        given.print( codePrinter );
+        target.given().print( codePrinter );
         for ( Action<T,F> action : actions )
         {
             action.printAsCode( target, codePrinter, false );

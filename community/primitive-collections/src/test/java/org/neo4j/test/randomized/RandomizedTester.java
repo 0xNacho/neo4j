@@ -23,6 +23,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import org.neo4j.function.Factory;
+
 /**
  * Randomized tester, where it's given a target factory, i.e. a factory for creating the object
  * participating in all actions. I.e. the subject of this randomized test. It's also given an action factory,
@@ -39,17 +41,17 @@ import java.util.List;
 public class RandomizedTester<T extends TestResource,F>
 {
     private final List<Action<T,F>> givenActions = new ArrayList<>();
-    private final TargetFactory<T> targetFactory; // will be used later for finding a minimal test case
+    private final Factory<T> targetFactory; // will be used later for finding a minimal test case
     private final ActionFactory<T,F> actionFactory;
     private Action<T,F> failingAction;
     private F failure;
 
-    public RandomizedTester( TargetFactory<T> targetFactory, ActionFactory<T,F> actionFactory )
+    public RandomizedTester( Factory<T> targetFactory, ActionFactory<T,F> actionFactory )
     {
         this( targetFactory, actionFactory, null, null );
     }
 
-    private RandomizedTester( TargetFactory<T> targetFactory, ActionFactory<T,F> actionFactory,
+    private RandomizedTester( Factory<T> targetFactory, ActionFactory<T,F> actionFactory,
             Action<T,F> failingAction, F failure )
     {
         this.targetFactory = targetFactory;
@@ -157,19 +159,14 @@ public class RandomizedTester<T extends TestResource,F>
         };
     }
 
-    public TestCaseWriter<T,F> testCaseWriter( String name, Printable given )
+    public TestCaseWriter<T,F> testCaseWriter( String name )
     {
-        return new TestCaseWriter<>( name, given, targetFactory, givenActions, failingAction );
+        return new TestCaseWriter<>( name, targetFactory, givenActions, failingAction );
     }
 
     public F failure()
     {
         return failure;
-    }
-
-    public interface TargetFactory<T>
-    {
-        T newInstance();
     }
 
     public interface ActionFactory<T,F>

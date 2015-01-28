@@ -149,11 +149,11 @@ public abstract class HopScotchHashingCollection<VALUE>
         {   // this index is free, just place it there
             putKey( array, absIndex, key );
             size++;
-            return false;
+            return true;
         }
         else if ( keyAtIndex == key )
         {   // this index is occupied with the same key
-            return true;
+            return false;
         }
         else
         {   // look at the neighbors of this entry to see if any is the requested key
@@ -173,7 +173,7 @@ public abstract class HopScotchHashingCollection<VALUE>
         if ( hopScotchPut( key, index, null ) )
         {   // we managed to wiggle our way to a free spot and put it there
             size++;
-            return false;
+            return true;
         }
 
         // we couldn't add this value, even in the H-1 neighborhood, so grow table...
@@ -308,7 +308,7 @@ public abstract class HopScotchHashingCollection<VALUE>
         return true;
     }
 
-    public VALUE _remove( long key )
+    public VALUE getAndRemove( long key )
     {
         int index = indexOf( key );
         int absIndex = index( index );
@@ -319,23 +319,67 @@ public abstract class HopScotchHashingCollection<VALUE>
             freedIndex = index;
             result = removeKey( array, absIndex );
         }
-
-        // Look in its neighborhood
-        long hopBits = array.get( absIndex+itemsPerKey );
-        while ( hopBits > 0 )
-        {
-            int hd = numberOfTrailingZeros( hopBits );
-            int hopIndex = nextIndex( index, hd+1 );
-            int absHopIndex = index( hopIndex );
-            if ( getKey( array, absHopIndex ) == key )
-            {   // there it is
-                freedIndex = hopIndex;
-                result = removeKey( array, absHopIndex );
-                array.genericOr( absHopIndex+itemsPerKey, (1 << hd) );
+        else
+        {   // Look in its neighborhood
+            long hopBits = array.get( absIndex+itemsPerKey );
+            while ( hopBits > 0 )
+            {
+                int hd = numberOfTrailingZeros( hopBits );
+                int hopIndex = nextIndex( index, hd+1 );
+                int absHopIndex = index( hopIndex );
+                if ( getKey( array, absHopIndex ) == key )
+                {   // there it is
+                    freedIndex = hopIndex;
+                    result = removeKey( array, absHopIndex );
+                    array.genericOr( absHopIndex+itemsPerKey, (1 << hd) );
+                    break;
+                }
+                hopBits &= hopBits-1;
             }
-            hopBits &= hopBits-1;
         }
 
+        reverseRemoveHopScotching( freedIndex );
+        return result;
+    }
+
+    public boolean _remove( long key )
+    {
+        int index = indexOf( key );
+        int absIndex = index( index );
+        int freedIndex = -1;
+        boolean removed = false;
+        if ( getKey( array, absIndex ) == key )
+        {   // Bulls eye
+            freedIndex = index;
+            removeKey( array, absIndex );
+            removed = true;
+        }
+        else
+        {   // Look in its neighborhood
+            long hopBits = array.get( absIndex+itemsPerKey );
+            while ( hopBits > 0 )
+            {
+                int hd = numberOfTrailingZeros( hopBits );
+                int hopIndex = nextIndex( index, hd+1 );
+                int absHopIndex = index( hopIndex );
+                if ( getKey( array, absHopIndex ) == key )
+                {   // there it is
+                    freedIndex = hopIndex;
+                    removeKey( array, absHopIndex );
+                    array.genericOr( absHopIndex+itemsPerKey, (1 << hd) );
+                    removed = true;
+                    break;
+                }
+                hopBits &= hopBits-1;
+            }
+        }
+
+        reverseRemoveHopScotching( freedIndex );
+        return removed;
+    }
+
+    private void reverseRemoveHopScotching( int freedIndex )
+    {
         // reversed hop-scotching, i.e. pull in the most distant neighbor, iteratively as long as the
         // pulled index has neighbors of its own
         while ( freedIndex != -1 )
@@ -356,8 +400,6 @@ public abstract class HopScotchHashingCollection<VALUE>
                 freedIndex = -1;
             }
         }
-
-        return result;
     }
 
 
