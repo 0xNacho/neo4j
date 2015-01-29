@@ -19,13 +19,16 @@
  */
 package org.neo4j.collection.primitive.hopscotch;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 
 import org.neo4j.collection.primitive.Primitive;
 import org.neo4j.collection.primitive.PrimitiveLongCollections;
 import org.neo4j.collection.primitive.PrimitiveLongCollections.PrimitiveLongBaseIterator;
+import org.neo4j.collection.primitive.PrimitiveLongIntMap;
 import org.neo4j.collection.primitive.PrimitiveLongIterator;
 import org.neo4j.collection.primitive.PrimitiveLongSet;
 import org.neo4j.test.randomized.Printable;
@@ -78,6 +81,43 @@ public class TestResources
         boolean containsKey( long key )
         {
             return normalSet.contains( key );
+        }
+    }
+
+    public static class PrimitiveLongIntHashMapResource extends PrimitiveCollectionTestResource<Integer>
+    {
+        final Map<Long,Integer> normalMap = new HashMap<>();
+        final PrimitiveLongIntMap map = Primitive.longIntMap();
+
+        @Override
+        public void close()
+        {
+            map.close();
+        }
+
+        @Override
+        public Printable given()
+        {
+            return line( PrimitiveLongIntMap.class.getSimpleName() + " map = " +
+                    Primitive.class.getSimpleName() + ".longIntMap();" );
+        }
+
+        @Override
+        int size()
+        {
+            return normalMap.size();
+        }
+
+        @Override
+        PrimitiveLongIterator keyIterator()
+        {
+            return fromBoxedLong( normalMap.keySet().iterator() );
+        }
+
+        @Override
+        boolean containsKey( long key )
+        {
+            return normalMap.containsKey( key );
         }
     }
 

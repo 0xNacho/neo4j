@@ -134,9 +134,10 @@ public abstract class HopScotchHashingCollection<VALUE>
         while ( hopBits > 0 )
         {
             int hopIndex = nextIndex( index, numberOfTrailingZeros( hopBits )+1 );
-            if ( getKey( array, index( hopIndex) ) == key )
+            int absHopIndex = index( hopIndex);
+            if ( getKey( array, absHopIndex ) == key )
             {   // There it is
-                return getValue( array, index, absIndex );
+                return getValue( array, hopIndex, absHopIndex );
             }
             hopBits &= hopBits-1;
         }
@@ -196,15 +197,14 @@ public abstract class HopScotchHashingCollection<VALUE>
         if ( keyAtIndex == nullKey )
         {   // this index is free, just place it there
             putKey( array, absIndex, key );
+            putValue( array, index, absIndex, value );
             size++;
             assert monitor.placedAtFreeAndIntendedIndex( key, index );
             return nullValue;
         }
         else if ( keyAtIndex == key )
         {   // this index is occupied with the same key
-            VALUE prev = getValue( array, index, absIndex );
-            putValue( array, index, absIndex, value );
-            return prev;
+            return putValue( array, index, absIndex, value );
         }
         else
         {   // look at the neighbors of this entry to see if any is the requested key
@@ -215,9 +215,7 @@ public abstract class HopScotchHashingCollection<VALUE>
                 int absHopIndex = index( hopIndex );
                 if ( getKey( array, absHopIndex ) == key )
                 {   // this index is occupied with the same key
-                    VALUE prev = getValue( array, hopIndex, absHopIndex );
-                    putValue( array, hopIndex, absHopIndex, value );
-                    return prev;
+                    return putValue( array, hopIndex, absHopIndex, value );
                 }
                 hopBits &= hopBits-1;
             }
@@ -327,11 +325,13 @@ public abstract class HopScotchHashingCollection<VALUE>
         int index = indexOf( key );
         int absIndex = index( index );
         int freedIndex = -1;
-        VALUE result = null;
+        VALUE result = nullValue;
         if ( getKey( array, absIndex ) == key )
         {   // Bulls eye
             freedIndex = index;
-            result = removeKey( array, absIndex );
+            result = getValue( array, index, absIndex );
+            removeEntry( array, absIndex );
+            size--;
         }
         else
         {   // Look in its neighborhood
@@ -344,7 +344,9 @@ public abstract class HopScotchHashingCollection<VALUE>
                 if ( getKey( array, absHopIndex ) == key )
                 {   // there it is
                     freedIndex = hopIndex;
-                    result = removeKey( array, absHopIndex );
+                    result = getValue( array, hopIndex, absHopIndex );
+                    removeEntry( array, absHopIndex );
+                    size--;
                     array.genericOr( absHopIndex+itemsPerEntry-1, hopBit( hd ) );
                     break;
                 }
@@ -365,7 +367,7 @@ public abstract class HopScotchHashingCollection<VALUE>
         if ( getKey( array, absIndex ) == key )
         {   // Bulls eye
             freedIndex = index;
-            removeKey( array, absIndex );
+            removeEntry( array, absIndex );
             removed = true;
         }
         else
@@ -379,7 +381,7 @@ public abstract class HopScotchHashingCollection<VALUE>
                 if ( getKey( array, absHopIndex ) == key )
                 {   // there it is
                     freedIndex = hopIndex;
-                    removeKey( array, absHopIndex );
+                    removeEntry( array, absHopIndex );
                     array.genericOr( absIndex+itemsPerEntry-1, hopBit( hd ) );
                     removed = true;
                     break;
@@ -562,8 +564,9 @@ public abstract class HopScotchHashingCollection<VALUE>
         return nullValue;
     }
 
-    protected void putValue( IntArray array, int index, int absIndex, VALUE value )
+    protected VALUE putValue( IntArray array, int index, int absIndex, VALUE value )
     {
+        return nullValue;
     }
 
     protected long getKey( IntArray array, int absIndex )
@@ -576,9 +579,8 @@ public abstract class HopScotchHashingCollection<VALUE>
         array.set( absIndex, (int) key );
     }
 
-    protected VALUE removeKey( IntArray array, int absIndex )
+    protected void removeEntry( IntArray array, int absIndex )
     {
         array.remove( absIndex, itemsPerEntry-1 );
-        return null;
     }
 }

@@ -19,11 +19,10 @@
  */
 package org.neo4j.collection.primitive.hopscotch;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
 import org.junit.Test;
 
-import org.neo4j.array.primitive.NumberArrayFactory;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.neo4j.collection.primitive.Primitive;
 import org.neo4j.collection.primitive.PrimitiveIntSet;
 import org.neo4j.collection.primitive.PrimitiveIntVisitor;
@@ -33,56 +32,12 @@ import org.neo4j.collection.primitive.PrimitiveLongVisitor;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 public class PrimitiveLongSetTest
 {
-    private PrimitiveLongHashSet newSet()
-    {
-        return new PrimitiveLongHashSet( HashFunction.DEFAULT_HASHING, NumberArrayFactory.HEAP, 1 << 4 );
-    }
-
-    @Test
-    public void shouldOnlyContainAddedValues() throws Exception
-    {
-        // GIVEN
-        PrimitiveLongSet set = Primitive.longSet();
-        set.add( 1782159662243139806L );
-        set.add( 1998940269699431967L );
-        set.add( 6237973095280222104L );
-        set.remove( 2094308016346104534L );
-        set.add( 6512105166676564768L );
-        set.add( 6120498779828695406L );
-        set.add( 6512105166676564768L );
-        set.add( 715733209311190193L );
-        set.add( 5579397148461206583L );
-        set.remove( 8484687959885845004L );
-        set.add( 715733209311190193L );
-        set.add( 5495448419530643274L );
-        set.add( 392053931805482047L );
-        set.add( 5495448419530643274L );
-        set.add( 1782159662243139806L );
-        set.add( 6512105166676564768L );
-        set.add( 981507809131455862L );
-        set.add( 953475307207219665L );
-        set.add( 8479551558857653641L );
-        set.add( 7486245702546711200L );
-        set.add( 6237973095280222104L );
-        set.add( 4922210374246859883L );
-
-        // WHEN/THEN
-        boolean existedBefore = set.contains( 392053931805482047L );
-        boolean removed = set.remove( 392053931805482047L );
-        boolean existsAfter = set.contains( 392053931805482047L );
-        assertTrue( "392053931805482047 should exist before removing here", existedBefore );
-        assertTrue( "392053931805482047 should be reported as removed here", removed );
-        assertFalse( "392053931805482047 should not exist", existsAfter );
-    }
-
-
     @SuppressWarnings( "unchecked" )
     @Test
     public void longVisitorShouldSeeAllEntriesIfItDoesNotBreakOut()

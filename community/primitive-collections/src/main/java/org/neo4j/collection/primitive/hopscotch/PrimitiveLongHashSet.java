@@ -19,7 +19,6 @@
  */
 package org.neo4j.collection.primitive.hopscotch;
 
-import org.neo4j.array.primitive.IntArray;
 import org.neo4j.array.primitive.NumberArrayFactory;
 import org.neo4j.collection.primitive.PrimitiveLongIterator;
 import org.neo4j.collection.primitive.PrimitiveLongSet;
@@ -33,19 +32,6 @@ public class PrimitiveLongHashSet extends HopScotchHashingLongCollection<Boolean
             Monitor monitor )
     {
         super( hashFunction, factory, 3, Boolean.TRUE, initialCapacity, monitor );
-    }
-
-    @Override
-    protected long getKey( IntArray array, int absIndex )
-    {
-        return getLong( array, absIndex );
-    }
-
-    @Override
-    protected void putKey( IntArray array, int absIndex, long key )
-    {
-        array.set( absIndex, (int)key );
-        array.set( absIndex+1, (int)((key&0xFFFFFFFF00000000L) >>> 32) );
     }
 
     @Override

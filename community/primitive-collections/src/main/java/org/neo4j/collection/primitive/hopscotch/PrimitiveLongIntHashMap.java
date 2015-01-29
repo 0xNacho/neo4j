@@ -47,14 +47,17 @@ public class PrimitiveLongIntHashMap extends HopScotchHashingLongCollection<int[
     @Override
     protected int[] getValue( IntArray array, int index, int absIndex )
     {
-        transport[0] = array.get( absIndex+3 );
+        transport[0] = array.get( absIndex+2 );
         return transport;
     }
 
     @Override
-    protected void putValue( IntArray array, int index, int absIndex, int[] value )
+    protected int[] putValue( IntArray array, int index, int absIndex, int[] value )
     {
-        array.set( absIndex+3, value[0] );
+        int prev = array.get( absIndex+2 );
+        array.set( absIndex+2, value[0] );
+        transport[0] = prev;
+        return transport;
     }
 
     @Override

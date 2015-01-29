@@ -58,9 +58,11 @@ public class PrimitiveIntObjectHashMap<VALUE> extends HopScotchHashingIntCollect
     }
 
     @Override
-    protected void putValue( IntArray array, int index, int absIndex, VALUE value )
+    protected VALUE putValue( IntArray array, int index, int absIndex, VALUE value )
     {
+        VALUE prev = values[index];
         values[index] = value;
+        return prev;
     }
 
     @Override
