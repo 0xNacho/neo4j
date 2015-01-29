@@ -61,6 +61,12 @@ public class PrimitiveLongIntHashMap extends HopScotchHashingLongCollection<int[
     }
 
     @Override
+    protected int[] cloneValue( int[] value )
+    {
+        return value.clone();
+    }
+
+    @Override
     public boolean containsKey( long key )
     {
         return contains( key );

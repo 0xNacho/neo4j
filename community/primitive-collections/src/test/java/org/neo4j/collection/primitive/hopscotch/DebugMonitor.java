@@ -112,6 +112,13 @@ public class DebugMonitor extends Monitor.Adapter
     }
 
     @Override
+    public boolean tableGrowing( int fromCapacity, int currentSize )
+    {
+        System.out.println( "Table growing " + fromCapacity );
+        return true;
+    }
+
+    @Override
     public boolean tableGrew( int fromCapacity, int toCapacity, int currentSize )
     {
         System.out.println( "Table grew " + fromCapacity + " --> " + toCapacity );

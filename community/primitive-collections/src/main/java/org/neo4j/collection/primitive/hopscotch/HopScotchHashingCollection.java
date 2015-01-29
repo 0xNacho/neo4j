@@ -21,8 +21,6 @@ package org.neo4j.collection.primitive.hopscotch;
 
 import org.neo4j.array.primitive.IntArray;
 import org.neo4j.array.primitive.NumberArrayFactory;
-import org.neo4j.collection.primitive.PrimitiveLongCollections;
-import org.neo4j.collection.primitive.PrimitiveLongIterator;
 
 import static java.lang.Integer.highestOneBit;
 import static java.lang.Long.numberOfLeadingZeros;
@@ -229,6 +227,7 @@ public abstract class HopScotchHashingCollection<VALUE>
         }
 
         // we couldn't add this value, even in the H-1 neighborhood, so grow table...
+        value = cloneValue( value );
         growTable();
 
         // ...and try again
@@ -288,7 +287,7 @@ public abstract class HopScotchHashingCollection<VALUE>
                     //  - update the neighbor entry with the move of the candidate entry
                     array.genericXor( index( neighborIndex )+itemsPerEntry-1, hopBit( hd ) | hopBit( hd+distance ) );
                     assert monitor.pushedToFreeIndex( index, oldNeighborHopBits, hopBits( index( neighborIndex ) ),
-                            neighborIndex, getKey( array, freeIndex ), candidateIndex, freeIndex );
+                            neighborIndex, getKey( array, index( freeIndex ) ), candidateIndex, freeIndex );
                     freeIndex = candidateIndex;
                     swapped = true;
                     totalHd -= distance;
@@ -347,7 +346,7 @@ public abstract class HopScotchHashingCollection<VALUE>
                     result = getValue( array, hopIndex, absHopIndex );
                     removeEntry( array, absHopIndex );
                     size--;
-                    array.genericOr( absHopIndex+itemsPerEntry-1, hopBit( hd ) );
+                    array.genericOr( absIndex+itemsPerEntry-1, hopBit( hd ) );
                     break;
                 }
                 hopBits &= hopBits-1;
@@ -419,8 +418,6 @@ public abstract class HopScotchHashingCollection<VALUE>
             }
         }
     }
-
-
 
     protected void newArray( int logicalCapacity )
     {
@@ -512,35 +509,6 @@ public abstract class HopScotchHashingCollection<VALUE>
         array.set( absIndex+1, (int)((value&0xFFFFFFFF00000000L) >>> 32) );
     }
 
-    protected PrimitiveLongIterator longKeyIterator()
-    {
-        return new PrimitiveLongCollections.PrimitiveLongBaseIterator()
-        {
-            private final int max = capacity();
-            private int i;
-
-            @Override
-            protected boolean fetchNext()
-            {
-                while ( i < max )
-                {
-                    int index = i++;
-                    long key = getKey( array, index );
-                    if ( isVisible( index, key ) )
-                    {
-                        return next( key );
-                    }
-                }
-                return false;
-            }
-
-            private boolean isVisible( int index, long key )
-            {
-                return key != nullKey;
-            }
-        };
-    }
-
     protected final boolean typeAndSizeEqual( Object other )
     {
         if ( this.getClass() == other.getClass() )
@@ -567,6 +535,21 @@ public abstract class HopScotchHashingCollection<VALUE>
     protected VALUE putValue( IntArray array, int index, int absIndex, VALUE value )
     {
         return nullValue;
+    }
+
+    /**
+     * Special method for cloning a value. This solves a problem that primitive maps with primitive values
+     * have, a problem very specific to their current implementation where there VALUE type is declared using
+     * their primitive type as an array, just to fit into generics. The thing is that there's only one
+     * such array with length 1 and it's reused everywhere. This clashes in the case where {@link #_put(long, Object)}
+     * or {@link #add(long)} needs to grow the table. The re-adding of all values in {@link #growTable()}
+     * will reuse the value array in each call, and so the original value will be lost. To solve this
+     * the value is cloned before growing the table. For implementations that doesn't have primitive type as value
+     * this can be left as-is, otherwise a standard implementation is to just return {@code value.clone()}.
+     */
+    protected VALUE cloneValue( VALUE value )
+    {
+        return value;
     }
 
     protected long getKey( IntArray array, int absIndex )
