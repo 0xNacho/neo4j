@@ -76,14 +76,16 @@ public abstract class HopScotchHashingCollection<VALUE>
     protected final int itemsPerEntry;
     private int size;
     private final VALUE nullValue;
+    private final Monitor monitor;
 
     public HopScotchHashingCollection( HashFunction hashFunction, NumberArrayFactory factory,
-            int itemsPerEntry, VALUE nullValue, int initialCapacity )
+            int itemsPerEntry, VALUE nullValue, int initialCapacity, Monitor monitor )
     {
         this.hashFunction = hashFunction;
         this.factory = factory;
         this.itemsPerEntry = itemsPerEntry;
         this.nullValue = nullValue;
+        this.monitor = monitor;
         newArray( initialCapacity );
     }
 
@@ -151,6 +153,7 @@ public abstract class HopScotchHashingCollection<VALUE>
         {   // this index is free, just place it there
             putKey( array, absIndex, key );
             size++;
+            assert monitor.placedAtFreeAndIntendedIndex( key, index );
             return true;
         }
         else if ( keyAtIndex == key )
@@ -194,6 +197,7 @@ public abstract class HopScotchHashingCollection<VALUE>
         {   // this index is free, just place it there
             putKey( array, absIndex, key );
             size++;
+            assert monitor.placedAtFreeAndIntendedIndex( key, index );
             return nullValue;
         }
         else if ( keyAtIndex == key )
@@ -268,6 +272,7 @@ public abstract class HopScotchHashingCollection<VALUE>
             for ( int d = 0; d < (DEFAULT_H >> 1) && !swapped; d++ )
             {   // examine hop information (i.e. is there's someone in the neighborhood here to swap with 'hopIndex'?)
                 long neighborHopBits = hopBits( index( neighborIndex ) );
+                final long oldNeighborHopBits = neighborHopBits;
                 while ( neighborHopBits > 0 && !swapped )
                 {
                     int hd = numberOfTrailingZeros( neighborHopBits );
@@ -283,11 +288,9 @@ public abstract class HopScotchHashingCollection<VALUE>
                     int distance = (freeIndex-candidateIndex)&tableMask;
                     array.swap( index( candidateIndex ), index( freeIndex ), itemsPerEntry-1 );
                     //  - update the neighbor entry with the move of the candidate entry
-                    long hopBitsBefore = hopBits( index( neighborIndex ) );
                     array.genericXor( index( neighborIndex )+itemsPerEntry-1, hopBit( hd ) | hopBit( hd+distance ) );
-                    long hopBitsAfter = hopBits( index( neighborIndex ) );
-                    System.out.println( "swap " + candidateIndex + " --> " + freeIndex + " where " + neighborIndex +
-                            " tracks that hop " + hopBitsBefore + " --> " + hopBitsAfter );
+                    assert monitor.pushedToFreeIndex( index, oldNeighborHopBits, hopBits( index( neighborIndex ) ),
+                            neighborIndex, getKey( array, freeIndex ), candidateIndex, freeIndex );
                     freeIndex = candidateIndex;
                     swapped = true;
                     totalHd -= distance;
@@ -310,8 +313,7 @@ public abstract class HopScotchHashingCollection<VALUE>
         putValue( array, index, absIndex, value );
         // and update the hop bits of "index"
         array.genericAnd( index( index )+itemsPerEntry-1, ~hopBit( totalHd ) );
-        System.out.println( index + " hop " + totalHd + " " + hopBits( index( index ) ) );
-
+        assert monitor.placedAtFreedIndex( index, hopBits( index( index ) ), key, freeIndex );
         return true;
     }
 
@@ -350,7 +352,7 @@ public abstract class HopScotchHashingCollection<VALUE>
             }
         }
 
-        reverseHopScotching( freedIndex );
+        reverseHopScotching( index, freedIndex );
         return result;
     }
 
@@ -378,7 +380,7 @@ public abstract class HopScotchHashingCollection<VALUE>
                 {   // there it is
                     freedIndex = hopIndex;
                     removeKey( array, absHopIndex );
-                    array.genericOr( absHopIndex+itemsPerEntry-1, hopBit( hd ) );
+                    array.genericOr( absIndex+itemsPerEntry-1, hopBit( hd ) );
                     removed = true;
                     break;
                 }
@@ -386,11 +388,11 @@ public abstract class HopScotchHashingCollection<VALUE>
             }
         }
 
-        reverseHopScotching( freedIndex );
+        reverseHopScotching( index, freedIndex );
         return removed;
     }
 
-    private void reverseHopScotching( int freedIndex )
+    private void reverseHopScotching( int index, int freedIndex )
     {
         // reversed hop-scotching, i.e. pull in the most distant neighbor, iteratively as long as the
         // pulled index has neighbors of its own
@@ -402,13 +404,11 @@ public abstract class HopScotchHashingCollection<VALUE>
                 int hd = 63-numberOfLeadingZeros( freedHopBits );
                 int candidateIndex = nextIndex( freedIndex, hd+1 );
                 // move key/value
-                long hopBitsBefore = hopBits( index( freedIndex ) );
                 array.swap( index( candidateIndex ), index( freedIndex ), itemsPerEntry-1 );
                 // remove that hop bit, since that one is no longer a neighbor, it's "the one" at the index
                 array.genericOr( index( freedIndex )+itemsPerEntry-1, hopBit( hd ) );
-                long hopBitsAfter = hopBits( index( freedIndex ) );
-                System.out.println( "swap " + freedIndex + " <-- " + candidateIndex + " hops " +
-                        hopBitsBefore + " --> " + hopBitsAfter );
+                assert monitor.pulledToFreeIndex( index, hopBits( index( freedIndex ) ), getKey( array, freedIndex ),
+                        candidateIndex, freedIndex );
                 freedIndex = candidateIndex;
             }
             else
@@ -448,25 +448,28 @@ public abstract class HopScotchHashingCollection<VALUE>
 
     private void growTable()
     {
+        assert monitor.tableGrowing( capacity(), size );
+
         IntArray oldArray = array;
         int oldCapacity = capacity();
         newArray( oldCapacity * 2 );
+        size = 0;
 
         // place all entries in the new table
-        for ( int i = 0; i < oldCapacity; i++ )
+        for ( int i = 0, k = 0; i < oldCapacity; i++, k += itemsPerEntry )
         {
-            int absIndex = index( i );
-            long key = getKey( array, absIndex );
+            long key = getKey( oldArray, k );
             if ( key != nullKey )
             {
-                VALUE value = getValue( oldArray, i, absIndex );
-                if ( _put( key, value ) != null )
+                VALUE value = getValue( oldArray, i, k );
+                if ( _put( key, value ) != nullValue )
                 {
-                    throw new IllegalStateException( "Couldn't add " + key + " when growing table" );
+                    throw new IllegalStateException( "Couldn't add " + key + " at index " + i + " when growing table" );
                 }
             }
         }
         oldArray.close();
+        assert monitor.tableGrew( oldCapacity, capacity(), size );
     }
 
     // =============================================================

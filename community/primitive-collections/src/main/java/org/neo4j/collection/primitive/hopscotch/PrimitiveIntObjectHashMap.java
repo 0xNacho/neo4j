@@ -31,9 +31,10 @@ public class PrimitiveIntObjectHashMap<VALUE> extends HopScotchHashingIntCollect
 {
     private VALUE[] values;
 
-    public PrimitiveIntObjectHashMap( HashFunction hashFunction, NumberArrayFactory factory, int initialCapacity )
+    public PrimitiveIntObjectHashMap( HashFunction hashFunction, NumberArrayFactory factory, int initialCapacity,
+            Monitor monitor )
     {
-        super( hashFunction, factory, 3, null, initialCapacity );
+        super( hashFunction, factory, 3, null, initialCapacity, monitor );
     }
 
     @SuppressWarnings( "unchecked" )

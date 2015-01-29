@@ -24,7 +24,11 @@ import java.util.Set;
 
 import static java.lang.String.format;
 
-class DebugMonitor extends Monitor.Adapter
+/**
+ * Helpful when tracking problems in the hopscotch algorithm. This monitor makes it easy to follow changes
+ * and "hop scotching" of specific values or indexes throughout the collection.
+ */
+public class DebugMonitor extends Monitor.Adapter
 {
     // This is not the place to use primitive collections, since we're debugging issues in them
     private final Set<Integer> indexes = new HashSet<>();
@@ -104,6 +108,13 @@ class DebugMonitor extends Monitor.Adapter
                     intendedIndex, toIndex, key, fromIndex,
                     hopBitsAsString( newHopBits ) ) );
         }
+        return true;
+    }
+
+    @Override
+    public boolean tableGrew( int fromCapacity, int toCapacity, int currentSize )
+    {
+        System.out.println( "Table grew " + fromCapacity + " --> " + toCapacity );
         return true;
     }
 }

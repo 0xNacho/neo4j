@@ -29,9 +29,10 @@ import static org.neo4j.collection.primitive.hopscotch.HashFunction.DEFAULT_HASH
 
 public class PrimitiveLongHashSet extends HopScotchHashingLongCollection<Boolean> implements PrimitiveLongSet
 {
-    public PrimitiveLongHashSet( HashFunction hashFunction, NumberArrayFactory factory, int initialCapacity )
+    public PrimitiveLongHashSet( HashFunction hashFunction, NumberArrayFactory factory, int initialCapacity,
+            Monitor monitor )
     {
-        super( hashFunction, factory, 3, Boolean.TRUE, initialCapacity );
+        super( hashFunction, factory, 3, Boolean.TRUE, initialCapacity, monitor );
     }
 
     @Override

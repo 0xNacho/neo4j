@@ -30,9 +30,10 @@ public class PrimitiveLongObjectHashMap<VALUE> extends HopScotchHashingLongColle
 {
     private VALUE[] values;
 
-    public PrimitiveLongObjectHashMap( HashFunction hashFunction, NumberArrayFactory factory, int initialCapacity )
+    public PrimitiveLongObjectHashMap( HashFunction hashFunction, NumberArrayFactory factory, int initialCapacity,
+            Monitor monitor )
     {
-        super( hashFunction, factory, 3, null, initialCapacity );
+        super( hashFunction, factory, 3, null, initialCapacity, monitor );
     }
 
     @SuppressWarnings( "unchecked" )

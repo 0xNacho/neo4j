@@ -29,9 +29,9 @@ public abstract class HopScotchHashingLongCollection<VALUE> extends HopScotchHas
         implements PrimitiveLongCollection
 {
     public HopScotchHashingLongCollection( HashFunction hashFunction, NumberArrayFactory factory,
-            int itemsPerEntry, VALUE nullValue, int initialCapacity )
+            int itemsPerEntry, VALUE nullValue, int initialCapacity, Monitor monitor )
     {
-        super( hashFunction, factory, itemsPerEntry, nullValue, initialCapacity );
+        super( hashFunction, factory, itemsPerEntry, nullValue, initialCapacity, monitor );
     }
 
     @Override

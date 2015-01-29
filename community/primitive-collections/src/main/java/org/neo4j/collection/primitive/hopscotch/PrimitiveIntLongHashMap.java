@@ -32,9 +32,10 @@ public class PrimitiveIntLongHashMap extends HopScotchHashingIntCollection<long[
 
     private final long[] transport = new long[1];
 
-    public PrimitiveIntLongHashMap( HashFunction hashFunction, NumberArrayFactory factory, int initialCapacity )
+    public PrimitiveIntLongHashMap( HashFunction hashFunction, NumberArrayFactory factory, int initialCapacity,
+            Monitor monitor )
     {
-        super( hashFunction, factory, 4, NULL, initialCapacity );
+        super( hashFunction, factory, 4, NULL, initialCapacity, monitor );
     }
 
     @Override

@@ -19,19 +19,18 @@
  */
 package org.neo4j.collection.primitive.hopscotch;
 
+import org.junit.Test;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
-import org.junit.Test;
-
 import org.neo4j.collection.primitive.Primitive;
 import org.neo4j.collection.primitive.PrimitiveIntSet;
 import org.neo4j.collection.primitive.PrimitiveLongIntMap;
-import org.neo4j.test.randomized.RandomizedTester.TargetFactory;
-import org.neo4j.test.randomized.TestResource;
+import org.neo4j.function.Factory;
 
 import static java.lang.System.currentTimeMillis;
 import static java.lang.Thread.sleep;
@@ -94,7 +93,7 @@ public class PrimitiveCollectionBenchmark
     @Test
     public void performanceTestPrimitiveLongSet() throws Exception
     {
-        TargetFactory<MapInterface> factory = new TargetFactory<MapInterface>()
+        Factory<MapInterface> factory = new Factory<MapInterface>()
         {
             @Override
             public MapInterface newInstance()
@@ -109,7 +108,7 @@ public class PrimitiveCollectionBenchmark
     @Test
     public void performanceTestToTheMetalPrimitiveLongSet() throws Exception
     {
-        TargetFactory<MapInterface> factory = new TargetFactory<MapInterface>()
+        Factory<MapInterface> factory = new Factory<MapInterface>()
         {
             @Override
             public MapInterface newInstance()
@@ -124,7 +123,7 @@ public class PrimitiveCollectionBenchmark
     @Test
     public void performanceTestPrimitiveLongMap() throws Exception
     {
-        TargetFactory<MapInterface> factory = new TargetFactory<MapInterface>()
+        Factory<MapInterface> factory = new Factory<MapInterface>()
         {
             @Override
             public MapInterface newInstance()
@@ -184,7 +183,7 @@ public class PrimitiveCollectionBenchmark
     @Test
     public void performanceTestJavaLongSet() throws Exception
     {
-        TargetFactory<MapInterface> factory = new TargetFactory<MapInterface>()
+        Factory<MapInterface> factory = new Factory<MapInterface>()
         {
             @Override
             public MapInterface newInstance()
@@ -199,7 +198,7 @@ public class PrimitiveCollectionBenchmark
     @Test
     public void performanceTestJavaLongMap() throws Exception
     {
-        TargetFactory<MapInterface> factory = new TargetFactory<MapInterface>()
+        Factory<MapInterface> factory = new Factory<MapInterface>()
         {
             @Override
             public MapInterface newInstance()
@@ -211,7 +210,7 @@ public class PrimitiveCollectionBenchmark
         performanceTest( "juc Long->Integer map, seq", factory, SEQUENTIAL_DATA );
     }
 
-    private void performanceTest( String name, TargetFactory<MapInterface> factory,
+    private void performanceTest( String name, Factory<MapInterface> factory,
             long[] data ) throws Exception
     {
         System.out.println( "testing: " + name );
@@ -239,7 +238,7 @@ public class PrimitiveCollectionBenchmark
         }
     }
 
-    private interface MapInterface extends TestResource
+    private interface MapInterface extends AutoCloseable
     {
         void put( long key, int value );
 
