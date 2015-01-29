@@ -152,7 +152,7 @@ public abstract class HopScotchHashingCollection<VALUE>
         {   // this index is free, just place it there
             putKey( array, absIndex, key );
             size++;
-            assert monitor.placedAtFreeAndIntendedIndex( key, index );
+//            assert monitor.placedAtFreeAndIntendedIndex( key, index );
             return true;
         }
         else if ( keyAtIndex == key )
@@ -197,7 +197,7 @@ public abstract class HopScotchHashingCollection<VALUE>
             putKey( array, absIndex, key );
             putValue( array, index, absIndex, value );
             size++;
-            assert monitor.placedAtFreeAndIntendedIndex( key, index );
+//            assert monitor.placedAtFreeAndIntendedIndex( key, index );
             return nullValue;
         }
         else if ( keyAtIndex == key )
@@ -269,7 +269,7 @@ public abstract class HopScotchHashingCollection<VALUE>
             for ( int d = 0; d < (DEFAULT_H >> 1) && !swapped; d++ )
             {   // examine hop information (i.e. is there's someone in the neighborhood here to swap with 'hopIndex'?)
                 long neighborHopBits = hopBits( index( neighborIndex ) );
-                final long oldNeighborHopBits = neighborHopBits;
+//                final long oldNeighborHopBits = neighborHopBits;
                 while ( neighborHopBits > 0 && !swapped )
                 {
                     int hd = numberOfTrailingZeros( neighborHopBits );
@@ -286,8 +286,8 @@ public abstract class HopScotchHashingCollection<VALUE>
                     array.swap( index( candidateIndex ), index( freeIndex ), itemsPerEntry-1 );
                     //  - update the neighbor entry with the move of the candidate entry
                     array.genericXor( index( neighborIndex )+itemsPerEntry-1, hopBit( hd ) | hopBit( hd+distance ) );
-                    assert monitor.pushedToFreeIndex( index, oldNeighborHopBits, hopBits( index( neighborIndex ) ),
-                            neighborIndex, getKey( array, index( freeIndex ) ), candidateIndex, freeIndex );
+//                    assert monitor.pushedToFreeIndex( index, oldNeighborHopBits, hopBits( index( neighborIndex ) ),
+//                            neighborIndex, getKey( array, index( freeIndex ) ), candidateIndex, freeIndex );
                     freeIndex = candidateIndex;
                     swapped = true;
                     totalHd -= distance;
@@ -310,7 +310,7 @@ public abstract class HopScotchHashingCollection<VALUE>
         putValue( array, index, absIndex, value );
         // and update the hop bits of "index"
         array.genericAnd( index( index )+itemsPerEntry-1, ~hopBit( totalHd ) );
-        assert monitor.placedAtFreedIndex( index, hopBits( index( index ) ), key, freeIndex );
+//        assert monitor.placedAtFreedIndex( index, hopBits( index( index ) ), key, freeIndex );
         return true;
     }
 
@@ -408,8 +408,8 @@ public abstract class HopScotchHashingCollection<VALUE>
                 array.swap( index( candidateIndex ), index( freedIndex ), itemsPerEntry-1 );
                 // remove that hop bit, since that one is no longer a neighbor, it's "the one" at the index
                 array.genericOr( index( freedIndex )+itemsPerEntry-1, hopBit( hd ) );
-                assert monitor.pulledToFreeIndex( index, hopBits( index( freedIndex ) ), getKey( array, freedIndex ),
-                        candidateIndex, freedIndex );
+//                assert monitor.pulledToFreeIndex( index, hopBits( index( freedIndex ) ), getKey( array, freedIndex ),
+//                        candidateIndex, freedIndex );
                 freedIndex = candidateIndex;
             }
             else
@@ -447,7 +447,7 @@ public abstract class HopScotchHashingCollection<VALUE>
 
     private void growTable()
     {
-        assert monitor.tableGrowing( capacity(), size );
+//        assert monitor.tableGrowing( capacity(), size );
 
         IntArray oldArray = array;
         int oldCapacity = capacity();
@@ -468,7 +468,7 @@ public abstract class HopScotchHashingCollection<VALUE>
             }
         }
         oldArray.close();
-        assert monitor.tableGrew( oldCapacity, capacity(), size );
+//        assert monitor.tableGrew( oldCapacity, capacity(), size );
     }
 
     // =============================================================
