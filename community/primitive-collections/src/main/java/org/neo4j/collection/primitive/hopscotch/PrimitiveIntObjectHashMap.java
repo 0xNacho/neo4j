@@ -33,7 +33,7 @@ public class PrimitiveIntObjectHashMap<VALUE> extends HopScotchHashingIntCollect
 
     public PrimitiveIntObjectHashMap( HashFunction hashFunction, NumberArrayFactory factory, int initialCapacity )
     {
-        super( hashFunction, factory, 3, 2, null, initialCapacity );
+        super( hashFunction, factory, 3, null, initialCapacity );
     }
 
     @SuppressWarnings( "unchecked" )
@@ -77,7 +77,7 @@ public class PrimitiveIntObjectHashMap<VALUE> extends HopScotchHashingIntCollect
     @Override
     public VALUE remove( int key )
     {
-        return _remove( key );
+        return getAndRemove( key );
     }
 
     @Override

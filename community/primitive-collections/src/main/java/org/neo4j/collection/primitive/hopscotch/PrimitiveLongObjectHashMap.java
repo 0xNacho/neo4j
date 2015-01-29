@@ -32,7 +32,7 @@ public class PrimitiveLongObjectHashMap<VALUE> extends HopScotchHashingLongColle
 
     public PrimitiveLongObjectHashMap( HashFunction hashFunction, NumberArrayFactory factory, int initialCapacity )
     {
-        super( hashFunction, factory, 3, 2, null, initialCapacity );
+        super( hashFunction, factory, 3, null, initialCapacity );
     }
 
     @SuppressWarnings( "unchecked" )
@@ -76,7 +76,7 @@ public class PrimitiveLongObjectHashMap<VALUE> extends HopScotchHashingLongColle
     @Override
     public VALUE remove( long key )
     {
-        return _remove( key );
+        return getAndRemove( key );
     }
 
     @Override

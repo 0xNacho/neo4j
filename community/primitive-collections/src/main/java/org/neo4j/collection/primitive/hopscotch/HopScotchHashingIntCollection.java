@@ -29,9 +29,9 @@ public abstract class HopScotchHashingIntCollection<VALUE> extends HopScotchHash
         implements PrimitiveIntCollection
 {
     public HopScotchHashingIntCollection( HashFunction hashFunction, NumberArrayFactory factory,
-            int itemsPerEntry, int itemsPerKey, VALUE nullValue, int initialCapacity )
+            int itemsPerEntry, VALUE nullValue, int initialCapacity )
     {
-        super( hashFunction, factory, itemsPerEntry, itemsPerKey, nullValue, initialCapacity );
+        super( hashFunction, factory, itemsPerEntry, nullValue, initialCapacity );
     }
 
     @Override

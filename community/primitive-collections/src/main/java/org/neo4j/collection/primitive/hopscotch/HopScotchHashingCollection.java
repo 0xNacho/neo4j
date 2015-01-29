@@ -25,7 +25,6 @@ import org.neo4j.collection.primitive.PrimitiveLongCollections;
 import org.neo4j.collection.primitive.PrimitiveLongIterator;
 
 import static java.lang.Integer.highestOneBit;
-import static java.lang.Integer.numberOfTrailingZeros;
 import static java.lang.Long.numberOfLeadingZeros;
 import static java.lang.Long.numberOfTrailingZeros;
 
@@ -73,19 +72,17 @@ public abstract class HopScotchHashingCollection<VALUE>
     protected IntArray array;
     private int tableMask;
     protected final long nullKey = -1;
-    protected final int itemsPerKey;
     private final NumberArrayFactory factory;
     protected final int itemsPerEntry;
     private int size;
     private final VALUE nullValue;
 
     public HopScotchHashingCollection( HashFunction hashFunction, NumberArrayFactory factory,
-            int itemsPerEntry, int itemsPerKey, VALUE nullValue, int initialCapacity )
+            int itemsPerEntry, VALUE nullValue, int initialCapacity )
     {
         this.hashFunction = hashFunction;
         this.factory = factory;
         this.itemsPerEntry = itemsPerEntry;
-        this.itemsPerKey = itemsPerKey;
         this.nullValue = nullValue;
         newArray( initialCapacity );
     }
@@ -101,11 +98,11 @@ public abstract class HopScotchHashingCollection<VALUE>
         }
 
         // Look in its neighborhood
-        int hopBits = array.get( absIndex+itemsPerKey );
+        long hopBits = hopBits( absIndex );
         while ( hopBits > 0 )
         {
             int hopIndex = nextIndex( index, numberOfTrailingZeros( hopBits )+1 );
-            if ( array.get( index( hopIndex )) == key )
+            if ( getKey( array, index( hopIndex ) ) == key )
             {   // There it is
                 return true;
             }
@@ -113,6 +110,11 @@ public abstract class HopScotchHashingCollection<VALUE>
         }
 
         return false;
+    }
+
+    private long hopBits( int absIndex )
+    {
+        return ~(array.get( absIndex+itemsPerEntry-1 ) | 0xFFFFFFFF00000000L);
     }
 
     public VALUE _get( long key )
@@ -126,11 +128,11 @@ public abstract class HopScotchHashingCollection<VALUE>
         }
 
         // Look in its neighborhood
-        int hopBits = array.get( absIndex+itemsPerKey );
+        long hopBits = hopBits( absIndex );
         while ( hopBits > 0 )
         {
             int hopIndex = nextIndex( index, numberOfTrailingZeros( hopBits )+1 );
-            if ( array.get( index( hopIndex )) == key )
+            if ( getKey( array, index( hopIndex) ) == key )
             {   // There it is
                 return getValue( array, index, absIndex );
             }
@@ -157,7 +159,7 @@ public abstract class HopScotchHashingCollection<VALUE>
         }
         else
         {   // look at the neighbors of this entry to see if any is the requested key
-            int hopBits = array.get( absIndex + itemsPerKey );
+            long hopBits = hopBits( absIndex );
             while ( hopBits > 0 )
             {
                 int hopIndex = nextIndex( index, numberOfTrailingZeros( hopBits )+1 );
@@ -202,7 +204,7 @@ public abstract class HopScotchHashingCollection<VALUE>
         }
         else
         {   // look at the neighbors of this entry to see if any is the requested key
-            int hopBits = array.get( absIndex + itemsPerKey );
+            long hopBits = hopBits( absIndex );
             while ( hopBits > 0 )
             {
                 int hopIndex = nextIndex( index, numberOfTrailingZeros( hopBits )+1 );
@@ -265,7 +267,7 @@ public abstract class HopScotchHashingCollection<VALUE>
             boolean swapped = false;
             for ( int d = 0; d < (DEFAULT_H >> 1) && !swapped; d++ )
             {   // examine hop information (i.e. is there's someone in the neighborhood here to swap with 'hopIndex'?)
-                int neighborHopBits = array.get( index( neighborIndex )+itemsPerKey );
+                long neighborHopBits = hopBits( index( neighborIndex ) );
                 while ( neighborHopBits > 0 && !swapped )
                 {
                     int hd = numberOfTrailingZeros( neighborHopBits );
@@ -279,9 +281,13 @@ public abstract class HopScotchHashingCollection<VALUE>
                     // OK, here's a neighbor, let's examine it's neighbors (candidates to move)
                     //  - move the candidate entry (incl. updating its hop bits) to the free index
                     int distance = (freeIndex-candidateIndex)&tableMask;
-                    array.swap( index( candidateIndex ), index( freeIndex ), 1 );
+                    array.swap( index( candidateIndex ), index( freeIndex ), itemsPerEntry-1 );
                     //  - update the neighbor entry with the move of the candidate entry
-                    array.genericXor( index( neighborIndex )+itemsPerKey, ((1 << hd) | (1 << (hd+distance))) );
+                    long hopBitsBefore = hopBits( index( neighborIndex ) );
+                    array.genericXor( index( neighborIndex )+itemsPerEntry-1, hopBit( hd ) | hopBit( hd+distance ) );
+                    long hopBitsAfter = hopBits( index( neighborIndex ) );
+                    System.out.println( "swap " + candidateIndex + " --> " + freeIndex + " where " + neighborIndex +
+                            " tracks that hop " + hopBitsBefore + " --> " + hopBitsAfter );
                     freeIndex = candidateIndex;
                     swapped = true;
                     totalHd -= distance;
@@ -303,9 +309,15 @@ public abstract class HopScotchHashingCollection<VALUE>
         putKey( array, absIndex, key );
         putValue( array, index, absIndex, value );
         // and update the hop bits of "index"
-        array.genericAnd( index( index )+itemsPerKey, ~(1 << totalHd) );
+        array.genericAnd( index( index )+itemsPerEntry-1, ~hopBit( totalHd ) );
+        System.out.println( index + " hop " + totalHd + " " + hopBits( index( index ) ) );
 
         return true;
+    }
+
+    private long hopBit( int hd )
+    {
+        return (1L << hd);
     }
 
     public VALUE getAndRemove( long key )
@@ -321,7 +333,7 @@ public abstract class HopScotchHashingCollection<VALUE>
         }
         else
         {   // Look in its neighborhood
-            long hopBits = array.get( absIndex+itemsPerKey );
+            long hopBits = hopBits( absIndex );
             while ( hopBits > 0 )
             {
                 int hd = numberOfTrailingZeros( hopBits );
@@ -331,14 +343,14 @@ public abstract class HopScotchHashingCollection<VALUE>
                 {   // there it is
                     freedIndex = hopIndex;
                     result = removeKey( array, absHopIndex );
-                    array.genericOr( absHopIndex+itemsPerKey, (1 << hd) );
+                    array.genericOr( absHopIndex+itemsPerEntry-1, hopBit( hd ) );
                     break;
                 }
                 hopBits &= hopBits-1;
             }
         }
 
-        reverseRemoveHopScotching( freedIndex );
+        reverseHopScotching( freedIndex );
         return result;
     }
 
@@ -356,7 +368,7 @@ public abstract class HopScotchHashingCollection<VALUE>
         }
         else
         {   // Look in its neighborhood
-            long hopBits = array.get( absIndex+itemsPerKey );
+            long hopBits = hopBits( absIndex );
             while ( hopBits > 0 )
             {
                 int hd = numberOfTrailingZeros( hopBits );
@@ -366,7 +378,7 @@ public abstract class HopScotchHashingCollection<VALUE>
                 {   // there it is
                     freedIndex = hopIndex;
                     removeKey( array, absHopIndex );
-                    array.genericOr( absHopIndex+itemsPerKey, (1 << hd) );
+                    array.genericOr( absHopIndex+itemsPerEntry-1, hopBit( hd ) );
                     removed = true;
                     break;
                 }
@@ -374,30 +386,34 @@ public abstract class HopScotchHashingCollection<VALUE>
             }
         }
 
-        reverseRemoveHopScotching( freedIndex );
+        reverseHopScotching( freedIndex );
         return removed;
     }
 
-    private void reverseRemoveHopScotching( int freedIndex )
+    private void reverseHopScotching( int freedIndex )
     {
         // reversed hop-scotching, i.e. pull in the most distant neighbor, iteratively as long as the
         // pulled index has neighbors of its own
         while ( freedIndex != -1 )
         {
-            int freedHopBits = array.get( index( freedIndex )+itemsPerKey );
+            long freedHopBits = hopBits( index( freedIndex ) );
             if ( freedHopBits > 0 )
             {   // It's got a neighbor, go ahead and move it here
                 int hd = 63-numberOfLeadingZeros( freedHopBits );
                 int candidateIndex = nextIndex( freedIndex, hd+1 );
                 // move key/value
-                array.swap( index( candidateIndex ), index( freedIndex ), 1 );
+                long hopBitsBefore = hopBits( index( freedIndex ) );
+                array.swap( index( candidateIndex ), index( freedIndex ), itemsPerEntry-1 );
                 // remove that hop bit, since that one is no longer a neighbor, it's "the one" at the index
-                array.genericOr( index( freedIndex )+itemsPerKey, (1 << hd) );
+                array.genericOr( index( freedIndex )+itemsPerEntry-1, hopBit( hd ) );
+                long hopBitsAfter = hopBits( index( freedIndex ) );
+                System.out.println( "swap " + freedIndex + " <-- " + candidateIndex + " hops " +
+                        hopBitsBefore + " --> " + hopBitsAfter );
                 freedIndex = candidateIndex;
             }
             else
             {
-                freedIndex = -1;
+                break;
             }
         }
     }
@@ -559,7 +575,7 @@ public abstract class HopScotchHashingCollection<VALUE>
 
     protected VALUE removeKey( IntArray array, int absIndex )
     {
-        array.remove( absIndex, itemsPerKey );
+        array.remove( absIndex, itemsPerEntry-1 );
         return null;
     }
 }

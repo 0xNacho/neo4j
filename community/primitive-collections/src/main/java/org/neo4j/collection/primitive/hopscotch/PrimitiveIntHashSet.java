@@ -28,7 +28,7 @@ public class PrimitiveIntHashSet extends HopScotchHashingIntCollection<Void> imp
 {
     public PrimitiveIntHashSet( HashFunction hashFunction, NumberArrayFactory factory, int initialCapacity )
     {
-        super( hashFunction, factory, 2, 1, null, initialCapacity );
+        super( hashFunction, factory, 2, null, initialCapacity );
     }
 
     @Override
@@ -63,7 +63,7 @@ public class PrimitiveIntHashSet extends HopScotchHashingIntCollection<Void> imp
     @Override
     public boolean remove( int value )
     {
-        return _remove( value ) != null;
+        return _remove( value );
     }
 
     @SuppressWarnings( "EqualsWhichDoesntCheckParameterClass" ) // yes it does

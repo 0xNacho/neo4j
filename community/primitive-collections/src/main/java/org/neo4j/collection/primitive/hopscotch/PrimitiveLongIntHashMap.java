@@ -33,7 +33,7 @@ public class PrimitiveLongIntHashMap extends HopScotchHashingLongCollection<int[
 
     public PrimitiveLongIntHashMap( HashFunction hashFunction, NumberArrayFactory factory, int initialCapacity )
     {
-        super( hashFunction, factory, 4, 2, NULL, initialCapacity );
+        super( hashFunction, factory, 4, NULL, initialCapacity );
     }
 
     @Override
@@ -71,7 +71,7 @@ public class PrimitiveLongIntHashMap extends HopScotchHashingLongCollection<int[
     @Override
     public int remove( long key )
     {
-        return _remove( key )[0];
+        return getAndRemove( key )[0];
     }
 
     @Override

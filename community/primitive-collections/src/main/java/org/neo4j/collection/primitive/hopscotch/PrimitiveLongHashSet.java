@@ -27,16 +27,11 @@ import org.neo4j.collection.primitive.PrimitiveLongVisitor;
 
 import static org.neo4j.collection.primitive.hopscotch.HashFunction.DEFAULT_HASHING;
 
-/**
- * add:    change -> true
- * remove: change -> true
- *
- */
 public class PrimitiveLongHashSet extends HopScotchHashingLongCollection<Boolean> implements PrimitiveLongSet
 {
     public PrimitiveLongHashSet( HashFunction hashFunction, NumberArrayFactory factory, int initialCapacity )
     {
-        super( hashFunction, factory, 3, 2, Boolean.TRUE, initialCapacity );
+        super( hashFunction, factory, 3, Boolean.TRUE, initialCapacity );
     }
 
     @Override
