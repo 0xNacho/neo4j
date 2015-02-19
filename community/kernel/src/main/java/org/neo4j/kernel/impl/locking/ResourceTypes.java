@@ -25,7 +25,7 @@ import java.util.Map;
 import org.neo4j.kernel.impl.util.concurrent.LockWaitStrategies;
 import org.neo4j.kernel.impl.util.concurrent.WaitStrategy;
 
-import static org.neo4j.collection.primitive.hopscotch.OldHopScotchHashingAlgorithm.DEFAULT_HASHING;
+import static org.neo4j.collection.primitive.hopscotch.HashFunction.DEFAULT_HASHING;
 
 public enum ResourceTypes implements Locks.ResourceType
 {

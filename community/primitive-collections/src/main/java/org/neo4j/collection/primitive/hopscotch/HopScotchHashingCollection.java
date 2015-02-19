@@ -447,7 +447,7 @@ public abstract class HopScotchHashingCollection<VALUE>
 
     private void growTable()
     {
-//        assert monitor.tableGrowing( capacity(), size );
+        assert monitor.tableGrowing( capacity(), size );
 
         IntArray oldArray = array;
         int oldCapacity = capacity();
@@ -468,7 +468,7 @@ public abstract class HopScotchHashingCollection<VALUE>
             }
         }
         oldArray.close();
-//        assert monitor.tableGrew( oldCapacity, capacity(), size );
+        assert monitor.tableGrew( oldCapacity, capacity(), size );
     }
 
     // =============================================================

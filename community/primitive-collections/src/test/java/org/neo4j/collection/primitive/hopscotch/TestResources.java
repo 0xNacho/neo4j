@@ -30,6 +30,7 @@ import org.neo4j.collection.primitive.PrimitiveLongCollections;
 import org.neo4j.collection.primitive.PrimitiveLongCollections.PrimitiveLongBaseIterator;
 import org.neo4j.collection.primitive.PrimitiveLongIntMap;
 import org.neo4j.collection.primitive.PrimitiveLongIterator;
+import org.neo4j.collection.primitive.PrimitiveLongObjectMap;
 import org.neo4j.collection.primitive.PrimitiveLongSet;
 import org.neo4j.test.randomized.Printable;
 import org.neo4j.test.randomized.TestResource;
@@ -100,6 +101,43 @@ public class TestResources
         {
             return line( PrimitiveLongIntMap.class.getSimpleName() + " map = " +
                     Primitive.class.getSimpleName() + ".longIntMap();" );
+        }
+
+        @Override
+        int size()
+        {
+            return normalMap.size();
+        }
+
+        @Override
+        PrimitiveLongIterator keyIterator()
+        {
+            return fromBoxedLong( normalMap.keySet().iterator() );
+        }
+
+        @Override
+        boolean containsKey( long key )
+        {
+            return normalMap.containsKey( key );
+        }
+    }
+
+    public static class PrimitiveLongObjectHashMapResource extends PrimitiveCollectionTestResource<Integer>
+    {
+        final Map<Long,Integer> normalMap = new HashMap<>();
+        final PrimitiveLongObjectMap<Integer> map = Primitive.longObjectMap();
+
+        @Override
+        public void close()
+        {
+            map.close();
+        }
+
+        @Override
+        public Printable given()
+        {
+            return line( PrimitiveLongObjectMap.class.getSimpleName() + "<Integer> map = " +
+                    Primitive.class.getSimpleName() + ".longObjectMap();" );
         }
 
         @Override

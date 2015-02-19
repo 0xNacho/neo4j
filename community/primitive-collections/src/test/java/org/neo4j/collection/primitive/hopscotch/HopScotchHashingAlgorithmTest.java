@@ -19,22 +19,20 @@
  */
 package org.neo4j.collection.primitive.hopscotch;
 
+import org.junit.Test;
+
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.junit.Test;
-
+import org.neo4j.array.primitive.NumberArrayFactory;
+import org.neo4j.collection.primitive.Primitive;
 import org.neo4j.collection.primitive.PrimitiveLongIterator;
 import org.neo4j.collection.primitive.PrimitiveLongSet;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-
-import static org.neo4j.array.primitive.NumberArrayFactory.HEAP;
-import static org.neo4j.collection.primitive.Primitive.VALUE_MARKER;
-import static org.neo4j.collection.primitive.hopscotch.OldHopScotchHashingAlgorithm.DEFAULT_H;
 
 public class HopScotchHashingAlgorithmTest
 {
@@ -44,8 +42,7 @@ public class HopScotchHashingAlgorithmTest
         // GIVEN
         int threshold = figureOutGrowthThreshold();
         TableGrowthAwareMonitor monitor = new TableGrowthAwareMonitor();
-        PrimitiveLongSet set = new PrimitiveLongHashSet(
-                new LongKeyTable<>( HEAP, DEFAULT_H, VALUE_MARKER ), VALUE_MARKER, monitor );
+        PrimitiveLongSet set = set( monitor );
         Set<Long> added = new HashSet<>();
         for ( int i = 0; i < threshold-1; i++ )
         {
@@ -71,6 +68,12 @@ public class HopScotchHashingAlgorithmTest
 
         // THEN
         assertEquals( added, iterated );
+    }
+
+    private PrimitiveLongHashSet set( Monitor monitor )
+    {
+        return new PrimitiveLongHashSet(
+                HashFunction.DEFAULT_HASHING, NumberArrayFactory.HEAP, Primitive.DEFAULT_HEAP_CAPACITY, monitor );
     }
 
     private static class TableGrowthAwareMonitor extends Monitor.Adapter
@@ -108,8 +111,7 @@ public class HopScotchHashingAlgorithmTest
                 return true;
             }
         };
-        try ( PrimitiveLongSet set = new PrimitiveLongHashSet(
-                new LongKeyTable<>( HEAP, DEFAULT_H, VALUE_MARKER ), VALUE_MARKER, monitor ) )
+        try ( PrimitiveLongSet set = set( monitor ) )
         {
             int i = 0;
             for ( i = 0; !grew.get(); i++ )

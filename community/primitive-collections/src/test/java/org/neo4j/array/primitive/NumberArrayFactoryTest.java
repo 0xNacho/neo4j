@@ -19,13 +19,6 @@
  */
 package org.neo4j.array.primitive;
 
-import org.neo4j.array.primitive.AvailableMemoryCalculator;
-import org.neo4j.array.primitive.DynamicLongArray;
-import org.neo4j.array.primitive.HeapLongArray;
-import org.neo4j.array.primitive.LongArray;
-import org.neo4j.array.primitive.NumberArrayFactory;
-import org.neo4j.array.primitive.OffHeapLongArray;
-
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

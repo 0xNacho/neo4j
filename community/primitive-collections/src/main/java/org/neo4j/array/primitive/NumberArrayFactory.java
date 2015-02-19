@@ -19,9 +19,8 @@
  */
 package org.neo4j.array.primitive;
 
+import java.lang.reflect.Field;
 import java.util.Arrays;
-
-import org.neo4j.helpers.Exceptions;
 
 import static java.lang.String.format;
 
@@ -181,8 +180,22 @@ public interface NumberArrayFactory
 
         private OutOfMemoryError error( long length, int itemSize, OutOfMemoryError error )
         {
-            throw Exceptions.withMessage( error, format( "%s: Not enough memory available for allocating %s, tried %s",
+            throw withMessage( error, format( "%s: Not enough memory available for allocating %s, tried %s",
                     error.getMessage(), bytes( length*itemSize ), Arrays.toString( candidates ) ) );
+        }
+
+        private <T extends Throwable> T withMessage( T error, String message )
+        {
+            try
+            {
+                Field field = Throwable.class.getDeclaredField( "detailMessage" );
+                field.setAccessible( true );
+                field.set( error, message );
+            }
+            catch ( Exception e )
+            {   // Hmm, unable to set additional message, OK then
+            }
+            return error;
         }
     }
 
