@@ -29,7 +29,8 @@ import org.neo4j.kernel.api.direct.BoundedIterable;
 import org.neo4j.kernel.impl.api.index.IndexUpdateMode;
 import org.neo4j.kernel.impl.api.index.SwallowingIndexUpdater;
 
-import static org.neo4j.helpers.collection.IteratorUtil.emptyIterator;
+import static org.neo4j.kernel.impl.util.collection.Iterators.emptyIterator;
+import static org.neo4j.kernel.impl.util.collection.Iterators.emptyResourceIterator;
 
 /**
  * Used for online operation of an index.
@@ -69,6 +70,7 @@ public interface IndexAccessor extends Closeable
      *
      * @throws IOException if unable to close index.
      */
+    @Override
     void close() throws IOException;
 
     /**
@@ -140,7 +142,7 @@ public interface IndexAccessor extends Closeable
         @Override
         public ResourceIterator<File> snapshotFiles()
         {
-            return emptyIterator();
+            return emptyResourceIterator();
         }
     }
 

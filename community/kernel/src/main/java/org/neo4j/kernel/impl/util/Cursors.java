@@ -20,13 +20,12 @@
 package org.neo4j.kernel.impl.util;
 
 import java.io.IOException;
-import java.util.Collections;
 
 import org.neo4j.cursor.Cursor;
 import org.neo4j.graphdb.ResourceIterable;
 import org.neo4j.graphdb.ResourceIterator;
-import org.neo4j.helpers.collection.IteratorUtil;
 import org.neo4j.kernel.impl.transaction.log.IOCursor;
+import org.neo4j.kernel.impl.util.collection.Iterators;
 
 public class Cursors
 {
@@ -102,12 +101,12 @@ public class Cursors
                     } else
                     {
                         cursor.close();
-                        return IteratorUtil.<T>asResourceIterator( Collections.<T>emptyIterator());
+                        return Iterators.emptyResourceIterator();
                     }
                 }
                 catch ( IOException e )
                 {
-                    return IteratorUtil.<T>asResourceIterator( Collections.<T>emptyIterator());
+                    return Iterators.emptyResourceIterator();
                 }
             }
         };

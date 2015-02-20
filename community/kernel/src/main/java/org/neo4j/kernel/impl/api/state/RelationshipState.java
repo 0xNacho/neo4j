@@ -21,9 +21,9 @@ package org.neo4j.kernel.impl.api.state;
 
 import java.util.Iterator;
 
-import org.neo4j.helpers.collection.IteratorUtil;
 import org.neo4j.kernel.api.properties.DefinedProperty;
 import org.neo4j.kernel.impl.api.RelationshipVisitor;
+import org.neo4j.kernel.impl.util.collection.Iterators;
 
 /**
  * Represents the transactional changes to a relationship.
@@ -105,25 +105,25 @@ public interface RelationshipState extends PropertyContainerState
             @Override
             public Iterator<DefinedProperty> addedProperties()
             {
-                return IteratorUtil.emptyIterator();
+                return Iterators.emptyIterator();
             }
 
             @Override
             public Iterator<DefinedProperty> changedProperties()
             {
-                return IteratorUtil.emptyIterator();
+                return Iterators.emptyIterator();
             }
 
             @Override
             public Iterator<Integer> removedProperties()
             {
-                return IteratorUtil.emptyIterator();
+                return Iterators.emptyIterator();
             }
 
             @Override
             public Iterator<DefinedProperty> addedAndChangedProperties()
             {
-                return IteratorUtil.emptyIterator();
+                return Iterators.emptyIterator();
             }
 
             @Override

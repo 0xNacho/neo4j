@@ -27,18 +27,18 @@ import java.util.List;
 
 import org.neo4j.graphdb.DependencyResolver.SelectionStrategy;
 import org.neo4j.graphdb.ResourceIterator;
-import org.neo4j.helpers.collection.IteratorUtil;
 import org.neo4j.io.fs.FileSystemAbstraction;
 import org.neo4j.kernel.configuration.Config;
 import org.neo4j.kernel.impl.api.index.IndexingService;
 import org.neo4j.kernel.impl.api.index.sampling.IndexSamplingConfig;
 import org.neo4j.kernel.impl.storemigration.StoreMigrationParticipant;
 import org.neo4j.kernel.impl.storemigration.UpgradableDatabase;
+import org.neo4j.kernel.impl.util.collection.Iterators;
 import org.neo4j.kernel.lifecycle.LifecycleAdapter;
 
 import static org.neo4j.graphdb.factory.GraphDatabaseSettings.store_dir;
-import static org.neo4j.helpers.collection.IteratorUtil.addToCollection;
 import static org.neo4j.kernel.extension.KernelExtensionUtil.servicesClassPathEntryInformation;
+import static org.neo4j.kernel.impl.util.collection.Iterables.addToCollection;
 
 /**
  * Contract for implementing an index in Neo4j.
@@ -255,7 +255,7 @@ public abstract class SchemaIndexProvider extends LifecycleAdapter implements Co
      */
     public ResourceIterator<File> snapshotMetaFiles()
     {
-        return IteratorUtil.emptyIterator();
+        return Iterators.emptyResourceIterator();
     }
 
     public static class Descriptor

@@ -27,7 +27,6 @@ import java.util.List;
 import org.neo4j.collection.primitive.PrimitiveLongCollections.PrimitiveLongBaseIterator;
 import org.neo4j.collection.primitive.PrimitiveLongIterator;
 import org.neo4j.graphdb.DependencyResolver.SelectionStrategy;
-import org.neo4j.helpers.collection.PrefetchingIterator;
 import org.neo4j.kernel.api.labelscan.LabelScanStore;
 import org.neo4j.kernel.api.labelscan.NodeLabelUpdate;
 import org.neo4j.kernel.extension.KernelExtensionFactory;
@@ -37,14 +36,15 @@ import org.neo4j.kernel.impl.store.NodeLabelsField;
 import org.neo4j.kernel.impl.store.NodeStore;
 import org.neo4j.kernel.impl.store.record.NodeRecord;
 import org.neo4j.kernel.impl.transaction.state.NeoStoreProvider;
+import org.neo4j.kernel.impl.util.collection.Iterators;
 import org.neo4j.kernel.lifecycle.LifeSupport;
 import org.neo4j.kernel.lifecycle.Lifecycle;
 import org.neo4j.kernel.lifecycle.LifecycleAdapter;
 
 import static java.lang.Integer.MAX_VALUE;
 
-import static org.neo4j.helpers.collection.IteratorUtil.addToCollection;
 import static org.neo4j.kernel.extension.KernelExtensionUtil.servicesClassPathEntryInformation;
+import static org.neo4j.kernel.impl.util.collection.Iterables.addToCollection;
 
 /**
  * Used by a {@link KernelExtensions} to provide access a {@link LabelScanStore} and prioritize against other.
@@ -124,7 +124,7 @@ public class LabelScanStoreProvider extends LifecycleAdapter implements Comparab
             @Override
             public Iterator<NodeLabelUpdate> iterator()
             {
-                return new PrefetchingIterator<NodeLabelUpdate>()
+                return new Iterators.Base<NodeLabelUpdate>()
                 {
                     private final long[] NO_LABELS = new long[0];
                     private final NodeStore nodeStore = neoStoreProvider.evaluate().getNodeStore();

@@ -22,7 +22,7 @@ package org.neo4j.kernel.api.direct;
 import java.io.IOException;
 import java.util.Iterator;
 
-import static org.neo4j.helpers.collection.IteratorUtil.emptyIterator;
+import static org.neo4j.kernel.impl.util.collection.Iterators.emptyIterator;
 
 public interface AllEntriesLabelScanReader extends BoundedIterable<NodeLabelRange>
 {
@@ -45,5 +45,4 @@ public interface AllEntriesLabelScanReader extends BoundedIterable<NodeLabelRang
             return emptyIterator();
         }
     };
-
 }

@@ -26,16 +26,14 @@ import java.util.Set;
 import org.neo4j.collection.primitive.PrimitiveIntIterator;
 import org.neo4j.collection.primitive.PrimitiveLongIterator;
 import org.neo4j.helpers.Predicate;
-import org.neo4j.helpers.collection.Iterables;
 import org.neo4j.kernel.impl.util.DiffApplyingPrimitiveIntIterator;
 import org.neo4j.kernel.impl.util.DiffApplyingPrimitiveLongIterator;
 import org.neo4j.kernel.impl.util.VersionedHashMap;
+import org.neo4j.kernel.impl.util.collection.Iterables;
+import org.neo4j.kernel.impl.util.collection.Iterators;
 
 import static java.lang.String.format;
 import static java.util.Collections.newSetFromMap;
-
-import static org.neo4j.helpers.collection.Iterables.concat;
-import static org.neo4j.helpers.collection.IteratorUtil.asSet;
 
 /**
  * Given a sequence of add and removal operations, instances of DiffSets track
@@ -162,11 +160,11 @@ public class DiffSets<T> implements ReadableDiffSets<T>
              ( addedElements != null && !addedElements.isEmpty() ) )
         {
             ensureFilterHasBeenCreated();
-            result = Iterables.filter( filter, result );
+            result = Iterators.filter( result, filter );
         }
         if ( addedElements != null && !addedElements.isEmpty() )
         {
-            result = concat( result, addedElements.iterator() );
+            result = Iterators.concat( result, addedElements.iterator() );
         }
         return result;
     }
@@ -199,16 +197,16 @@ public class DiffSets<T> implements ReadableDiffSets<T>
     public DiffSets<T> filterAdded( Predicate<T> addedFilter )
     {
         return new DiffSets<>(
-                asSet( Iterables.filter( addedFilter, added( false ) ) ),
-                asSet( removed( false ) ) );
+                Iterables.asSet( Iterables.filter( added( false ), addedFilter ) ),
+                Iterables.asSet( removed( false ) ) );
     }
 
     @Override
     public DiffSets<T> filter( Predicate<T> filter )
     {
         return new DiffSets<>(
-                asSet( Iterables.filter( filter, added( false ) ) ),
-                asSet( Iterables.filter( filter, removed( false ) ) ) );
+                Iterables.asSet( Iterables.filter( added( false ), filter ) ),
+                Iterables.asSet( Iterables.filter( removed( false ), filter ) ) );
     }
 
     private Set<T> added( boolean create )

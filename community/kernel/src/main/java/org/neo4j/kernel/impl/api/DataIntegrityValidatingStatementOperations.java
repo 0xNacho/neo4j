@@ -40,7 +40,7 @@ import org.neo4j.kernel.impl.api.operations.KeyWriteOperations;
 import org.neo4j.kernel.impl.api.operations.SchemaReadOperations;
 import org.neo4j.kernel.impl.api.operations.SchemaWriteOperations;
 
-import static org.neo4j.helpers.collection.IteratorUtil.loop;
+import static org.neo4j.kernel.impl.util.collection.Iterators.loop;
 
 public class DataIntegrityValidatingStatementOperations implements
     KeyWriteOperations,

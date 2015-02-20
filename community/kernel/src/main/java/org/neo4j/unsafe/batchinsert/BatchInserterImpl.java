@@ -44,8 +44,6 @@ import org.neo4j.graphdb.schema.ConstraintDefinition;
 import org.neo4j.graphdb.schema.IndexCreator;
 import org.neo4j.graphdb.schema.IndexDefinition;
 import org.neo4j.helpers.Function;
-import org.neo4j.helpers.collection.IteratorUtil;
-import org.neo4j.helpers.collection.IteratorWrapper;
 import org.neo4j.helpers.collection.Visitor;
 import org.neo4j.io.fs.FileSystemAbstraction;
 import org.neo4j.io.fs.FileUtils;
@@ -129,6 +127,7 @@ import org.neo4j.kernel.impl.transaction.state.RelationshipLocker;
 import org.neo4j.kernel.impl.util.Listener;
 import org.neo4j.kernel.impl.util.Neo4jJobScheduler;
 import org.neo4j.kernel.impl.util.StringLogger;
+import org.neo4j.kernel.impl.util.collection.Iterators;
 import org.neo4j.kernel.lifecycle.LifeSupport;
 import org.neo4j.kernel.logging.Logging;
 import org.neo4j.kernel.logging.SingleLoggingService;
@@ -138,11 +137,11 @@ import static java.lang.Boolean.parseBoolean;
 
 import static org.neo4j.collection.primitive.PrimitiveLongCollections.map;
 import static org.neo4j.graphdb.DynamicLabel.label;
-import static org.neo4j.helpers.collection.Iterables.map;
-import static org.neo4j.helpers.collection.IteratorUtil.first;
 import static org.neo4j.kernel.impl.store.NodeLabelsField.parseLabelsField;
 import static org.neo4j.kernel.impl.store.PropertyStore.encodeString;
 import static org.neo4j.kernel.impl.util.IoPrimitiveUtils.safeCastLongToInt;
+import static org.neo4j.kernel.impl.util.collection.Iterables.first;
+import static org.neo4j.kernel.impl.util.collection.Iterables.map;
 
 public class BatchInserterImpl implements BatchInserter
 {
@@ -638,12 +637,13 @@ public class BatchInserterImpl implements BatchInserter
     {
         if ( properties == null || properties.isEmpty() )
         {
-            return IteratorUtil.emptyIterator();
+            return Iterators.emptyIterator();
         }
-        return new IteratorWrapper<PropertyBlock, Map.Entry<String,Object>>( properties.entrySet().iterator() )
+
+        return new Iterators.Map<Map.Entry<String,Object>,PropertyBlock>( properties.entrySet().iterator() )
         {
             @Override
-            protected PropertyBlock underlyingObjectToObject( Entry<String, Object> property )
+            protected PropertyBlock map( Entry<String,Object> property )
             {
                 return propertyCreator.encodePropertyValue(
                         getOrCreatePropertyKeyId( property.getKey() ), property.getValue() );
@@ -820,13 +820,13 @@ public class BatchInserterImpl implements BatchInserter
     @Override
     public Iterable<Long> getRelationshipIds( long nodeId )
     {
-        return map( REL_RECORD_TO_ID, new BatchRelationshipIterable( neoStore, nodeId ) );
+        return map( new BatchRelationshipIterable( neoStore, nodeId ), REL_RECORD_TO_ID );
     }
 
     @Override
     public Iterable<BatchRelationship> getRelationships( long nodeId )
     {
-        return map( REL_RECORD_TO_BATCH_REL, new BatchRelationshipIterable( neoStore, nodeId ) );
+        return map( new BatchRelationshipIterable( neoStore, nodeId ), REL_RECORD_TO_BATCH_REL );
     }
 
     @Override

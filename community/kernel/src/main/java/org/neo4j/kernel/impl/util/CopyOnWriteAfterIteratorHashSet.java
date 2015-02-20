@@ -24,7 +24,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Set;
 
-import org.neo4j.helpers.collection.IteratorUtil;
+import org.neo4j.kernel.impl.util.collection.Iterators;
 
 /**
  * Set implementation that provides stable snapshot iteration. It does so by marking the current underlying map as read
@@ -44,7 +44,7 @@ class CopyOnWriteAfterIteratorHashSet<E> implements Set<E>
     {
         if ( map == null || map.isEmpty() )
         {
-            return IteratorUtil.emptyIterator();
+            return Iterators.emptyIterator();
         }
         readOnly = true;
         return map.keySet().iterator();

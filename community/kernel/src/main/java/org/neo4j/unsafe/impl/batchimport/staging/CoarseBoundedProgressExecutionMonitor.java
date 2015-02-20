@@ -25,7 +25,7 @@ import static java.lang.Math.max;
 import static java.lang.Math.min;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
-import static org.neo4j.helpers.collection.IteratorUtil.last;
+import static org.neo4j.kernel.impl.util.collection.Iterables.last;
 
 /**
  * An {@link ExecutionMonitor} that prints progress in percent, knowing the max number of nodes and relationships

@@ -19,12 +19,11 @@
  */
 package org.neo4j.index.impl.lucene;
 
-import java.util.Iterator;
-
 import org.neo4j.graphdb.ResourceIterator;
 import org.neo4j.graphdb.index.IndexHits;
-import org.neo4j.helpers.collection.IteratorUtil;
 import org.neo4j.helpers.collection.PrefetchingIterator;
+
+import static org.neo4j.kernel.impl.util.collection.Iterators.single;
 
 public abstract class AbstractIndexHits<T> extends PrefetchingIterator<T> implements IndexHits<T>
 {
@@ -44,7 +43,7 @@ public abstract class AbstractIndexHits<T> extends PrefetchingIterator<T> implem
     {
         try
         {
-            return IteratorUtil.singleOrNull( (Iterator<T>) this );
+            return single( this, null );
         }
         finally
         {

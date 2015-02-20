@@ -23,13 +23,9 @@ import java.util.Iterator;
 
 import org.neo4j.graphdb.ResourceIterator;
 import org.neo4j.helpers.Predicate;
-import org.neo4j.helpers.collection.CombiningIterator;
-import org.neo4j.helpers.collection.FilteringIterator;
-import org.neo4j.helpers.collection.IteratorUtil;
 import org.neo4j.kernel.api.properties.DefinedProperty;
 import org.neo4j.kernel.impl.util.VersionedHashMap;
-
-import static org.neo4j.helpers.collection.IteratorUtil.emptyIterator;
+import org.neo4j.kernel.impl.util.collection.Iterators;
 
 /**
  * Represents the property changes to a {@link NodeState node} or {@link RelationshipState relationship}:
@@ -63,7 +59,7 @@ interface PropertyContainerState
     class Mutable implements PropertyContainerState
     {
         private final long id;
-        private static final ResourceIterator<DefinedProperty> NO_PROPERTIES = emptyIterator();
+        private static final ResourceIterator<DefinedProperty> NO_PROPERTIES = Iterators.emptyResourceIterator();
 
         private VersionedHashMap<Integer, DefinedProperty> addedProperties;
         private VersionedHashMap<Integer, DefinedProperty> changedProperties;
@@ -175,7 +171,7 @@ interface PropertyContainerState
         public Iterator<Integer> removedProperties()
         {
             return removedProperties != null ? removedProperties.keySet().iterator()
-                                             : IteratorUtil.<Integer>emptyIterator();
+                                             : Iterators.<Integer>emptyIterator();
         }
 
         @Override
@@ -190,8 +186,7 @@ interface PropertyContainerState
             {
                 if ( out != null )
                 {
-                    out = new CombiningIterator<>(
-                            IteratorUtil.iterator( out, changedProperties.values().iterator() ) );
+                    out = Iterators.concat( out, changedProperties.values().iterator()  );
                 }
                 else
                 {
@@ -206,17 +201,15 @@ interface PropertyContainerState
         {
             if ( removedProperties != null || addedProperties != null || changedProperties != null )
             {
-                iterator = new FilteringIterator<>( iterator, excludePropertiesWeKnowAbout );
+                iterator = Iterators.filter( iterator, excludePropertiesWeKnowAbout );
 
                 if ( addedProperties != null && !addedProperties.isEmpty() )
                 {
-                    iterator = new CombiningIterator<>(
-                            IteratorUtil.iterator( iterator, addedProperties.values().iterator() ) );
+                    iterator = Iterators.concat( iterator, addedProperties.values().iterator() );
                 }
                 if ( changedProperties != null && !changedProperties.isEmpty() )
                 {
-                    iterator = new CombiningIterator<>(
-                            IteratorUtil.iterator( iterator, changedProperties.values().iterator() ) );
+                    iterator = Iterators.concat( iterator, changedProperties.values().iterator() );
                 }
             }
 

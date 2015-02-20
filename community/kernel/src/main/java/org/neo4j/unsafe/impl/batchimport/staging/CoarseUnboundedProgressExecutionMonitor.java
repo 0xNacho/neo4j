@@ -26,7 +26,7 @@ import org.neo4j.unsafe.impl.batchimport.stats.Keys;
 import static java.lang.Math.max;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
-import static org.neo4j.helpers.collection.IteratorUtil.last;
+import static org.neo4j.kernel.impl.util.collection.Iterables.last;
 
 /**
  * {@link ExecutionMonitor} that prints progress, e.g. a dot every N batches completed.

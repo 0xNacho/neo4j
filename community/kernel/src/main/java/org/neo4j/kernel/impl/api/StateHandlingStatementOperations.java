@@ -31,7 +31,6 @@ import org.neo4j.collection.primitive.PrimitiveLongCollections;
 import org.neo4j.collection.primitive.PrimitiveLongIterator;
 import org.neo4j.cursor.Cursor;
 import org.neo4j.graphdb.Direction;
-import org.neo4j.helpers.Predicate;
 import org.neo4j.kernel.api.EntityType;
 import org.neo4j.kernel.api.LegacyIndex;
 import org.neo4j.kernel.api.LegacyIndexHits;
@@ -74,16 +73,16 @@ import org.neo4j.kernel.impl.index.IndexEntityType;
 import org.neo4j.kernel.impl.index.LegacyIndexStore;
 import org.neo4j.kernel.impl.store.SchemaStorage;
 import org.neo4j.kernel.impl.util.PrimitiveLongResourceIterator;
+import org.neo4j.kernel.impl.util.collection.Iterators;
 import org.neo4j.kernel.impl.util.diffsets.ReadableDiffSets;
 import org.neo4j.kernel.impl.util.register.NeoRegister;
 import org.neo4j.register.Register;
 
 import static org.neo4j.collection.primitive.PrimitiveLongCollections.single;
-import static org.neo4j.helpers.collection.Iterables.filter;
-import static org.neo4j.helpers.collection.IteratorUtil.iterator;
 import static org.neo4j.helpers.collection.IteratorUtil.resourceIterator;
-import static org.neo4j.helpers.collection.IteratorUtil.singleOrNull;
 import static org.neo4j.kernel.api.StatementConstants.NO_SUCH_NODE;
+import static org.neo4j.kernel.impl.util.collection.Iterators.iterator;
+import static org.neo4j.kernel.impl.util.collection.Iterators.single;
 
 public class StateHandlingStatementOperations implements
         KeyReadOperations,
@@ -462,22 +461,22 @@ public class StateHandlingStatementOperations implements
     public IndexDescriptor indexesGetForLabelAndPropertyKey( KernelStatement state, int labelId, int propertyKey )
     {
         IndexDescriptor indexDescriptor = storeLayer.indexesGetForLabelAndPropertyKey( labelId, propertyKey );
-
-        Iterator<IndexDescriptor> rules = iterator( indexDescriptor );
-        if ( state.hasTxStateWithChanges() )
+        if ( !state.hasTxStateWithChanges() )
         {
-            rules = filterByPropertyKeyId(
-                    state.txState().indexDiffSetsByLabel( labelId ).apply( rules ),
-                    propertyKey );
+            return indexDescriptor;
         }
-        return singleOrNull( rules );
+
+        Iterator<IndexDescriptor> rules = filterByPropertyKeyId(
+                state.txState().indexDiffSetsByLabel( labelId ).apply( iterator( indexDescriptor ) ),
+                propertyKey );
+        return single( rules, null );
     }
 
     private Iterator<IndexDescriptor> filterByPropertyKeyId(
             Iterator<IndexDescriptor> descriptorIterator,
             final int propertyKey )
     {
-        Predicate<IndexDescriptor> predicate = new Predicate<IndexDescriptor>()
+        return new Iterators.Filter<IndexDescriptor>( descriptorIterator )
         {
             @Override
             public boolean accept( IndexDescriptor item )
@@ -485,7 +484,6 @@ public class StateHandlingStatementOperations implements
                 return item.getPropertyKeyId() == propertyKey;
             }
         };
-        return filter( predicate, descriptorIterator );
     }
 
     @Override

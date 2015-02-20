@@ -29,10 +29,10 @@ import org.neo4j.collection.primitive.PrimitiveIntCollections;
 import org.neo4j.collection.primitive.PrimitiveIntIterator;
 import org.neo4j.collection.primitive.PrimitiveLongIterator;
 import org.neo4j.graphdb.Direction;
-import org.neo4j.helpers.collection.IteratorUtil;
 import org.neo4j.kernel.api.properties.DefinedProperty;
 import org.neo4j.kernel.api.txstate.UpdateTriState;
 import org.neo4j.kernel.impl.api.state.RelationshipChangesForNode.DiffStrategy;
+import org.neo4j.kernel.impl.util.collection.Iterators;
 import org.neo4j.kernel.impl.util.diffsets.DiffSets;
 import org.neo4j.kernel.impl.util.diffsets.ReadableDiffSets;
 
@@ -316,25 +316,25 @@ public interface NodeState extends PropertyContainerState
             @Override
             public Iterator<DefinedProperty> addedProperties()
             {
-                return IteratorUtil.emptyIterator();
+                return Iterators.emptyIterator();
             }
 
             @Override
             public Iterator<DefinedProperty> changedProperties()
             {
-                return IteratorUtil.emptyIterator();
+                return Iterators.emptyIterator();
             }
 
             @Override
             public Iterator<Integer> removedProperties()
             {
-                return IteratorUtil.emptyIterator();
+                return Iterators.emptyIterator();
             }
 
             @Override
             public Iterator<DefinedProperty> addedAndChangedProperties()
             {
-                return IteratorUtil.emptyIterator();
+                return Iterators.emptyIterator();
             }
 
             @Override

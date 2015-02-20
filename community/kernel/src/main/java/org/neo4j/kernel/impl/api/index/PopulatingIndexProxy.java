@@ -42,9 +42,8 @@ import org.neo4j.kernel.impl.api.UpdateableSchemaState;
 import org.neo4j.kernel.impl.util.JobScheduler;
 import org.neo4j.kernel.logging.Logging;
 
-import static org.neo4j.helpers.collection.IteratorUtil.emptyIterator;
 import static org.neo4j.kernel.impl.util.JobScheduler.Group.indexPopulation;
-
+import static org.neo4j.kernel.impl.util.collection.Iterators.emptyResourceIterator;
 
 public class PopulatingIndexProxy implements IndexProxy
 {
@@ -184,7 +183,7 @@ public class PopulatingIndexProxy implements IndexProxy
     @Override
     public ResourceIterator<File> snapshotFiles()
     {
-        return emptyIterator();
+        return emptyResourceIterator();
     }
 
     @Override

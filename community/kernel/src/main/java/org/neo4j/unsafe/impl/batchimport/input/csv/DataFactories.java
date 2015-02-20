@@ -34,7 +34,7 @@ import org.neo4j.csv.reader.Mark;
 import org.neo4j.csv.reader.Readables;
 import org.neo4j.function.Factory;
 import org.neo4j.function.Function;
-import org.neo4j.helpers.collection.Iterables;
+import org.neo4j.kernel.impl.util.collection.Iterables;
 import org.neo4j.unsafe.impl.batchimport.input.DuplicateHeaderException;
 import org.neo4j.unsafe.impl.batchimport.input.InputEntity;
 import org.neo4j.unsafe.impl.batchimport.input.InputException;
