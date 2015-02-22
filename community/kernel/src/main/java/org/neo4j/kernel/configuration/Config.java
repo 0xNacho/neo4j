@@ -32,8 +32,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import org.neo4j.graphdb.config.Setting;
 import org.neo4j.helpers.Function;
 import org.neo4j.helpers.Functions;
-import org.neo4j.helpers.collection.Iterables;
 import org.neo4j.kernel.impl.util.StringLogger;
+import org.neo4j.kernel.impl.util.collection.Iterables;
 import org.neo4j.kernel.info.DiagnosticsPhase;
 import org.neo4j.kernel.info.DiagnosticsProvider;
 import org.neo4j.kernel.logging.BufferingLogger;
@@ -231,15 +231,15 @@ public class Config implements DiagnosticsProvider
     {
         if ( phase.isInitialization() || phase.isExplicitlyRequested() )
         {
-            log.logLongMessage( "Neo4j Kernel properties:", Iterables.map( new Function<Map.Entry<String, String>,
-                    String>()
+            log.logLongMessage( "Neo4j Kernel properties:",
+                    new Iterables.Map<Map.Entry<String,String>,String>( params.entrySet() )
             {
                 @Override
-                public String apply( Map.Entry<String, String> stringStringEntry )
+                public String map( Map.Entry<String, String> stringStringEntry )
                 {
                     return stringStringEntry.getKey() + "=" + stringStringEntry.getValue();
                 }
-            }, params.entrySet() ) );
+            } );
         }
     }
 

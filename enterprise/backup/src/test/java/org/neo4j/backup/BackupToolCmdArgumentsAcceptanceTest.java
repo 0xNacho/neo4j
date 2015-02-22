@@ -32,14 +32,16 @@ import java.util.Deque;
 import java.util.List;
 import java.util.Map;
 
-import org.neo4j.helpers.collection.Iterables;
 import org.neo4j.kernel.configuration.Config;
+import org.neo4j.kernel.impl.util.collection.Iterables;
 
-import static java.util.Arrays.asList;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+
+import static java.util.Arrays.asList;
+
 import static org.neo4j.helpers.collection.MapUtil.stringMap;
 
 /**

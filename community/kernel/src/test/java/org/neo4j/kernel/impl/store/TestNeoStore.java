@@ -45,7 +45,6 @@ import org.neo4j.graphdb.factory.GraphDatabaseSettings;
 import org.neo4j.graphdb.mockfs.EphemeralFileSystemAbstraction;
 import org.neo4j.helpers.Pair;
 import org.neo4j.helpers.UTF8;
-import org.neo4j.helpers.collection.CombiningIterable;
 import org.neo4j.helpers.collection.MapUtil;
 import org.neo4j.io.fs.FileSystemAbstraction;
 import org.neo4j.io.fs.StoreChannel;
@@ -98,6 +97,7 @@ import org.neo4j.kernel.impl.util.ArrayMap;
 import org.neo4j.kernel.impl.util.JobScheduler;
 import org.neo4j.kernel.impl.util.RelIdArray.DirectionWrapper;
 import org.neo4j.kernel.impl.util.StringLogger;
+import org.neo4j.kernel.impl.util.collection.Iterables;
 import org.neo4j.kernel.logging.DevNullLoggingService;
 import org.neo4j.kernel.monitoring.Monitors;
 import org.neo4j.kernel.monitoring.tracing.Tracers;
@@ -530,7 +530,7 @@ public class TestNeoStore
             list.add( entry.getValue() );
         }
         position.setActual( rels.other() );
-        return new CombiningIterable<>( list );
+        return Iterables.concat( list );
     }
 
     private void validateNodeRel1( long node, DefinedProperty prop1,

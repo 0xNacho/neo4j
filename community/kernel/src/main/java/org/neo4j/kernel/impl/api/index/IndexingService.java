@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Future;
 
+import org.neo4j.graphdb.Resource;
 import org.neo4j.graphdb.ResourceIterator;
 import org.neo4j.helpers.BiConsumer;
 import org.neo4j.helpers.Pair;
@@ -61,8 +62,9 @@ import org.neo4j.register.Registers;
 import static java.util.concurrent.TimeUnit.MINUTES;
 
 import static org.neo4j.helpers.Exceptions.launderedException;
-import static org.neo4j.helpers.collection.Iterables.concatResourceIterators;
 import static org.neo4j.kernel.impl.api.index.IndexPopulationFailure.failure;
+import static org.neo4j.kernel.impl.util.collection.Iterators.concat;
+import static org.neo4j.kernel.impl.util.collection.Iterators.resourceIterator;
 
 /**
  * Manages the indexes that were introduced in 2.0. These indexes depend on the normal neo4j logical log for
@@ -634,7 +636,7 @@ public class IndexingService extends LifecycleAdapter
 
     public ResourceIterator<File> snapshotStoreFiles() throws IOException
     {
-        Collection<ResourceIterator<File>> snapshots = new ArrayList<>();
+        final Collection<ResourceIterator<File>> snapshots = new ArrayList<>();
         Set<SchemaIndexProvider.Descriptor> fromProviders = new HashSet<>();
         for ( IndexProxy indexProxy : indexMapRef.getAllIndexProxies() )
         {
@@ -646,6 +648,18 @@ public class IndexingService extends LifecycleAdapter
             snapshots.add( indexProxy.snapshotFiles() );
         }
 
-        return concatResourceIterators( snapshots.iterator() );
+        Resource closer = new Resource()
+        {
+            @Override
+            public void close()
+            {
+                for ( ResourceIterator<File> iterator : snapshots )
+                {
+                    iterator.close();
+                }
+            }
+        };
+
+        return resourceIterator( concat( snapshots.iterator() ), closer );
     }
 }

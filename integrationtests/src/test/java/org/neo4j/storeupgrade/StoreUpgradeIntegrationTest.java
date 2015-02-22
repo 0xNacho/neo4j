@@ -53,6 +53,8 @@ import org.neo4j.kernel.impl.core.ThreadToStatementContextBridge;
 import org.neo4j.kernel.impl.store.NeoStore;
 import org.neo4j.kernel.impl.store.counts.CountsTracker;
 import org.neo4j.kernel.impl.storemigration.StoreUpgrader.UpgradingStoreVersionNotFoundException;
+import org.neo4j.kernel.impl.util.collection.Iterables;
+import org.neo4j.kernel.impl.util.collection.Iterators;
 import org.neo4j.register.Register.DoubleLongRegister;
 import org.neo4j.register.Registers;
 import org.neo4j.server.Bootstrapper;
@@ -69,8 +71,6 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
 import static org.neo4j.consistency.store.StoreAssertions.assertConsistentStore;
-import static org.neo4j.helpers.collection.Iterables.concat;
-import static org.neo4j.helpers.collection.Iterables.count;
 import static org.neo4j.test.ha.ClusterManager.allSeesAllAsAvailable;
 import static org.neo4j.test.ha.ClusterManager.clusterOfSize;
 
@@ -348,7 +348,7 @@ public class StoreUpgradeIntegrationTest
             ThreadToStatementContextBridge bridge = db.getDependencyResolver()
                                                       .resolveDependency( ThreadToStatementContextBridge.class );
             Statement statement = bridge.instance();
-            return concat(
+            return Iterators.concat(
                     statement.readOperations().indexesGetAll(),
                     statement.readOperations().uniqueIndexesGetAll()
             );
@@ -407,11 +407,11 @@ public class StoreUpgradeIntegrationTest
         try ( Transaction ignored = db.beginTx() )
         {
             // count nodes
-            long nodeCount = count( GlobalGraphOperations.at( db ).getAllNodes() );
+            long nodeCount = Iterables.count( GlobalGraphOperations.at( db ).getAllNodes() );
             assertThat( nodeCount, is( store.expectedNodeCount ) );
 
             // count indexes
-            long indexCount = count( db.schema().getIndexes() );
+            long indexCount = Iterables.count( db.schema().getIndexes() );
             assertThat( indexCount, is( store.indexes() ) );
 
             // check last committed tx

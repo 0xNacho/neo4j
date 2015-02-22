@@ -21,7 +21,6 @@ package org.neo4j.helpers.collection;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -31,9 +30,9 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
+import org.neo4j.function.Function;
 import org.neo4j.graphdb.ResourceIterable;
 import org.neo4j.graphdb.ResourceIterator;
-import org.neo4j.function.Function;
 import org.neo4j.helpers.Predicate;
 
 import static java.util.Arrays.asList;
@@ -378,11 +377,6 @@ public final class Iterables
         return new MapIterable.MapIterator<>( from, function );
     }
 
-    public static <FROM, TO> Iterator<TO> flatMap( Function<? super FROM, ? extends Iterator<TO>> function, Iterator<FROM> from )
-    {
-        return new CombiningIterator<>( map(function, from) );
-    }
-
     @SafeVarargs
     @SuppressWarnings("unchecked")
     public static <T, C extends T> Iterable<T> iterable( C... items )
@@ -394,35 +388,6 @@ public final class Iterables
     public static <T, C> Iterable<T> cast( Iterable<C> iterable )
     {
         return (Iterable) iterable;
-    }
-
-    @SafeVarargs
-    @SuppressWarnings("unchecked")
-    public static <T> Iterable<T> concat( Iterable<? extends T>... iterables )
-    {
-        return concat( asList( (Iterable<T>[]) iterables ) );
-    }
-
-    public static <T> Iterable<T> concat( final Iterable<Iterable<T>> iterables )
-    {
-        return new CombiningIterable<>( iterables );
-    }
-
-    @SafeVarargs
-    @SuppressWarnings("unchecked")
-    public static <T> Iterator<T> concat( Iterator<? extends T>... iterables )
-    {
-        return concat( Arrays.asList( (Iterator<T>[]) iterables ).iterator() );
-    }
-
-    public static <T> ResourceIterator<T> concatResourceIterators( Iterator<ResourceIterator<T>> iterators )
-    {
-        return new CombiningResourceIterator<>(iterators);
-    }
-
-    public static <T> Iterator<T> concat( Iterator<Iterator<T>> iterators )
-    {
-        return new CombiningIterator<>(iterators);
     }
 
     public static <FROM, TO> Function<FROM, TO> cast()
