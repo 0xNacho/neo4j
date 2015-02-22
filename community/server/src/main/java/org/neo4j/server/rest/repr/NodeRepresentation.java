@@ -19,13 +19,13 @@
  */
 package org.neo4j.server.rest.repr;
 
+import java.util.Collection;
+
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
-import org.neo4j.helpers.collection.IterableWrapper;
 import org.neo4j.helpers.collection.IteratorUtil;
+import org.neo4j.kernel.impl.util.collection.Iterables;
 import org.neo4j.tooling.GlobalGraphOperations;
-
-import java.util.Collection;
 
 import static org.neo4j.helpers.collection.MapUtil.map;
 
@@ -109,7 +109,7 @@ public final class NodeRepresentation extends ObjectRepresentation implements Ex
     {
         return ValueRepresentation.template( path( "/relationships/out/{-list|&|types}" ) );
     }
-    
+
     @Mapping( "labels" )
     public ValueRepresentation labelsUriTemplate()
     {
@@ -143,10 +143,10 @@ public final class NodeRepresentation extends ObjectRepresentation implements Ex
     @Mapping( "metadata" )
     public MapRepresentation metadata()
     {
-        Collection<String> labels = IteratorUtil.asCollection( new IterableWrapper<String, Label>( node.getLabels() )
+        Collection<String> labels = IteratorUtil.asCollection( new Iterables.Map<Label,String>( node.getLabels() )
         {
             @Override
-            protected String underlyingObjectToObject( Label label )
+            protected String map( Label label )
             {
                 return label.name();
             }
@@ -170,10 +170,10 @@ public final class NodeRepresentation extends ObjectRepresentation implements Ex
 
     public static ListRepresentation list( Iterable<Node> nodes )
     {
-        return new ListRepresentation( RepresentationType.NODE, new IterableWrapper<Representation, Node>( nodes )
+        return new ListRepresentation( RepresentationType.NODE, new Iterables.Map<Node,Representation>( nodes )
         {
             @Override
-            protected Representation underlyingObjectToObject( Node node )
+            protected Representation map( Node node )
             {
                 return new NodeRepresentation( node );
             }

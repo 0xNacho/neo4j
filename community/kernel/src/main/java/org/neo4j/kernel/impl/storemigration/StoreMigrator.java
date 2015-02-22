@@ -624,6 +624,7 @@ public class StoreMigrator implements StoreMigrationParticipant
                     throw new RuntimeException( e );
                 }
 
+//<<<<<<< HEAD
                 final StoreSourceTraceability traceability =
                         new StoreSourceTraceability( "legacy nodes", reader.getRecordSize() );
                 return new SourceInputIterator<InputNode, NodeRecord>( traceability )

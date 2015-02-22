@@ -41,15 +41,17 @@ import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.factory.GraphDatabaseBuilder;
 import org.neo4j.graphdb.factory.GraphDatabaseSettings;
-import org.neo4j.helpers.collection.IterableWrapper;
 import org.neo4j.kernel.impl.MyRelTypes;
+import org.neo4j.kernel.impl.util.collection.Iterables;
 import org.neo4j.test.DatabaseRule;
 import org.neo4j.test.ImpermanentDatabaseRule;
 
-import static java.lang.Integer.parseInt;
-import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
+
+import static java.lang.Integer.parseInt;
+import static java.util.Arrays.asList;
+
 import static org.neo4j.helpers.collection.IteratorUtil.asSet;
 
 @RunWith( Parameterized.class )
@@ -186,10 +188,10 @@ public class TestRelationshipCount
 
     private Iterable<String> asStrings( Iterable<RelationshipType> relationshipTypes )
     {
-        return new IterableWrapper<String, RelationshipType>( relationshipTypes )
+        return new Iterables.Map<RelationshipType,String>( relationshipTypes )
         {
             @Override
-            protected String underlyingObjectToObject( RelationshipType object )
+            protected String map( RelationshipType object )
             {
                 return object.name();
             }

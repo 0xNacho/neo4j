@@ -19,14 +19,15 @@
  */
 package org.neo4j.server.rest.web;
 
+import com.sun.jersey.api.core.HttpContext;
+import org.apache.lucene.search.Sort;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import org.apache.lucene.search.Sort;
 
 import org.neo4j.graphalgo.CommonEvaluators;
 import org.neo4j.graphalgo.CostEvaluator;
@@ -62,11 +63,10 @@ import org.neo4j.helpers.Function;
 import org.neo4j.helpers.Pair;
 import org.neo4j.helpers.Predicate;
 import org.neo4j.helpers.Predicates;
-import org.neo4j.helpers.collection.IterableWrapper;
-import org.neo4j.helpers.collection.Iterables;
 import org.neo4j.index.lucene.QueryContext;
 import org.neo4j.kernel.GraphDatabaseAPI;
 import org.neo4j.kernel.Traversal;
+import org.neo4j.kernel.impl.util.collection.Iterables;
 import org.neo4j.server.database.InjectableProvider;
 import org.neo4j.server.rest.domain.EndNodeNotFoundException;
 import org.neo4j.server.rest.domain.PropertySettingStrategy;
@@ -99,8 +99,6 @@ import org.neo4j.server.rest.repr.ScoredRelationshipRepresentation;
 import org.neo4j.server.rest.repr.ValueRepresentation;
 import org.neo4j.server.rest.repr.WeightedPathRepresentation;
 import org.neo4j.tooling.GlobalGraphOperations;
-
-import com.sun.jersey.api.core.HttpContext;
 
 import static org.neo4j.graphdb.DynamicLabel.label;
 import static org.neo4j.helpers.collection.Iterables.filter;
@@ -354,10 +352,10 @@ public class DatabaseActions
 
     public ListRepresentation getNodeLabels( long nodeId ) throws NodeNotFoundException
     {
-        Iterable<String> labels = new IterableWrapper<String, Label>( node( nodeId ).getLabels() )
+        Iterable<String> labels = new Iterables.Map<Label,String>( node( nodeId ).getLabels() )
         {
             @Override
-            protected String underlyingObjectToObject( Label object )
+            protected String map( Label object )
             {
                 return object.name();
             }
@@ -772,10 +770,10 @@ public class DatabaseActions
         final IndexRepresentation indexRepresentation = new NodeIndexRepresentation( indexName );
         final IndexHits<Node> indexHits = index.get( key, value );
 
-        final IterableWrapper<Representation, Node> results = new IterableWrapper<Representation, Node>( indexHits )
+        final Iterables.Map<Node,Representation> results = new Iterables.Map<Node,Representation>( indexHits )
         {
             @Override
-            protected Representation underlyingObjectToObject( Node node )
+            protected Representation map( Node node )
             {
                 return new IndexedEntityRepresentation( node, key, value, indexRepresentation );
             }
@@ -820,10 +818,10 @@ public class DatabaseActions
         {
             return new ListRepresentation( RepresentationType.NODE, Collections.<Representation>emptyList() );
         }
-        final IterableWrapper<Representation, Node> results = new IterableWrapper<Representation, Node>( result )
+        final Iterable<Representation> results = new Iterables.Map<Node,Representation>( result )
         {
             @Override
-            protected Representation underlyingObjectToObject( Node node )
+            protected Representation map( Node node )
             {
                 final NodeRepresentation nodeRepresentation = new NodeRepresentation( node );
                 if ( order == null )
@@ -848,11 +846,10 @@ public class DatabaseActions
         {
             return new ListRepresentation( RepresentationType.RELATIONSHIP, Collections.<Representation>emptyList() );
         }
-        final IterableWrapper<Representation, Relationship> results = new IterableWrapper<Representation,
-                Relationship>( result )
+        final Iterable<Representation> results = new Iterables.Map<Relationship,Representation>( result )
         {
             @Override
-            protected Representation underlyingObjectToObject( Relationship rel )
+            protected Representation map( Relationship rel )
             {
                 final RelationshipRepresentation relationshipRepresentation = new RelationshipRepresentation( rel );
                 if ( order != null )
@@ -1036,16 +1033,14 @@ public class DatabaseActions
 
         final IndexRepresentation indexRepresentation = new RelationshipIndexRepresentation( indexName );
 
-        IterableWrapper<Representation, Relationship> result =
-                new IterableWrapper<Representation, Relationship>( index.get( key, value ) )
-                {
-                    @Override
-                    protected Representation underlyingObjectToObject( Relationship relationship )
-                    {
-                        return new IndexedEntityRepresentation( relationship,
-                                key, value, indexRepresentation );
-                    }
-                };
+        Iterable<Representation> result = new Iterables.Map<Relationship,Representation>( index.get( key, value ) )
+        {
+            @Override
+            protected Representation map( Relationship relationship )
+            {
+                return new IndexedEntityRepresentation( relationship, key, value, indexRepresentation );
+            }
+        };
         return new ListRepresentation( RepresentationType.RELATIONSHIP, result );
     }
 
@@ -1104,10 +1099,10 @@ public class DatabaseActions
     private ListRepresentation toListPathRepresentation( final Iterable<Path> paths,
                                                          final TraverserReturnType returnType )
     {
-        final IterableWrapper<Representation, Path> result = new IterableWrapper<Representation, Path>( paths )
+        final Iterable<Representation> result = new Iterables.Map<Path,Representation>( paths )
         {
             @Override
-            protected Representation underlyingObjectToObject( Path position )
+            protected Representation map( Path position )
             {
                 return returnType.toRepresentation( position );
             }
@@ -1200,11 +1195,10 @@ public class DatabaseActions
 
         Iterable paths = finder.findAllPaths( startNode, endNode );
 
-        IterableWrapper<PathRepresentation, Path> pathRepresentations = new IterableWrapper<PathRepresentation, Path>(
-                paths )
+        Iterable<PathRepresentation> pathRepresentations = new Iterables.Map<Path,PathRepresentation>( paths )
         {
             @Override
-            protected PathRepresentation underlyingObjectToObject( Path path )
+            protected PathRepresentation map( Path path )
             {
                 return findParams.pathRepresentationOf( path );
             }
@@ -1441,15 +1435,14 @@ public class DatabaseActions
                     "filter by, or none at all." );
         }
 
-        IterableWrapper<NodeRepresentation, Node> nodeRepresentations =
-                new IterableWrapper<NodeRepresentation, Node>( asList( nodes ) )
-                {
-                    @Override
-                    protected NodeRepresentation underlyingObjectToObject( Node node )
-                    {
-                        return new NodeRepresentation( node );
-                    }
-                };
+        Iterable<NodeRepresentation> nodeRepresentations = new Iterables.Map<Node,NodeRepresentation>( asList( nodes ) )
+        {
+            @Override
+            protected NodeRepresentation map( Node node )
+            {
+                return new NodeRepresentation( node );
+            }
+        };
 
         return new ListRepresentation( RepresentationType.NODE, nodeRepresentations );
     }

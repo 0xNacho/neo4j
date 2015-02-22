@@ -24,6 +24,8 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 
+import org.neo4j.kernel.impl.util.collection.Iterators;
+
 /**
  * Wraps a {@link Collection}, making it look (and function) like a collection
  * holding another type of items. The wrapper delegates to its underlying
@@ -34,52 +36,66 @@ import java.util.Iterator;
  */
 public abstract class CollectionWrapper<T, U> implements Collection<T>
 {
-	private Collection<U> collection;
-	
+	private final Collection<U> collection;
+
 	public CollectionWrapper( Collection<U> underlyingCollection )
 	{
 		this.collection = underlyingCollection;
 	}
-	
+
 	protected abstract U objectToUnderlyingObject( T object );
-	
+
 	protected abstract T underlyingObjectToObject( U object );
 
-	public boolean add( T o )
+	@Override
+    public boolean add( T o )
 	{
 		return collection.add( objectToUnderlyingObject( o ) );
 	}
 
-	public void clear()
+	@Override
+    public void clear()
 	{
 		collection.clear();
 	}
 
-	public boolean contains( Object o )
+	@Override
+    public boolean contains( Object o )
 	{
 		return collection.contains( objectToUnderlyingObject( ( T ) o ) );
 	}
 
-	public boolean isEmpty()
+	@Override
+    public boolean isEmpty()
 	{
 		return collection.isEmpty();
 	}
 
-	public Iterator<T> iterator()
+	@Override
+    public Iterator<T> iterator()
 	{
-		return new WrappingIterator( collection.iterator() );
+	    return new Iterators.Map<U,T>( collection.iterator() )
+        {
+            @Override
+            protected T map( U item )
+            {
+                return CollectionWrapper.this.underlyingObjectToObject( item );
+            }
+        };
 	}
 
-	public boolean remove( Object o )
+	@Override
+    public boolean remove( Object o )
 	{
 		return collection.remove( objectToUnderlyingObject( ( T ) o ) );
 	}
 
-	public int size()
+	@Override
+    public int size()
 	{
 		return collection.size();
 	}
-	
+
 	protected Collection<U> convertCollection( Collection c )
 	{
 		Collection<U> converted = new HashSet<U>();
@@ -89,28 +105,33 @@ public abstract class CollectionWrapper<T, U> implements Collection<T>
 		}
 		return converted;
 	}
-	
-	public boolean retainAll( Collection c )
+
+	@Override
+    public boolean retainAll( Collection c )
 	{
 		return collection.retainAll( convertCollection( c ) );
 	}
 
-	public boolean addAll( Collection c )
+	@Override
+    public boolean addAll( Collection c )
 	{
 		return collection.addAll( convertCollection( c ) );
 	}
 
-	public boolean removeAll( Collection c )
+	@Override
+    public boolean removeAll( Collection c )
 	{
 		return collection.removeAll( convertCollection( c ) );
 	}
 
-	public boolean containsAll( Collection c )
+	@Override
+    public boolean containsAll( Collection c )
 	{
 		return collection.containsAll( convertCollection( c ) );
 	}
 
-	public Object[] toArray()
+	@Override
+    public Object[] toArray()
 	{
 		Object[] array = collection.toArray();
 		Object[] result = new Object[ array.length ];
@@ -121,7 +142,8 @@ public abstract class CollectionWrapper<T, U> implements Collection<T>
 		return result;
 	}
 
-	public <R> R[] toArray( R[] a )
+	@Override
+    public <R> R[] toArray( R[] a )
 	{
 		Object[] array = collection.toArray();
 		ArrayList<R> result = new ArrayList<R>();
@@ -130,19 +152,5 @@ public abstract class CollectionWrapper<T, U> implements Collection<T>
 			result.add( ( R ) underlyingObjectToObject( ( U ) array[ i ] ) );
 		}
 		return result.toArray( a );
-	}
-	
-	private class WrappingIterator extends IteratorWrapper<T, U>
-	{
-		WrappingIterator( Iterator<U> iterator )
-		{
-			super( iterator );
-		}
-
-		@Override
-		protected T underlyingObjectToObject( U object )
-		{
-			return CollectionWrapper.this.underlyingObjectToObject( object );
-		}
 	}
 }

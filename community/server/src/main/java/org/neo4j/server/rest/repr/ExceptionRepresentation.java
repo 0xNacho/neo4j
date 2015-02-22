@@ -24,8 +24,8 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.neo4j.helpers.collection.IterableWrapper;
 import org.neo4j.kernel.api.exceptions.Status;
+import org.neo4j.kernel.impl.util.collection.Iterables;
 import org.neo4j.server.rest.transactional.error.Neo4jError;
 
 public class ExceptionRepresentation extends MappingRepresentation
@@ -123,10 +123,10 @@ public class ExceptionRepresentation extends MappingRepresentation
 
         public static ListRepresentation list( Collection<Neo4jError> errors )
         {
-            return new ListRepresentation( "error-list", new IterableWrapper<ErrorEntryRepresentation, Neo4jError>( errors )
+            return new ListRepresentation( "error-list", new Iterables.Map<Neo4jError,ErrorEntryRepresentation>( errors )
             {
                 @Override
-                protected ErrorEntryRepresentation underlyingObjectToObject( Neo4jError error )
+                protected ErrorEntryRepresentation map( Neo4jError error )
                 {
                     return new ErrorEntryRepresentation( error );
                 }

@@ -19,8 +19,8 @@
  */
 package org.neo4j.kernel.impl.transaction.state;
 
-import org.neo4j.helpers.collection.IterableWrapper;
 import org.neo4j.kernel.impl.transaction.state.RelationshipCreatorTest.Tracker;
+import org.neo4j.kernel.impl.util.collection.Iterables;
 
 public class TrackingRecordAccess<RECORD, ADDITIONAL> implements RecordAccess<Long, RECORD, ADDITIONAL>
 {
@@ -73,12 +73,11 @@ public class TrackingRecordAccess<RECORD, ADDITIONAL> implements RecordAccess<Lo
     @Override
     public Iterable<RecordProxy<Long,RECORD,ADDITIONAL>> changes()
     {
-        return new IterableWrapper<RecordProxy<Long,RECORD,ADDITIONAL>,RecordProxy<Long,RECORD,ADDITIONAL>>(
+        return new Iterables.Map<RecordProxy<Long,RECORD,ADDITIONAL>,RecordProxy<Long,RECORD,ADDITIONAL>>(
                 delegate.changes() )
         {
             @Override
-            protected RecordProxy<Long,RECORD,ADDITIONAL> underlyingObjectToObject(
-                    RecordProxy<Long,RECORD,ADDITIONAL> actual )
+            protected RecordProxy<Long,RECORD,ADDITIONAL> map( RecordProxy<Long,RECORD,ADDITIONAL> actual )
             {
                 return new TrackingRecordProxy<>( actual, false, tracker );
             }

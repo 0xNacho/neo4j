@@ -19,15 +19,15 @@
  */
 package examples;
 
+import org.junit.ClassRule;
+import org.junit.Test;
+
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashSet;
 import java.util.Set;
-
-import org.junit.ClassRule;
-import org.junit.Test;
 
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.DynamicRelationshipType;
@@ -41,7 +41,7 @@ import org.neo4j.graphmatching.PatternMatcher;
 import org.neo4j.graphmatching.PatternNode;
 import org.neo4j.graphmatching.PatternRelationship;
 import org.neo4j.graphmatching.ValueMatcher;
-import org.neo4j.helpers.collection.IterableWrapper;
+import org.neo4j.kernel.impl.util.collection.Iterables;
 import org.neo4j.test.EmbeddedDatabaseRule;
 
 import static org.junit.Assert.assertEquals;
@@ -80,10 +80,10 @@ public class TestSiteIndexExamples
         }
         PatternMatcher matcher = PatternMatcher.getMatcher();
         Iterable<PatternMatch> matches = matcher.match( anchor, nodes[0] );
-        return new IterableWrapper<Node, PatternMatch>( matches )
+        return new Iterables.Map<PatternMatch,Node>( matches )
         {
             @Override
-            protected Node underlyingObjectToObject( PatternMatch match )
+            protected Node map( PatternMatch match )
             {
                 return match.getNodeFor( requested );
             }
@@ -144,10 +144,10 @@ public class TestSiteIndexExamples
         PatternMatcher matcher = PatternMatcher.getMatcher();
         Iterable<PatternMatch> matches = matcher.match( root, me );
         // Return the result
-        return new IterableWrapper<Node, PatternMatch>( matches )
+        return new Iterables.Map<PatternMatch,Node>( matches )
         {
             @Override
-            protected Node underlyingObjectToObject( PatternMatch match )
+            protected Node map( PatternMatch match )
             {
                 return match.getNodeFor( friend );
             }
@@ -238,7 +238,7 @@ public class TestSiteIndexExamples
 
         Set<String> expected = new HashSet<>( Arrays.asList( "Andy", "Bob" ) );
         Iterable<Node> friends = findFriendsSinceSpecifiedTimeInSpecifiedPlace( root, "Stockholm", 3 );
-        
+
         try ( Transaction transaction = graphDb.getGraphDatabaseService().beginTx() )
         {
             for ( Node friend : friends )

@@ -25,7 +25,6 @@ import java.util.Iterator;
 
 import org.neo4j.collection.primitive.PrimitiveLongIterator;
 import org.neo4j.helpers.Predicate;
-import org.neo4j.helpers.collection.IterableWrapper;
 import org.neo4j.helpers.collection.PrefetchingIterator;
 import org.neo4j.helpers.progress.ProgressListener;
 import org.neo4j.kernel.IdType;
@@ -39,6 +38,7 @@ import org.neo4j.kernel.impl.store.record.PropertyRecord;
 import org.neo4j.kernel.impl.store.record.RelationshipGroupRecord;
 import org.neo4j.kernel.impl.store.record.RelationshipRecord;
 import org.neo4j.kernel.impl.store.record.RelationshipTypeTokenRecord;
+import org.neo4j.kernel.impl.util.collection.Iterables;
 
 public interface RecordStore<R extends AbstractBaseRecord> extends IdSequence
 {
@@ -208,10 +208,10 @@ public interface RecordStore<R extends AbstractBaseRecord> extends IdSequence
         public static <R extends AbstractBaseRecord> Iterable<R> scanById( final RecordStore<R> store,
                 Iterable<Long> ids )
         {
-            return new IterableWrapper<R,Long>( ids )
+            return new Iterables.Map<Long,R>( ids )
             {
                 @Override
-                protected R underlyingObjectToObject( Long id )
+                protected R map( Long id )
                 {
                     return store.forceGetRecord( id );
                 }

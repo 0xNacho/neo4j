@@ -26,8 +26,8 @@ import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.helpers.collection.FirstItemIterable;
-import org.neo4j.helpers.collection.IterableWrapper;
-import org.neo4j.helpers.collection.IteratorWrapper;
+import org.neo4j.kernel.impl.util.collection.Iterables;
+import org.neo4j.kernel.impl.util.collection.Iterators;
 
 public class ObjectToRepresentationConverter
 {
@@ -44,7 +44,7 @@ public class ObjectToRepresentationConverter
         }
         if ( data instanceof Map )
         {
-            
+
             return getMapRepresentation( (Map) data );
         }
         return getSingleRepresentation( data );
@@ -52,25 +52,31 @@ public class ObjectToRepresentationConverter
 
     public static MappingRepresentation getMapRepresentation( Map data )
     {
-        
+
         return new MapRepresentation( data );
     }
 
     @SuppressWarnings("unchecked")
     static Representation getIteratorRepresentation( Iterator data )
     {
-        final FirstItemIterable<Representation> results = new FirstItemIterable<>(new IteratorWrapper<Representation, Object>(data) {
-            @Override
-            protected Representation underlyingObjectToObject(Object value) {
-                if ( value instanceof Iterable )
+        final FirstItemIterable<Representation> results =
+                new FirstItemIterable<>( new Iterators.Map<Object,Representation>( data )
                 {
-                    FirstItemIterable<Representation> nested = convertValuesToRepresentations( (Iterable) value );
-                    return new ListRepresentation( getType( nested ), nested );
-                } else {
-                    return getSingleRepresentation( value );
-                }
-            }
-        });
+                    @Override
+                    protected Representation map( Object value )
+                    {
+                        if ( value instanceof Iterable )
+                        {
+                            FirstItemIterable<Representation> nested =
+                                    convertValuesToRepresentations( (Iterable) value );
+                            return new ListRepresentation( getType( nested ), nested );
+                        }
+                        else
+                        {
+                            return getSingleRepresentation( value );
+                        }
+                    }
+                } );
         return new ListRepresentation( getType( results ), results );
     }
 
@@ -83,12 +89,14 @@ public class ObjectToRepresentationConverter
     @SuppressWarnings("unchecked")
     static FirstItemIterable<Representation> convertValuesToRepresentations( Iterable data )
     {
-        return new FirstItemIterable<>(new IterableWrapper<Representation,Object>(data) {
+        return new FirstItemIterable<>( new Iterables.Map<Object,Representation>( data )
+        {
             @Override
-            protected Representation underlyingObjectToObject(Object value) {
-               return convert(value);
+            protected Representation map( Object value )
+            {
+                return convert( value );
             }
-        });
+        } );
     }
 
     static RepresentationType getType( FirstItemIterable<Representation> representations )

@@ -22,10 +22,11 @@ package org.neo4j.server.plugins;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 
+import org.neo4j.function.Function;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Path;
 import org.neo4j.graphdb.Relationship;
-import org.neo4j.helpers.collection.IterableWrapper;
+import org.neo4j.kernel.impl.util.collection.Iterables;
 import org.neo4j.server.rest.repr.ListRepresentation;
 import org.neo4j.server.rest.repr.NodeRepresentation;
 import org.neo4j.server.rest.repr.PathRepresentation;
@@ -222,7 +223,7 @@ abstract class ResultConverter
                 }
             };
 
-    private static class ListResult extends ResultConverter
+    private static class ListResult extends ResultConverter implements Function<Object,Representation>
     {
         private final ResultConverter itemConverter;
 
@@ -232,18 +233,16 @@ abstract class ResultConverter
         }
 
         @Override
+        public Representation apply( Object from ) throws RuntimeException
+        {
+            return itemConverter.convert( from );
+        }
+
+        @Override
         @SuppressWarnings( "unchecked" )
         Representation convert( Object obj )
         {
-            return new ListRepresentation( itemConverter.type(), new IterableWrapper<Representation, Object>(
-                    (Iterable<Object>) obj )
-            {
-                @Override
-                protected Representation underlyingObjectToObject( Object object )
-                {
-                    return itemConverter.convert( object );
-                }
-            } );
+            return new ListRepresentation( itemConverter.type(), Iterables.map( (Iterable<Object>) obj, this ) );
         }
 
         @Override

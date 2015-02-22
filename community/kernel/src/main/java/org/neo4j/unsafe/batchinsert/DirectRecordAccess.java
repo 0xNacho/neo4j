@@ -25,10 +25,10 @@ import java.util.TreeMap;
 
 import org.neo4j.collection.pool.LinkedQueuePool;
 import org.neo4j.function.Factory;
-import org.neo4j.helpers.collection.IterableWrapper;
 import org.neo4j.kernel.impl.store.AbstractRecordStore;
 import org.neo4j.kernel.impl.store.record.AbstractBaseRecord;
 import org.neo4j.kernel.impl.transaction.state.RecordAccess;
+import org.neo4j.kernel.impl.util.collection.Iterables;
 import org.neo4j.kernel.impl.util.statistics.IntCounter;
 
 /**
@@ -111,11 +111,10 @@ public class DirectRecordAccess<KEY extends Comparable<KEY>,RECORD extends Abstr
     @Override
     public Iterable<RecordProxy<KEY,RECORD,ADDITIONAL>> changes()
     {
-        return new IterableWrapper<RecordProxy<KEY,RECORD,ADDITIONAL>,DirectRecordProxy>(
-                batch.values() )
+        return new Iterables.Map<DirectRecordProxy,RecordProxy<KEY,RECORD,ADDITIONAL>>( batch.values() )
         {
             @Override
-            protected RecordProxy<KEY,RECORD,ADDITIONAL> underlyingObjectToObject( DirectRecordProxy object )
+            protected RecordProxy<KEY,RECORD,ADDITIONAL> map( DirectRecordProxy object )
             {
                 return object;
             }

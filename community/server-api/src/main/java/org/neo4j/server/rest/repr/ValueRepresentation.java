@@ -22,7 +22,7 @@ package org.neo4j.server.rest.repr;
 import java.net.URI;
 
 import org.neo4j.graphdb.RelationshipType;
-import org.neo4j.helpers.collection.IterableWrapper;
+import org.neo4j.kernel.impl.util.collection.Iterables;
 import org.neo4j.server.helpers.PropertyTypeDispatcher;
 
 public class ValueRepresentation extends Representation
@@ -211,10 +211,10 @@ public class ValueRepresentation extends Representation
         @SuppressWarnings( "unchecked" )
         private Iterable<Representation> dispatch( PropertyArray<?, ?> array )
         {
-            return new IterableWrapper<Representation, Object>( (Iterable<Object>) array )
+            return new Iterables.Map<Object,Representation>( (Iterable<Object>) array )
             {
                 @Override
-                protected Representation underlyingObjectToObject( Object object )
+                protected Representation map( Object object )
                 {
                     return property( object );
                 }

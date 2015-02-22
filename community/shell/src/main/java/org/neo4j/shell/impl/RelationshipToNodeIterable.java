@@ -21,9 +21,9 @@ package org.neo4j.shell.impl;
 
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
-import org.neo4j.helpers.collection.IterableWrapper;
+import org.neo4j.kernel.impl.util.collection.Iterables;
 
-public class RelationshipToNodeIterable extends IterableWrapper<Node, Relationship>
+public class RelationshipToNodeIterable extends Iterables.Map<Relationship,Node>
 {
     private final Node fromNode;
 
@@ -34,11 +34,11 @@ public class RelationshipToNodeIterable extends IterableWrapper<Node, Relationsh
     }
 
     @Override
-    protected Node underlyingObjectToObject( Relationship rel )
+    protected Node map( Relationship rel )
     {
         return rel.getOtherNode( fromNode );
     }
-    
+
     public static Iterable<Node> wrap( Iterable<Relationship> relationships, Node fromNode )
     {
         return new RelationshipToNodeIterable( relationships, fromNode );

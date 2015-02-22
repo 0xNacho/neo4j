@@ -41,7 +41,7 @@ import org.neo4j.graphdb.Traverser.Order;
 import org.neo4j.graphmatching.PatternMatch;
 import org.neo4j.graphmatching.PatternMatcher;
 import org.neo4j.graphmatching.PatternNode;
-import org.neo4j.helpers.collection.IteratorWrapper;
+import org.neo4j.kernel.impl.util.collection.Iterators;
 import org.neo4j.test.TargetDirectory;
 import org.neo4j.test.TestGraphDatabaseFactory;
 
@@ -75,12 +75,11 @@ public class TestMatchingOfCircularPattern
         @Override
         public Iterator<Node> iterator()
         {
-            Iterable<PatternMatch> matches = PatternMatcher.getMatcher().match(
-                    start, startNode );
-            return new IteratorWrapper<Node, PatternMatch>( matches.iterator() )
+            Iterable<PatternMatch> matches = PatternMatcher.getMatcher().match( start, startNode );
+            return new Iterators.Map<PatternMatch,Node>( matches.iterator() )
             {
                 @Override
-                protected Node underlyingObjectToObject( PatternMatch match )
+                protected Node map( PatternMatch match )
                 {
                     return match.getNodeFor( message );
                 }

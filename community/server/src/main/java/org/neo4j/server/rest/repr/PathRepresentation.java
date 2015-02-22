@@ -19,13 +19,13 @@
  */
 package org.neo4j.server.rest.repr;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Path;
 import org.neo4j.graphdb.Relationship;
-import org.neo4j.helpers.collection.IterableWrapper;
-
-import java.util.ArrayList;
-import java.util.Iterator;
+import org.neo4j.kernel.impl.util.collection.Iterables;
 
 public class PathRepresentation<P extends Path> extends ObjectRepresentation // implements
                                                                              // ExtensibleRepresentation
@@ -81,10 +81,10 @@ public class PathRepresentation<P extends Path> extends ObjectRepresentation // 
     public ListRepresentation nodes()
     {
         return new ListRepresentation( RepresentationType.NODE,
-                new IterableWrapper<Representation, Node>( path.nodes() )
+                new Iterables.Map<Node,Representation>( path.nodes() )
                 {
                     @Override
-                    protected Representation underlyingObjectToObject( Node node )
+                    protected Representation map( Node node )
                     {
                         return ValueRepresentation.uri( NodeRepresentation.path( node ) );
                     }
@@ -95,10 +95,10 @@ public class PathRepresentation<P extends Path> extends ObjectRepresentation // 
     public ListRepresentation relationships()
     {
         return new ListRepresentation( RepresentationType.RELATIONSHIP,
-                new IterableWrapper<Representation, Relationship>( path.relationships() )
+                new Iterables.Map<Relationship,Representation>( path.relationships() )
                 {
                     @Override
-                    protected Representation underlyingObjectToObject( Relationship node )
+                    protected Representation map( Relationship node )
                     {
                         return ValueRepresentation.uri( RelationshipRepresentation.path( node ) );
                     }
@@ -129,10 +129,10 @@ public class PathRepresentation<P extends Path> extends ObjectRepresentation // 
         }
 
         return new ListRepresentation( RepresentationType.STRING,
-                new IterableWrapper<Representation, String>( directionStrings )
+                new Iterables.Map<String,Representation>( directionStrings )
                 {
                     @Override
-                    protected Representation underlyingObjectToObject( String directionString )
+                    protected Representation map( String directionString )
                     {
                         return ValueRepresentation.string(directionString);
                     }

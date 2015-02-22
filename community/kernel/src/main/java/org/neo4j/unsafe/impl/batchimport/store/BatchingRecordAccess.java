@@ -21,10 +21,10 @@ package org.neo4j.unsafe.impl.batchimport.store;
 
 import java.util.Collection;
 
-import org.neo4j.helpers.collection.IterableWrapper;
 import org.neo4j.kernel.impl.transaction.state.NeoStoreTransactionContext;
 import org.neo4j.kernel.impl.transaction.state.RecordAccess;
 import org.neo4j.kernel.impl.util.collection.ArrayCollection;
+import org.neo4j.kernel.impl.util.collection.Iterables;
 
 /**
  * {@link RecordAccess} optimized for batching and an access pattern where records are created sequentially.
@@ -54,10 +54,10 @@ public abstract class BatchingRecordAccess<KEY,RECORD,ADDITIONAL> implements Rec
 
     public Iterable<RECORD> records()
     {
-        return new IterableWrapper<RECORD,RecordProxy<KEY,RECORD,ADDITIONAL>>( proxies )
+        return new Iterables.Map<RecordProxy<KEY,RECORD,ADDITIONAL>,RECORD>( proxies )
         {
             @Override
-            protected RECORD underlyingObjectToObject( RecordProxy<KEY,RECORD,ADDITIONAL> object )
+            protected RECORD map( RecordProxy<KEY,RECORD,ADDITIONAL> object )
             {
                 return object.forReadingLinkage();
             }

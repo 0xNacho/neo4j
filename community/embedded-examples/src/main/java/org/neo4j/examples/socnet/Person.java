@@ -35,9 +35,9 @@ import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.traversal.Evaluators;
 import org.neo4j.graphdb.traversal.TraversalDescription;
 import org.neo4j.graphdb.traversal.Traverser;
-import org.neo4j.helpers.collection.IterableWrapper;
-import org.neo4j.helpers.collection.IteratorUtil;
 import org.neo4j.graphdb.traversal.Uniqueness;
+import org.neo4j.helpers.collection.IteratorUtil;
+import org.neo4j.kernel.impl.util.collection.Iterables;
 
 import static org.neo4j.examples.socnet.RelTypes.FRIEND;
 import static org.neo4j.examples.socnet.RelTypes.NEXT;
@@ -185,11 +185,10 @@ public class Person
         // END SNIPPET: getStatusTraversal
 
 
-        return new IterableWrapper<StatusUpdate, Path>(
-                traversal.traverse( firstStatus.getEndNode() ) )
+        return new Iterables.Map<Path,StatusUpdate>( traversal.traverse( firstStatus.getEndNode() ) )
         {
             @Override
-            protected StatusUpdate underlyingObjectToObject( Path path )
+            protected StatusUpdate map( Path path )
             {
                 return new StatusUpdate( path.endNode() );
             }
@@ -315,13 +314,13 @@ public class Person
         return createPersonsFromPath( travDesc.traverse( underlyingNode ) );
     }
 
-    private IterableWrapper<Person, Path> createPersonsFromPath(
+    private Iterable<Person> createPersonsFromPath(
             Traverser iterableToWrap )
     {
-        return new IterableWrapper<Person, Path>( iterableToWrap )
+        return new Iterables.Map<Path,Person>( iterableToWrap )
         {
             @Override
-            protected Person underlyingObjectToObject( Path path )
+            protected Person map( Path path )
             {
                 return new Person( path.endNode() );
             }
@@ -337,10 +336,10 @@ public class Person
 
     private Iterable<Person> createPersonsFromNodes( final Path path )
     {
-        return new IterableWrapper<Person, Node>( path.nodes() )
+        return new Iterables.Map<Node,Person>( path.nodes() )
         {
             @Override
-            protected Person underlyingObjectToObject( Node node )
+            protected Person map( Node node )
             {
                 return new Person( node );
             }

@@ -24,8 +24,8 @@ import java.util.Arrays;
 import java.util.Iterator;
 
 import org.neo4j.graphdb.RelationshipType;
-import org.neo4j.helpers.collection.IterableWrapper;
 import org.neo4j.helpers.collection.PrefetchingIterator;
+import org.neo4j.kernel.impl.util.collection.Iterables;
 
 public class ListRepresentation extends Representation
 {
@@ -92,11 +92,10 @@ public class ListRepresentation extends Representation
 
     public static ListRepresentation string( Iterable<String> values )
     {
-        return new ListRepresentation( RepresentationType.STRING, new IterableWrapper<Representation, String>(
-                values )
+        return new ListRepresentation( RepresentationType.STRING, new Iterables.Map<String,Representation>( values )
         {
             @Override
-            protected Representation underlyingObjectToObject( String value )
+            protected Representation map( String value )
             {
                 return ValueRepresentation.string( value );
             }
@@ -106,10 +105,10 @@ public class ListRepresentation extends Representation
     public static ListRepresentation relationshipTypes( Iterable<RelationshipType> types )
     {
         return new ListRepresentation( RepresentationType.RELATIONSHIP_TYPE,
-                new IterableWrapper<Representation, RelationshipType>( types )
+                new Iterables.Map<RelationshipType,Representation>( types )
                 {
                     @Override
-                    protected Representation underlyingObjectToObject( RelationshipType value )
+                    protected Representation map( RelationshipType value )
                     {
                         return ValueRepresentation.relationshipType( value );
                     }

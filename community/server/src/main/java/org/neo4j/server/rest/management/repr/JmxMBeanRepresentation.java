@@ -32,7 +32,7 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import javax.management.ReflectionException;
 
-import org.neo4j.helpers.collection.IterableWrapper;
+import org.neo4j.kernel.impl.util.collection.Iterables;
 import org.neo4j.server.rest.repr.ListRepresentation;
 import org.neo4j.server.rest.repr.ObjectRepresentation;
 import org.neo4j.server.rest.repr.Representation;
@@ -40,7 +40,6 @@ import org.neo4j.server.rest.repr.ValueRepresentation;
 
 public class JmxMBeanRepresentation extends ObjectRepresentation
 {
-
     protected ObjectName beanName;
     protected MBeanServer jmxServer = ManagementFactory.getPlatformMBeanServer();
 
@@ -85,11 +84,11 @@ public class JmxMBeanRepresentation extends ObjectRepresentation
     {
         MBeanInfo beanInfo = jmxServer.getMBeanInfo( beanName );
 
-        return new ListRepresentation( "jmxAttribute", new IterableWrapper<Representation, MBeanAttributeInfo>(
+        return new ListRepresentation( "jmxAttribute", new Iterables.Map<MBeanAttributeInfo,Representation>(
                 Arrays.asList( beanInfo.getAttributes() ) )
         {
             @Override
-            protected Representation underlyingObjectToObject( MBeanAttributeInfo attrInfo )
+            protected Representation map( MBeanAttributeInfo attrInfo )
             {
                 return new JmxAttributeRepresentation( beanName, attrInfo );
             }

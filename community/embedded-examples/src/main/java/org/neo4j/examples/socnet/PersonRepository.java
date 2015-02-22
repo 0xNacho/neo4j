@@ -24,7 +24,7 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.index.Index;
 import org.neo4j.graphdb.index.IndexHits;
-import org.neo4j.helpers.collection.IterableWrapper;
+import org.neo4j.kernel.impl.util.collection.Iterables;
 
 import static org.neo4j.examples.socnet.RelTypes.A_PERSON;
 
@@ -111,11 +111,10 @@ public class PersonRepository
 
     public Iterable<Person> getAllPersons()
     {
-        return new IterableWrapper<Person, Relationship>(
-                personRefNode.getRelationships( A_PERSON ) )
+        return new Iterables.Map<Relationship,Person>( personRefNode.getRelationships( A_PERSON ) )
         {
             @Override
-            protected Person underlyingObjectToObject( Relationship personRel )
+            protected Person map( Relationship personRel )
             {
                 return new Person( personRel.getEndNode() );
             }

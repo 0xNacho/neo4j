@@ -23,7 +23,7 @@ import java.util.Map;
 
 import org.neo4j.function.Function;
 import org.neo4j.graphdb.ExecutionPlanDescription;
-import org.neo4j.helpers.collection.IterableWrapper;
+import org.neo4j.kernel.impl.util.collection.Iterables;
 
 import static org.neo4j.server.rest.repr.ObjectToRepresentationConverter.getMapRepresentation;
 
@@ -62,10 +62,10 @@ public abstract class CypherPlanRepresentation extends MappingRepresentation
 
         mappingSerializer.putList( "children",
                 new ListRepresentation( "children",
-                        new IterableWrapper<Representation, ExecutionPlanDescription>( planDescription.getChildren() )
+                        new Iterables.Map<ExecutionPlanDescription,Representation>( planDescription.getChildren() )
                         {
                             @Override
-                            protected Representation underlyingObjectToObject( final ExecutionPlanDescription childPlan )
+                            protected Representation map( final ExecutionPlanDescription childPlan )
                             {
                                 return newFromPlan( childPlan );
                             }

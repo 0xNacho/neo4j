@@ -20,7 +20,7 @@
 package org.neo4j.server.rest.repr;
 
 import org.neo4j.graphdb.Relationship;
-import org.neo4j.helpers.collection.IterableWrapper;
+import org.neo4j.kernel.impl.util.collection.Iterables;
 
 import static org.neo4j.helpers.collection.MapUtil.map;
 
@@ -46,6 +46,7 @@ public final class RelationshipRepresentation extends ObjectRepresentation imple
         return rel.getId();
     }
 
+    @Override
     @Mapping( "self" )
     public ValueRepresentation selfUri()
     {
@@ -109,10 +110,10 @@ public final class RelationshipRepresentation extends ObjectRepresentation imple
     public static ListRepresentation list( Iterable<Relationship> relationships )
     {
         return new ListRepresentation( RepresentationType.RELATIONSHIP,
-                new IterableWrapper<Representation, Relationship>( relationships )
+                new Iterables.Map<Relationship,Representation>( relationships )
                 {
                     @Override
-                    protected Representation underlyingObjectToObject( Relationship relationship )
+                    protected Representation map( Relationship relationship )
                     {
                         return new RelationshipRepresentation( relationship );
                     }

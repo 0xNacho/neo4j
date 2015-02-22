@@ -23,6 +23,7 @@ import java.io.Serializable;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+
 import org.neo4j.graphdb.DependencyResolver;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.GraphDatabaseService;
@@ -54,10 +55,10 @@ import org.neo4j.graphdb.schema.IndexDefinition;
 import org.neo4j.graphdb.schema.Schema;
 import org.neo4j.graphdb.traversal.BidirectionalTraversalDescription;
 import org.neo4j.graphdb.traversal.TraversalDescription;
-import org.neo4j.helpers.collection.IterableWrapper;
 import org.neo4j.kernel.GraphDatabaseAPI;
 import org.neo4j.kernel.impl.store.StoreId;
 import org.neo4j.kernel.impl.traversal.OldTraverserWrapper;
+import org.neo4j.kernel.impl.util.collection.Iterables;
 
 public class ReadOnlyGraphDatabaseProxy implements GraphDatabaseService, GraphDatabaseAPI, IndexManager
 {
@@ -554,10 +555,10 @@ public class ReadOnlyGraphDatabaseProxy implements GraphDatabaseService, GraphDa
 
     public Iterable<Node> nodes( Iterable<Node> nodes )
     {
-        return new IterableWrapper<Node, Node>( nodes )
+        return new Iterables.Map<Node,Node>( nodes )
         {
             @Override
-            protected Node underlyingObjectToObject( Node node )
+            protected Node map( Node node )
             {
                 return new ReadOnlyNodeProxy( node );
             }
@@ -566,10 +567,10 @@ public class ReadOnlyGraphDatabaseProxy implements GraphDatabaseService, GraphDa
 
     public Iterable<Relationship> relationships( Iterable<Relationship> relationships )
     {
-        return new IterableWrapper<Relationship, Relationship>( relationships )
+        return new Iterables.Map<Relationship,Relationship>( relationships )
         {
             @Override
-            protected Relationship underlyingObjectToObject( Relationship relationship )
+            protected Relationship map( Relationship relationship )
             {
                 return new ReadOnlyRelationshipProxy( relationship );
             }

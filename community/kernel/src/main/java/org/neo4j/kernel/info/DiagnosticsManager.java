@@ -23,9 +23,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import org.neo4j.helpers.collection.IterableWrapper;
 import org.neo4j.helpers.collection.Visitor;
 import org.neo4j.kernel.impl.util.StringLogger;
+import org.neo4j.kernel.impl.util.collection.Iterables;
 import org.neo4j.kernel.info.DiagnosticsExtractor.VisitableDiagnostics;
 import org.neo4j.kernel.lifecycle.Lifecycle;
 
@@ -58,11 +58,11 @@ public class DiagnosticsManager implements Iterable<DiagnosticsProvider>, Lifecy
             {
                 if ( phase.isInitialization() || phase.isExplicitlyRequested() )
                 {
-                    log.logLongMessage( "Diagnostics providers:", new IterableWrapper<String, DiagnosticsProvider>(
+                    log.logLongMessage( "Diagnostics providers:", new Iterables.Map<DiagnosticsProvider,String>(
                             providers )
                     {
                         @Override
-                        protected String underlyingObjectToObject( DiagnosticsProvider provider )
+                        protected String map( DiagnosticsProvider provider )
                         {
                             return provider.getDiagnosticsIdentifier();
                         }
@@ -96,6 +96,7 @@ public class DiagnosticsManager implements Iterable<DiagnosticsProvider>, Lifecy
         dumpAll( DiagnosticsPhase.INITIALIZED);
     }
 
+    @Override
     public void start()
     {
         synchronized ( providers )
@@ -119,6 +120,7 @@ public class DiagnosticsManager implements Iterable<DiagnosticsProvider>, Lifecy
         providers.clear();
     }
 
+    @Override
     public void shutdown()
     {
         synchronized ( providers )

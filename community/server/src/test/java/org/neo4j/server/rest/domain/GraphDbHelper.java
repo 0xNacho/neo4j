@@ -39,10 +39,9 @@ import org.neo4j.graphdb.schema.ConstraintDefinition;
 import org.neo4j.graphdb.schema.ConstraintType;
 import org.neo4j.graphdb.schema.IndexDefinition;
 import org.neo4j.helpers.Predicate;
-import org.neo4j.helpers.collection.IterableWrapper;
-import org.neo4j.helpers.collection.Iterables;
 import org.neo4j.helpers.collection.MapUtil;
 import org.neo4j.kernel.impl.transaction.state.NeoStoreProvider;
+import org.neo4j.kernel.impl.util.collection.Iterables;
 import org.neo4j.server.database.Database;
 
 import static org.neo4j.graphdb.DynamicLabel.label;
@@ -435,10 +434,10 @@ public class GraphDbHelper
 
     public Iterable<String> getNodeLabels( long node )
     {
-        return new IterableWrapper<String, Label>( database.getGraph().getNodeById( node ).getLabels() )
+        return new Iterables.Map<Label,String>( database.getGraph().getNodeById( node ).getLabels() )
         {
             @Override
-            protected String underlyingObjectToObject( Label object )
+            protected String map( Label object )
             {
                 return object.name();
             }
@@ -484,7 +483,9 @@ public class GraphDbHelper
         Transaction tx = database.getGraph().beginTx();
         try
         {
-            Iterable<ConstraintDefinition> definitions = Iterables.filter( new Predicate<ConstraintDefinition>()
+            Iterable<ConstraintDefinition> definitions = Iterables.filter(
+                    database.getGraph().schema().getConstraints( label( labelName ) ),
+                    new Predicate<ConstraintDefinition>()
             {
 
                 @Override
@@ -495,13 +496,9 @@ public class GraphDbHelper
                         Iterable<String> keys = item.getPropertyKeys();
                         return single( keys ).equals( propertyKey );
                     }
-                    else
-                    {
-                        return false;
-                    }
-
+                    return false;
                 }
-            }, database.getGraph().schema().getConstraints( label( labelName ) ) );
+            } );
             tx.success();
             return definitions;
         }

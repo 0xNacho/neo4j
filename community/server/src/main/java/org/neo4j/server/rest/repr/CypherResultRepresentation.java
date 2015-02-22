@@ -24,12 +24,12 @@ import java.util.List;
 import java.util.Map;
 
 import org.neo4j.function.Function;
+import org.neo4j.graphdb.ExecutionPlanDescription;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Path;
-import org.neo4j.graphdb.ExecutionPlanDescription;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Result;
-import org.neo4j.helpers.collection.IterableWrapper;
+import org.neo4j.kernel.impl.util.collection.Iterables;
 
 import static org.neo4j.helpers.collection.IteratorUtil.loop;
 
@@ -67,20 +67,21 @@ public class CypherResultRepresentation extends MappingRepresentation
     {
         final List<String> columns = executionResult.columns();
         Iterable<Map<String, Object>> inner = new RepresentationExceptionHandlingIterable<>( loop( executionResult ) );
-        return new ListRepresentation( "data", new IterableWrapper<Representation,Map<String,Object>>(inner) {
-
+        return new ListRepresentation( "data", new Iterables.Map<Map<String,Object>,Representation>( inner )
+        {
             @Override
-            protected Representation underlyingObjectToObject(final Map<String, Object> row) {
-                return new ListRepresentation("row",
-                 new IterableWrapper<Representation,String>(columns) {
-
-                     @Override
-                     protected Representation underlyingObjectToObject(String column) {
-                         return getRepresentation( row.get( column ) );
-                     }
-                 });
+            protected Representation map( final Map<String,Object> row )
+            {
+                return new ListRepresentation( "row", new Iterables.Map<String,Representation>( columns )
+                {
+                    @Override
+                    protected Representation map( String column )
+                    {
+                        return getRepresentation( row.get( column ) );
+                    }
+                } );
             }
-        });
+        } );
     }
 
     private Representation getRepresentation( Object r )

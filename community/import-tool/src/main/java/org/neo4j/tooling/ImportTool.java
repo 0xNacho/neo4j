@@ -31,8 +31,6 @@ import org.neo4j.function.Function;
 import org.neo4j.function.Function2;
 import org.neo4j.helpers.Args;
 import org.neo4j.helpers.Args.Option;
-import org.neo4j.helpers.collection.IterableWrapper;
-import org.neo4j.helpers.collection.Iterables;
 import org.neo4j.io.fs.DefaultFileSystemAbstraction;
 import org.neo4j.io.fs.FileSystemAbstraction;
 import org.neo4j.kernel.configuration.Config;
@@ -41,6 +39,7 @@ import org.neo4j.kernel.impl.storemigration.StoreFile;
 import org.neo4j.kernel.impl.storemigration.StoreFileType;
 import org.neo4j.kernel.impl.util.Converters;
 import org.neo4j.kernel.impl.util.Validators;
+import org.neo4j.kernel.impl.util.collection.Iterables;
 import org.neo4j.kernel.lifecycle.LifeSupport;
 import org.neo4j.kernel.logging.ClassicLoggingService;
 import org.neo4j.kernel.logging.Logging;
@@ -302,7 +301,7 @@ public class ImportTool
                 try
                 {
                     StoreFile.fileOperation( FileOperation.DELETE, fs, storeDir, null,
-                            Iterables.<StoreFile,StoreFile>iterable( StoreFile.values() ),
+                            Iterables.<StoreFile>iterable( StoreFile.values() ),
                             false, false, StoreFileType.values() );
                 }
                 catch ( IOException e )
@@ -373,10 +372,10 @@ public class ImportTool
     private static Iterable<DataFactory<InputRelationship>>
             relationshipData( Collection<Option<File[]>> relationshipsFiles )
     {
-        return new IterableWrapper<DataFactory<InputRelationship>,Option<File[]>>( relationshipsFiles )
+        return new Iterables.Map<Option<File[]>,DataFactory<InputRelationship>>( relationshipsFiles )
         {
             @Override
-            protected DataFactory<InputRelationship> underlyingObjectToObject( Option<File[]> group )
+            protected DataFactory<InputRelationship> map( Option<File[]> group )
             {
                 return data( defaultRelationshipType( group.metadata() ), group.value() );
             }
@@ -385,10 +384,10 @@ public class ImportTool
 
     private static Iterable<DataFactory<InputNode>> nodeData( Collection<Option<File[]>> nodesFiles )
     {
-        return new IterableWrapper<DataFactory<InputNode>,Option<File[]>>( nodesFiles )
+        return new Iterables.Map<Option<File[]>,DataFactory<InputNode>>( nodesFiles )
         {
             @Override
-            protected DataFactory<InputNode> underlyingObjectToObject( Option<File[]> input )
+            protected DataFactory<InputNode> map( Option<File[]> input )
             {
                 Function<InputNode,InputNode> decorator = input.metadata() != null
                         ? additiveLabels( input.metadata().split( ":" ) )
