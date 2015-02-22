@@ -28,13 +28,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
-import org.neo4j.helpers.collection.NestingIterable;
+import org.neo4j.kernel.impl.util.collection.Iterables;
 
 public final class ServerExtender
 {
     @SuppressWarnings( "unchecked" )
     private final Map<Class<?>, Map<String, PluginPoint>> targetToPluginMap = new HashMap();
-    private PluginPointFactory pluginPointFactory;
+    private final PluginPointFactory pluginPointFactory;
 
     ServerExtender( PluginPointFactory pluginPointFactory )
     {
@@ -53,12 +53,10 @@ public final class ServerExtender
 
     Iterable<PluginPoint> all()
     {
-        return new NestingIterable<PluginPoint, Map<String, PluginPoint>>(
-                targetToPluginMap.values() )
+        return new Iterables.Nest<Map<String, PluginPoint>,PluginPoint>( targetToPluginMap.values() )
         {
             @Override
-            protected Iterator<PluginPoint> createNestedIterator(
-                    Map<String, PluginPoint> item )
+            protected Iterator<PluginPoint> nested( Map<String, PluginPoint> item )
             {
                 return item.values().iterator();
             }

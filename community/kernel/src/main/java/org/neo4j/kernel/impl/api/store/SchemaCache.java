@@ -27,14 +27,14 @@ import java.util.Iterator;
 import java.util.Map;
 
 import org.neo4j.helpers.Predicate;
-import org.neo4j.helpers.collection.Iterables;
-import org.neo4j.helpers.collection.NestingIterable;
 import org.neo4j.kernel.api.constraints.UniquenessConstraint;
 import org.neo4j.kernel.api.exceptions.index.IndexNotFoundKernelException;
 import org.neo4j.kernel.api.index.IndexDescriptor;
 import org.neo4j.kernel.impl.store.UniquenessConstraintRule;
 import org.neo4j.kernel.impl.store.record.IndexRule;
 import org.neo4j.kernel.impl.store.record.SchemaRule;
+import org.neo4j.kernel.impl.util.collection.Iterables;
+import org.neo4j.kernel.impl.util.collection.Iterators;
 
 import static java.util.Collections.unmodifiableCollection;
 
@@ -83,10 +83,10 @@ public class SchemaCache
 
     public Iterable<SchemaRule> schemaRules()
     {
-        return new NestingIterable<SchemaRule, Map<Long,SchemaRule>>( rulesByLabelMap.values() )
+        return new Iterables.Nest<Map<Long,SchemaRule>,SchemaRule>( rulesByLabelMap.values() )
         {
             @Override
-            protected Iterator<SchemaRule> createNestedIterator( Map<Long,SchemaRule> item )
+            protected Iterator<SchemaRule> nested( Map<Long,SchemaRule> item )
             {
                 return item.values().iterator();
             }
@@ -164,7 +164,7 @@ public class SchemaCache
     public void load( Iterator<SchemaRule> schemaRuleIterator )
     {
         clear();
-        for ( SchemaRule schemaRule : Iterables.toList( schemaRuleIterator ) )
+        for ( SchemaRule schemaRule : Iterators.asList( schemaRuleIterator ) )
         {
             addSchemaRule( schemaRule );
         }

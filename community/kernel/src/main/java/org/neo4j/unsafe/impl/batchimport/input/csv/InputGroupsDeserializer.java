@@ -23,7 +23,7 @@ import java.util.Iterator;
 
 import org.neo4j.csv.reader.CharSeeker;
 import org.neo4j.function.Function;
-import org.neo4j.helpers.collection.NestingIterator;
+import org.neo4j.kernel.impl.util.collection.Iterators;
 import org.neo4j.unsafe.impl.batchimport.InputIterator;
 import org.neo4j.unsafe.impl.batchimport.input.InputEntity;
 
@@ -33,7 +33,7 @@ import org.neo4j.unsafe.impl.batchimport.input.InputEntity;
  * {@link InputEntityDeserializer}.
  */
 abstract class InputGroupsDeserializer<ENTITY extends InputEntity>
-        extends NestingIterator<ENTITY,DataFactory<ENTITY>>
+        extends Iterators.Nest<DataFactory<ENTITY>,ENTITY>
         implements InputIterator<ENTITY>
 {
     private final Header.Factory headerFactory;
@@ -53,7 +53,7 @@ abstract class InputGroupsDeserializer<ENTITY extends InputEntity>
     }
 
     @Override
-    protected InputIterator<ENTITY> createNestedIterator( DataFactory<ENTITY> dataFactory )
+    protected InputIterator<ENTITY> nested( DataFactory<ENTITY> dataFactory )
     {
         closeCurrent();
 

@@ -42,9 +42,9 @@ import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipExpander;
 import org.neo4j.graphdb.traversal.BranchState;
 import org.neo4j.graphdb.traversal.TraversalMetadata;
-import org.neo4j.helpers.collection.NestingIterator;
 import org.neo4j.helpers.collection.PrefetchingIterator;
 import org.neo4j.kernel.impl.util.collection.Iterables;
+import org.neo4j.kernel.impl.util.collection.Iterators;
 
 import static org.neo4j.kernel.StandardExpander.toPathExpander;
 
@@ -312,11 +312,10 @@ public class ShortestPath implements PathFinder<Path>
                     filterNextLevelNodes( this.nextNodes ) );
             this.nextNodes.clear();
             this.lastPath.setLength( currentDepth );
-            this.nextRelationships = new NestingIterator<Relationship, Node>(
-                    nodesToIterate.iterator() )
+            this.nextRelationships = new Iterators.Nest<Node,Relationship>( nodesToIterate.iterator() )
             {
                 @Override
-                protected Iterator<Relationship> createNestedIterator( Node node )
+                protected Iterator<Relationship> nested( Node node )
                 {
                     lastPath.setEndNode( node );
                     return expander.expand( lastPath, BranchState.NO_STATE ).iterator();

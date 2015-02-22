@@ -32,13 +32,13 @@ import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.traversal.BranchState;
 import org.neo4j.helpers.Pair;
-import org.neo4j.helpers.collection.NestingIterator;
+import org.neo4j.kernel.impl.util.collection.Iterators;
 
 public final class OrderedByTypeExpander extends
         StandardExpander.RegularExpander
 {
     private final Collection<Pair<RelationshipType, Direction>> orderedTypes;
-    
+
     public OrderedByTypeExpander()
     {
         this( Collections.<Pair<RelationshipType, Direction>>emptyList() );
@@ -57,7 +57,7 @@ public final class OrderedByTypeExpander extends
         newTypes.add( Pair.of( type, direction ) );
         return new OrderedByTypeExpander( newTypes );
     }
-    
+
     @Override
     public StandardExpander remove( RelationshipType type )
     {
@@ -67,13 +67,13 @@ public final class OrderedByTypeExpander extends
                 newTypes.add( pair );
         return new OrderedByTypeExpander( newTypes );
     }
-    
+
     @Override
     void buildString( StringBuilder result )
     {
         result.append( orderedTypes.toString() );
     }
-    
+
     @Override
     public StandardExpander reverse()
     {
@@ -93,12 +93,10 @@ public final class OrderedByTypeExpander extends
     Iterator<Relationship> doExpand( final Path path, BranchState state )
     {
         final Node node = path.endNode();
-        return new NestingIterator<Relationship, Pair<RelationshipType, Direction>>(
-                orderedTypes.iterator() )
+        return new Iterators.Nest<Pair<RelationshipType, Direction>,Relationship>( orderedTypes.iterator() )
         {
             @Override
-            protected Iterator<Relationship> createNestedIterator(
-                    Pair<RelationshipType, Direction> entry )
+            protected Iterator<Relationship> nested( Pair<RelationshipType, Direction> entry )
             {
                 RelationshipType type = entry.first();
                 Direction dir = entry.other();

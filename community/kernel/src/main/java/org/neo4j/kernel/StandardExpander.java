@@ -61,7 +61,6 @@ import org.neo4j.helpers.Pair;
 import org.neo4j.helpers.Predicate;
 import org.neo4j.helpers.collection.ArrayIterator;
 import org.neo4j.helpers.collection.FilteringIterator;
-import org.neo4j.helpers.collection.NestingIterator;
 import org.neo4j.kernel.impl.util.SingleNodePath;
 import org.neo4j.kernel.impl.util.collection.Iterators;
 
@@ -597,11 +596,11 @@ public abstract class StandardExpander implements Expander, PathExpander
             }
             else
             {
-                return new NestingIterator<Relationship, DirectionAndTypes>( new ArrayIterator<DirectionAndTypes>(
+                return new Iterators.Nest<DirectionAndTypes,Relationship>( new ArrayIterator<DirectionAndTypes>(
                         directions ) )
                 {
                     @Override
-                    protected Iterator<Relationship> createNestedIterator( DirectionAndTypes item )
+                    protected Iterator<Relationship> nested( DirectionAndTypes item )
                     {
                         return node.getRelationships( item.direction, item.types ).iterator();
                     }
