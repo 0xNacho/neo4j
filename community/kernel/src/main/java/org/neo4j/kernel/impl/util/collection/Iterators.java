@@ -48,7 +48,7 @@ import static org.neo4j.helpers.Exceptions.launderedException;
  * extend {@link Base} due to it's one-method-simplicity as opposed to two-method of implementing
  * {@link Iterator} directly. In here you'll find iterators that {@link #filter(Iterator, Predicate)},
  * {@link #map(Iterator, Function)}, {@link #reversed(Iterator) reverse},
- * {@link #catcher(Iterator, Predicate) catches certain exceptions}, {@link #interleave(Iterable)},
+ * {@link #catching(Iterator, Predicate) catches certain exceptions}, {@link #interleave(Iterable)},
  * {@link #skip(Iterator, int)}, {@link #limit(Iterator, int)} and more.
  *
  * @author Mattias Persson
@@ -142,14 +142,14 @@ public abstract class Iterators
     // Caching
     public static <T> ListIterator<T> cache( Iterator<T> source )
     {
-        return new Cache<>( source );
+        return new CacheAll<>( source );
     }
 
-    public static class Cache<T> extends Base<T> implements ListIterator<T>
+    public static abstract class Cache<T> extends Base<T> implements ListIterator<T>
     {
-        private final Iterator<T> source;
-        private final List<T> visited;
+        protected final Iterator<T> source;
         private int lastReturnedPosition = -1;
+        private T lastReturnedItem;
 
         /**
          * Creates a new caching iterator using {@code source} as its underlying
@@ -158,37 +158,31 @@ public abstract class Iterators
          */
         public Cache( Iterator<T> source )
         {
-            this( source, new ArrayList<T>() );
-        }
-
-        public Cache( Iterator<T> source, List<T> visited )
-        {
             this.source = source;
-            this.visited = visited;
         }
 
         @Override
         protected T fetchNextOrNull()
         {
-            T item = null;
             int position = position();
-            if ( position < visited.size() )
-            {
-                item = visited.get( position );
-            }
-            else
+            T item = lookup( position );
+            if ( item == null )
             {
                 if ( !source.hasNext() )
                 {
                     return null;
                 }
-                item = source.next();
-                visited.add( item );
+                lastReturnedItem = item = source.next();
+                cache( item, position );
             }
 
             lastReturnedPosition++;
             return item;
         }
+
+        protected abstract void cache( T item, int position );
+
+        public abstract T lookup( int position );
 
         /**
          * Returns the current position of the iterator, initially 0. The position
@@ -210,10 +204,7 @@ public abstract class Iterators
             return lastReturnedPosition + 1;
         }
 
-        private int highestVisitedPosition()
-        {
-            return visited.size() - 1;
-        }
+        protected abstract int highestVisitedPosition();
 
         /**
          * Sets the position of the iterator. {@code 0} means all the way back to
@@ -233,11 +224,14 @@ public abstract class Iterators
             }
 
             int previousPosition = position();
+            int currentPosition = previousPosition;
+            T item = null;
             while ( newPosition > highestVisitedPosition() )
             {
                 if ( source.hasNext() )
                 {
-                    visited.add( source.next() );
+                    item = source.next();
+                    cache( item, currentPosition++ );
                 }
                 else
                 {
@@ -245,6 +239,7 @@ public abstract class Iterators
                             ", but didn't get further than to " + highestVisitedPosition() );
                 }
             }
+            lastReturnedItem = item;
             lastReturnedPosition = newPosition;
             return previousPosition;
         }
@@ -269,7 +264,12 @@ public abstract class Iterators
             {
                 throw new NoSuchElementException( "Position is " + position() );
             }
-            T item = visited.get( lastReturnedPosition-- );
+            T item = lastReturnedItem = lookup( lastReturnedPosition-- );
+            if ( item == null )
+            {
+                throw new NoSuchElementException( this +
+                        " couldn't lookup previous from cache, position:" + position() );
+            }
             return item;
         }
 
@@ -286,11 +286,11 @@ public abstract class Iterators
          */
         public T current()
         {
-            if ( lastReturnedPosition == -1 )
+            if ( lastReturnedItem == null )
             {
                 throw new NoSuchElementException();
             }
-            return visited.get( lastReturnedPosition );
+            return lastReturnedItem;
         }
 
         @Override
@@ -318,10 +318,44 @@ public abstract class Iterators
         }
     }
 
-    // Catching
-    public static <T> Iterator<T> catcher( Iterator<T> source, final Predicate<Throwable> catchAndIgnoreException )
+    public static class CacheAll<T> extends Cache<T>
     {
-        return new Catcher<T>( source )
+        private final List<T> visited;
+
+        public CacheAll( Iterator<T> source, List<T> cache )
+        {
+            super( source );
+            this.visited = cache;
+        }
+
+        public CacheAll( Iterator<T> source )
+        {
+            this( source, new ArrayList<T>() );
+        }
+
+        @Override
+        protected void cache( T item, int position )
+        {
+            visited.add( item );
+        }
+
+        @Override
+        protected T lookup( int position )
+        {
+            return position >= 0 && position < visited.size() ? visited.get( position ) : null;
+        }
+
+        @Override
+        protected int highestVisitedPosition()
+        {
+            return visited.size() - 1;
+        }
+    }
+
+    // Catching
+    public static <T> Iterator<T> catching( Iterator<T> source, final Predicate<Throwable> catchAndIgnoreException )
+    {
+        return new Catch<T>( source )
         {
             @Override
             protected boolean exceptionOk( Throwable t )
@@ -331,11 +365,11 @@ public abstract class Iterators
         };
     }
 
-    public static abstract class Catcher<T> extends Base<T>
+    public static abstract class Catch<T> extends Base<T>
     {
         private final Iterator<T> source;
 
-        public Catcher( Iterator<T> source )
+        public Catch( Iterator<T> source )
         {
             this.source = source;
         }
@@ -719,7 +753,7 @@ public abstract class Iterators
      *
      * @param <T> the type of items in this iterator.
      */
-    public static class Pager<T> extends Cache<T>
+    public static class Pager<T> extends CacheAll<T>
     {
         private final int pageSize;
 

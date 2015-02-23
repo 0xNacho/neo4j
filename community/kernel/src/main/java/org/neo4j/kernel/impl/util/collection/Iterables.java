@@ -94,9 +94,9 @@ public abstract class Iterables
     }
 
     // Catching
-    public static <T> Iterable<T> catcher( Iterable<T> source, final Predicate<Throwable> catchAndIgnoreException )
+    public static <T> Iterable<T> catching( Iterable<T> source, final Predicate<Throwable> catchAndIgnoreException )
     {
-        return new Catcher<T>( source )
+        return new Catch<T>( source )
         {
             @Override
             protected boolean exceptionOk( Throwable t )
@@ -106,11 +106,11 @@ public abstract class Iterables
         };
     }
 
-    public static abstract class Catcher<T> implements Iterable<T>
+    public static abstract class Catch<T> implements Iterable<T>
     {
         private final Iterable<T> source;
 
-        public Catcher( Iterable<T> source )
+        public Catch( Iterable<T> source )
         {
             this.source = source;
         }
@@ -118,12 +118,12 @@ public abstract class Iterables
         @Override
         public Iterator<T> iterator()
         {
-            return new Iterators.Catcher<T>( source.iterator() )
+            return new Iterators.Catch<T>( source.iterator() )
             {
                 @Override
                 protected boolean exceptionOk( Throwable t )
                 {
-                    return Catcher.this.exceptionOk( t );
+                    return Catch.this.exceptionOk( t );
                 }
             };
         }
