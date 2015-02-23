@@ -35,8 +35,6 @@ import org.neo4j.cluster.ClusterSettings;
 import org.neo4j.cluster.InstanceId;
 import org.neo4j.com.ComException;
 import org.neo4j.helpers.NamedThreadFactory;
-import org.neo4j.helpers.Predicate;
-import org.neo4j.helpers.collection.FilteringIterator;
 import org.neo4j.kernel.configuration.Config;
 import org.neo4j.kernel.ha.HaSettings;
 import org.neo4j.kernel.ha.com.master.Slave;
@@ -45,6 +43,7 @@ import org.neo4j.kernel.ha.com.master.SlavePriority;
 import org.neo4j.kernel.ha.com.master.Slaves;
 import org.neo4j.kernel.impl.util.CappedOperation;
 import org.neo4j.kernel.impl.util.StringLogger;
+import org.neo4j.kernel.impl.util.collection.Iterators;
 import org.neo4j.kernel.lifecycle.Lifecycle;
 
 public class TransactionPropagator implements Lifecycle
@@ -287,14 +286,14 @@ public class TransactionPropagator implements Lifecycle
 
     private Iterator<Slave> filter( Iterator<Slave> slaves, final Integer externalAuthorServerId )
     {
-        return externalAuthorServerId == null ? slaves : new FilteringIterator<>( slaves, new Predicate<Slave>()
+        return externalAuthorServerId == null ? slaves : new Iterators.Filter<Slave>( slaves )
         {
             @Override
             public boolean accept( Slave item )
             {
                 return item.getServerId() != externalAuthorServerId;
             }
-        } );
+        };
     }
 
     private boolean isSuccessful( ReplicationContext context )

@@ -19,6 +19,10 @@
  */
 package org.neo4j.index.impl.lucene;
 
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -26,16 +30,10 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.index.Index;
 import org.neo4j.helpers.Predicate;
-import org.neo4j.helpers.collection.FilteringIterator;
-import org.neo4j.helpers.collection.IteratorUtil;
 import org.neo4j.kernel.GraphDatabaseAPI;
 import org.neo4j.kernel.NeoStoreDataSource;
 import org.neo4j.kernel.impl.index.IndexDefineCommand;
@@ -53,13 +51,15 @@ import org.neo4j.kernel.impl.transaction.log.entry.LogEntryStart;
 import org.neo4j.test.TargetDirectory;
 import org.neo4j.test.TestGraphDatabaseFactory;
 
-import static java.util.concurrent.Executors.newCachedThreadPool;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import static java.util.concurrent.Executors.newCachedThreadPool;
+
 import static org.neo4j.kernel.impl.transaction.log.entry.LogHeader.LOG_HEADER_SIZE;
+import static org.neo4j.kernel.impl.util.collection.Iterables.count;
+import static org.neo4j.kernel.impl.util.collection.Iterables.filter;
 
 /**
  * Test for a problem where multiple threads getting an index for the first time
@@ -166,19 +166,15 @@ public class IndexCreationTest
                     // The first COMMIT
                     assertTrue( startFound );
                     assertFalse( "Index creation transaction wasn't the first one", commandsInFirstEntry.isEmpty() );
-                    List<Command> createCommands = IteratorUtil.asList( new FilteringIterator<>(
-                            commandsInFirstEntry.iterator(),
-                            new Predicate<Command>()
-                            {
-                                @Override
-                                public boolean accept( Command item )
-                                {
-                                    return item instanceof IndexDefineCommand;
-
-                                }
-                            }
-                    ) );
-                    assertEquals( 1, createCommands.size() );
+                    int defineCommands = count( filter( commandsInFirstEntry, new Predicate<Command>()
+                    {
+                        @Override
+                        public boolean accept( Command item )
+                        {
+                            return item instanceof IndexDefineCommand;
+                        }
+                    } ) );
+                    assertEquals( 1, defineCommands );
                     success.set( true );
                     break;
                 }

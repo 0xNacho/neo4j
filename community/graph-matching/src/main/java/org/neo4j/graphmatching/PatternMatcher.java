@@ -31,8 +31,7 @@ import org.neo4j.graphmatching.filter.AbstractFilterExpression;
 import org.neo4j.graphmatching.filter.FilterBinaryNode;
 import org.neo4j.graphmatching.filter.FilterExpression;
 import org.neo4j.graphmatching.filter.FilterValueGetter;
-import org.neo4j.helpers.Predicate;
-import org.neo4j.helpers.collection.FilteringIterable;
+import org.neo4j.kernel.impl.util.collection.Iterables;
 
 /**
  * The PatternMatcher is the engine that performs the matching of a graph
@@ -192,10 +191,10 @@ public class PatternMatcher
 
 	private static class SimpleRegexValueGetter implements FilterValueGetter
 	{
-	    private PatternMatch match;
+	    private final PatternMatch match;
 	    private Map<String, PatternNode> labelToNode =
 	        new HashMap<String, PatternNode>();
-	    private Map<String, String> labelToProperty =
+	    private final Map<String, String> labelToProperty =
 	        new HashMap<String, String>();
 
 	    SimpleRegexValueGetter( Map<String, PatternNode> objectVariables,
@@ -226,6 +225,7 @@ public class PatternMatcher
 	        }
 	    }
 
+        @Override
         public String[] getValues( String label )
         {
             PatternNode pNode = labelToNode.get( label );
@@ -262,36 +262,38 @@ public class PatternMatcher
 	}
 
 	private static class FilteredPatternFinder
-	    extends FilteringIterable<PatternMatch>
+	    extends Iterables.Filter<PatternMatch>
 	{
-        public FilteredPatternFinder( Iterable<PatternMatch> source,
-            final Map<String, PatternNode> objectVariables )
+        private final Map<String,PatternNode> objectVariables;
+
+        public FilteredPatternFinder( Iterable<PatternMatch> source, Map<String, PatternNode> objectVariables )
         {
-            super( source, new Predicate<PatternMatch>()
+            super( source );
+            this.objectVariables = objectVariables;
+        }
+
+        @Override
+        public boolean accept( PatternMatch item )
+        {
+            Set<PatternGroup> calculatedGroups = new HashSet<PatternGroup>();
+            for ( PatternElement element : item.getElements() )
             {
-                public boolean accept( PatternMatch item )
+                PatternNode node = element.getPatternNode();
+                PatternGroup group = node.getGroup();
+                if ( calculatedGroups.add( group ) )
                 {
-                    Set<PatternGroup> calculatedGroups = new HashSet<PatternGroup>();
-                    for ( PatternElement element : item.getElements() )
+                    FilterValueGetter valueGetter = new SimpleRegexValueGetter(
+                        objectVariables, item, group.getFilters() );
+                    for ( FilterExpression expression : group.getFilters() )
                     {
-                        PatternNode node = element.getPatternNode();
-                        PatternGroup group = node.getGroup();
-                        if ( calculatedGroups.add( group ) )
+                        if ( !expression.matches( valueGetter ) )
                         {
-                            FilterValueGetter valueGetter = new SimpleRegexValueGetter(
-                                objectVariables, item, group.getFilters() );
-                            for ( FilterExpression expression : group.getFilters() )
-                            {
-                                if ( !expression.matches( valueGetter ) )
-                                {
-                                    return false;
-                                }
-                            }
+                            return false;
                         }
                     }
-                    return true;
                 }
-            } );
+            }
+            return true;
         }
 	}
 }

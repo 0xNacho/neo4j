@@ -39,7 +39,7 @@ import org.neo4j.graphdb.traversal.TraversalBranch;
 import org.neo4j.graphdb.traversal.TraversalContext;
 import org.neo4j.graphdb.traversal.UniquenessFilter;
 import org.neo4j.helpers.Predicate;
-import org.neo4j.helpers.collection.FilteringIterator;
+import org.neo4j.kernel.impl.util.collection.Iterators;
 
 class BidirectionalTraverserIterator extends AbstractTraverserIterator
 {
@@ -178,7 +178,7 @@ class BidirectionalTraverserIterator extends AbstractTraverserIterator
 
     private Iterator<Path> uniquenessFiltered( Iterator<Path> paths )
     {
-        return new FilteringIterator<>( paths, uniquenessPredicate );
+        return Iterators.filter( paths, uniquenessPredicate );
     }
 
     private Side currentSideDescription()

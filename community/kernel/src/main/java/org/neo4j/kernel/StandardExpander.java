@@ -60,7 +60,6 @@ import org.neo4j.graphdb.traversal.BranchState;
 import org.neo4j.helpers.Pair;
 import org.neo4j.helpers.Predicate;
 import org.neo4j.helpers.collection.ArrayIterator;
-import org.neo4j.helpers.collection.FilteringIterator;
 import org.neo4j.kernel.impl.util.SingleNodePath;
 import org.neo4j.kernel.impl.util.collection.Iterators;
 
@@ -457,19 +456,17 @@ public abstract class StandardExpander implements Expander, PathExpander
         Iterator<Relationship> doExpand( Path path, BranchState state )
         {
             final Node node = path.endNode();
-            return new FilteringIterator<Relationship>(
-                    node.getRelationships().iterator(),
-                    new Predicate<Relationship>()
-                    {
-                        @Override
-                        public boolean accept( Relationship rel )
-                        {
-                            Exclusion exclude = exclusion.get( rel.getType().name() );
-                            exclude = (exclude == null) ? defaultExclusion
-                                    : exclude;
-                            return exclude.accept( node, rel );
-                        }
-                    } );
+            return new Iterators.Filter<Relationship>( node.getRelationships().iterator() )
+            {
+                @Override
+                public boolean accept( Relationship rel )
+                {
+                    Exclusion exclude = exclusion.get( rel.getType().name() );
+                    exclude = (exclude == null) ? defaultExclusion
+                            : exclude;
+                    return exclude.accept( node, rel );
+                }
+            };
         }
 
         @Override
@@ -680,8 +677,7 @@ public abstract class StandardExpander implements Expander, PathExpander
         @Override
         Iterator<Relationship> doExpand( final Path path, BranchState state )
         {
-            return new FilteringIterator<Relationship>(
-                    expander.doExpand( path, state ), new Predicate<Relationship>()
+            return new Iterators.Filter<Relationship>( expander.doExpand( path, state ) )
             {
                 @Override
                 public boolean accept( Relationship item )
@@ -696,7 +692,7 @@ public abstract class StandardExpander implements Expander, PathExpander
                     }
                     return true;
                 }
-            } );
+            };
         }
 
         @Override

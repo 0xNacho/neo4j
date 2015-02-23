@@ -39,8 +39,8 @@ import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.traversal.BranchState;
 import org.neo4j.helpers.Predicate;
 import org.neo4j.helpers.Service;
-import org.neo4j.helpers.collection.FilteringIterator;
 import org.neo4j.kernel.impl.util.SingleNodePath;
+import org.neo4j.kernel.impl.util.collection.Iterators;
 import org.neo4j.shell.App;
 import org.neo4j.shell.AppCommandParser;
 import org.neo4j.shell.ColumnPrinter;
@@ -59,7 +59,7 @@ import org.neo4j.shell.ShellException;
 public class Ls extends TransactionProvidingApp
 {
     private static final int DEFAULT_MAX_RELS_PER_TYPE_LIMIT = 10;
-    
+
     {
         addOptionDefinition( "b", new OptionDefinition( OptionValueType.NONE,
             "Brief summary instead of full content" ) );
@@ -226,7 +226,7 @@ public class Ls extends TransactionProvidingApp
         List<String> labelNames = new ArrayList<String>();
         for ( Label label : thing.asNode().getLabels() )
             labelNames.add( label.name() );
-        
+
         if ( brief )
         {
             out.println( "Label count: " + labelNames.size() );
@@ -240,7 +240,7 @@ public class Ls extends TransactionProvidingApp
             }
         }
     }
-    
+
     private void displayRelationships( AppCommandParser parser, NodeOrRelationship thing,
         Session session, Output out, boolean verbose, boolean quiet,
         Map<String, Object> filterMap, boolean caseInsensitiveFilters,
@@ -285,7 +285,7 @@ public class Ls extends TransactionProvidingApp
             {
                 iterator = wrapInLimitingIterator( parser, iterator, filterMap, caseInsensitiveFilters, looseFilters );
             }
-            
+
             while ( iterator.hasNext() )
             {
                 Relationship rel = iterator.next();
@@ -298,7 +298,7 @@ public class Ls extends TransactionProvidingApp
             }
         }
     }
-    
+
     private Iterator<Relationship> wrapInLimitingIterator( AppCommandParser parser,
             Iterator<Relationship> iterator, Map<String, Object> filterMap, boolean caseInsensitiveFilters,
             boolean looseFilters ) throws ShellException
@@ -307,13 +307,20 @@ public class Ls extends TransactionProvidingApp
         int maxRelsPerType = parser.optionAsNumber( "m", DEFAULT_MAX_RELS_PER_TYPE_LIMIT ).intValue();
         Map<String, Direction> types = filterMapToTypes( getServer().getDb(),
                 Direction.BOTH, filterMap, caseInsensitiveFilters, looseFilters );
-        return new FilteringIterator<Relationship>( iterator,
-                new LimitPerTypeFilter( maxRelsPerType, types, handBreak ) )
+
+        Predicate<Relationship> filter = new LimitPerTypeFilter( maxRelsPerType, types, handBreak );
+        return new Iterators.Filter<Relationship>( iterator )
         {
             @Override
             protected Relationship fetchNextOrNull()
             {
                 return handBreak.get() ? null : super.fetchNextOrNull();
+            }
+
+            @Override
+            public boolean accept( Relationship item )
+            {
+                return false;
             }
         };
     }
