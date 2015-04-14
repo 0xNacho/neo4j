@@ -19,15 +19,15 @@
  */
 package org.neo4j.kernel.impl.store;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.Arrays;
-
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.internal.InOrderImpl;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.Arrays;
 
 import org.neo4j.graphdb.mockfs.EphemeralFileSystemAbstraction;
 import org.neo4j.io.pagecache.PageCache;
@@ -45,7 +45,6 @@ import org.neo4j.test.PageCacheRule;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.when;
 
 public class PropertyStoreTest
@@ -112,10 +111,7 @@ public class PropertyStoreTest
 
         inOrder.verify( stringPropertyStore ).updateRecord( dynamicRecord );
 
-        inOrder.verify( cursor ).putByte( (byte) 0 );
-        inOrder.verify( cursor, times( 2 ) ).putInt( -1 );
-        inOrder.verify( cursor ).putLong( propertyBlock.getValueBlocks()[0] );
-        inOrder.verify( cursor ).putLong( 0 );
+        inOrder.verify( cursor ).putInt( anyInt() );
     }
 
     private DynamicRecord dynamicRecord()
@@ -135,9 +131,6 @@ public class PropertyStoreTest
                 .getId() << 28) );
         propertyBlock.addValueRecord( dynamicRecord );
 
-
         return propertyBlock;
     }
-
-
 }

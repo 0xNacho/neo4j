@@ -69,8 +69,8 @@ public class AbstractDynamicStoreTest
 
     private void assertRecognizesByteAsInUse( AbstractDynamicStore store, byte inUseByte )
     {
-        assertTrue(  store.isInUse( (byte) (inUseByte | 0x10) ) );
-        assertFalse( store.isInUse( (byte) (inUseByte & ~0x10) ) );
+        assertTrue(  store.isInUse( (byte) (inUseByte | 0x1) ) );
+        assertFalse( store.isInUse( (byte) (inUseByte & ~0x1) ) );
     }
 
     private AbstractDynamicStore newTestableDynamicStore()

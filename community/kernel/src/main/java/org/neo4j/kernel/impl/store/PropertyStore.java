@@ -44,14 +44,16 @@ import org.neo4j.kernel.impl.store.record.PropertyBlock;
 import org.neo4j.kernel.impl.store.record.PropertyRecord;
 import org.neo4j.kernel.impl.store.record.Record;
 import org.neo4j.kernel.impl.transaction.state.PropertyRecordChange;
+import org.neo4j.kernel.monitoring.Monitors;
 import org.neo4j.logging.LogProvider;
 import org.neo4j.logging.Logger;
-import org.neo4j.kernel.monitoring.Monitors;
 
 import static org.neo4j.helpers.collection.IteratorUtil.first;
 import static org.neo4j.io.pagecache.PagedFile.PF_EXCLUSIVE_LOCK;
 import static org.neo4j.io.pagecache.PagedFile.PF_SHARED_LOCK;
 import static org.neo4j.kernel.impl.store.DynamicArrayStore.getRightArray;
+import static org.neo4j.kernel.impl.store.PageCursorUtils.read6B;
+import static org.neo4j.kernel.impl.store.PageCursorUtils.write6B;
 
 /**
  * Implementation of the property store. This implementation has two dynamic
@@ -63,16 +65,20 @@ public class PropertyStore extends AbstractRecordStore<PropertyRecord> implement
     {
     }
 
-    public static final int DEFAULT_DATA_BLOCK_SIZE = 120;
+    public static final int DEFAULT_DATA_BLOCK_SIZE = AbstractDynamicStore.DEFAULT_DATA_BLOCK_SIZE;
     public static final int DEFAULT_PAYLOAD_SIZE = 32;
 
     public static final String TYPE_DESCRIPTOR = "PropertyStore";
 
-    public static final int RECORD_SIZE = 1/*next and prev high bits*/
-    + 4/*next*/
-    + 4/*prev*/
-    + DEFAULT_PAYLOAD_SIZE /*property blocks*/;
-    // = 41
+    /*
+     * 6B  prev prop
+     * 6B  next prop
+     * 32B property data
+     * 4B  version
+     * 4B version pointer
+     *=64B
+     */
+    public static final int RECORD_SIZE = 64;
 
     private DynamicStringStore stringPropertyStore;
     private PropertyKeyTokenStore propertyKeyTokenStore;
@@ -200,18 +206,10 @@ public class PropertyStore extends AbstractRecordStore<PropertyRecord> implement
         cursor.setOffset( (int) (id * RECORD_SIZE % storeFile.pageSize()) );
         if ( record.inUse() )
         {
-            // Set up the record header
-            short prevModifier = record.getPrevProp() == Record.NO_NEXT_RELATIONSHIP.intValue() ? 0
-                    : (short) ( ( record.getPrevProp() & 0xF00000000L ) >> 28 );
-            short nextModifier = record.getNextProp() == Record.NO_NEXT_RELATIONSHIP.intValue() ? 0
-                    : (short) ( ( record.getNextProp() & 0xF00000000L ) >> 32 );
-            byte modifiers = (byte) ( prevModifier | nextModifier );
-            /*
-             * [pppp,nnnn] previous, next high bits
-             */
-            cursor.putByte( modifiers );
-            cursor.putInt( (int) record.getPrevProp() );
-            cursor.putInt( (int) record.getNextProp() );
+            write6B( cursor, record.getPrevProp() );
+            write6B( cursor, record.getNextProp() );
+            cursor.putInt( 0 ); // version
+            cursor.putInt( 0 ); // version pointer
 
             // Then go through the blocks
             int longsAppended = 0; // For marking the end of blocks
@@ -229,6 +227,8 @@ public class PropertyStore extends AbstractRecordStore<PropertyRecord> implement
             {
                 cursor.putLong( 0 );
             }
+
+            // 12B free here
         }
         else
         {
@@ -385,21 +385,14 @@ public class PropertyStore extends AbstractRecordStore<PropertyRecord> implement
 
     private PropertyRecord getRecordFromBuffer( long id, PageCursor cursor )
     {
-        int offsetAtBeginning = cursor.getOffset();
         PropertyRecord record = new PropertyRecord( id );
 
-        /*
-         * [pppp,nnnn] previous, next high bits
-         */
-        byte modifiers = cursor.getByte();
-        long prevMod = ( modifiers & 0xF0L ) << 28;
-        long nextMod = ( modifiers & 0x0FL ) << 32;
-        long prevProp = cursor.getUnsignedInt();
-        long nextProp = cursor.getUnsignedInt();
-        record.setPrevProp( longFromIntAndMod( prevProp, prevMod ) );
-        record.setNextProp( longFromIntAndMod( nextProp, nextMod ) );
+        record.setPrevProp( read6B( cursor ) );
+        record.setNextProp( read6B( cursor ) );
+        cursor.getInt();
+        cursor.getInt();
 
-        while ( cursor.getOffset() - offsetAtBeginning < RECORD_SIZE )
+        for ( int i = 0; i < 4; i++ ) // Sorry for hardcoding instead of the old "read the rest of the record as property blocks"
         {
             PropertyBlock newBlock = getPropertyBlock( cursor );
             if ( newBlock != null )

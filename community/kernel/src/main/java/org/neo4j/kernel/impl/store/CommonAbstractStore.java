@@ -330,7 +330,10 @@ public abstract class CommonAbstractStore implements IdSequence, AutoCloseable
         }
     }
 
-    protected abstract boolean isInUse( byte inUseByte );
+    protected boolean isInUse( byte inUseByte )
+    {
+        return (inUseByte & 0x1) == Record.IN_USE.intValue();
+    }
 
     /**
      * Should rebuild the id generator from scratch.

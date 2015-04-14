@@ -44,6 +44,10 @@ import org.neo4j.kernel.monitoring.Monitors;
 
 import static org.neo4j.io.pagecache.PagedFile.PF_EXCLUSIVE_LOCK;
 import static org.neo4j.io.pagecache.PagedFile.PF_SHARED_LOCK;
+import static org.neo4j.kernel.impl.store.PageCursorUtils.read3B;
+import static org.neo4j.kernel.impl.store.PageCursorUtils.read6B;
+import static org.neo4j.kernel.impl.store.PageCursorUtils.write3B;
+import static org.neo4j.kernel.impl.store.PageCursorUtils.write6B;
 
 /**
  * An abstract representation of a dynamic store. The difference between a
@@ -67,8 +71,18 @@ public abstract class AbstractDynamicStore extends CommonAbstractStore implement
         DynamicBlockSize, DynamicRecordAllocator
 {
     public static final byte[] NO_DATA = new byte[0];
-    // (in_use+next high)(1 byte)+nr_of_bytes(3 bytes)+next_block(int)
-    public static final int BLOCK_HEADER_SIZE = 1 + 3 + 4; // = 8
+
+    /*
+     * 1B inUse + 0:start/1:consecutive
+     * 3B nr of bytes (as a whole. TODO we want to really have 1B describing nr of bytes in this record instead)
+     * 6B next
+     * 4B version
+     * 4B version pointer
+     *=18B
+     */
+    public static final int DEFAULT_RECORD_SIZE = 128;
+    public static final int BLOCK_HEADER_SIZE = 18;
+    public static final int DEFAULT_DATA_BLOCK_SIZE = DEFAULT_RECORD_SIZE-BLOCK_HEADER_SIZE;
 
     // Return signals for the readRecordHeader() method:
     private static int hasDataSignal = 0;
@@ -329,28 +343,13 @@ public abstract class AbstractDynamicStore extends CommonAbstractStore implement
         cursor.setOffset( offset );
         if ( record.inUse() )
         {
-            long nextBlock = record.getNextBlock();
-            int highByteInFirstInteger = nextBlock == Record.NO_NEXT_BLOCK.intValue() ? 0
-                                                                                      : (int) ((nextBlock &
-                                                                                                0xF00000000L) >> 8);
-            highByteInFirstInteger |= (Record.IN_USE.byteValue() << 28);
-            highByteInFirstInteger |= (record.isStartRecord() ? 0 : 1) << 31;
+            byte inUseByte = (byte) ((record.isStartRecord() ? 0 : 0x2) | Record.IN_USE.byteValue());
+            cursor.putByte( inUseByte );
+            write3B( cursor, record.getLength() );
+            write6B( cursor, record.getNextBlock() );
+            cursor.putInt( 0 ); // version
+            cursor.putInt( 0 ); // version pointer
 
-            /*
-             * First 4b
-             * [x   ,    ][    ,    ][    ,    ][    ,    ] 0: start record, 1: linked record
-             * [   x,    ][    ,    ][    ,    ][    ,    ] inUse
-             * [    ,xxxx][    ,    ][    ,    ][    ,    ] high next block bits
-             * [    ,    ][xxxx,xxxx][xxxx,xxxx][xxxx,xxxx] nr of bytes in the data field in this record
-             *
-             */
-            int firstInteger = record.getLength();
-            assert firstInteger < (1 << 24) - 1;
-
-            firstInteger |= highByteInFirstInteger;
-
-            cursor.putInt( firstInteger );
-            cursor.putInt( (int) nextBlock );
             if ( !record.isLight() )
             {
                 cursor.putBytes( record.getData() );
@@ -441,41 +440,18 @@ public abstract class AbstractDynamicStore extends CommonAbstractStore implement
      */
     private int readRecordHeader( PageCursor cursor, DynamicRecord record, boolean force )
     {
-        /*
-         * First 4b
-         * [x   ,    ][    ,    ][    ,    ][    ,    ] 0: start record, 1: linked record
-         * [   x,    ][    ,    ][    ,    ][    ,    ] inUse
-         * [    ,xxxx][    ,    ][    ,    ][    ,    ] high next block bits
-         * [    ,    ][xxxx,xxxx][xxxx,xxxx][xxxx,xxxx] nr of bytes in the data field in this record
-         *
-         */
-        long firstInteger = cursor.getUnsignedInt();
-        boolean isStartRecord = (firstInteger & 0x80000000) == 0;
-        long maskedInteger = firstInteger & ~0x80000000;
-        int highNibbleInMaskedInteger = (int) ((maskedInteger) >> 28);
-        boolean inUse = highNibbleInMaskedInteger == Record.IN_USE.intValue();
-        if ( !inUse && !force )
-        {
-            return notInUseSignal;
-        }
+        byte inUseByte = cursor.getByte();
+        record.setInUse( (inUseByte & 0x1) != 0 );
+        record.setStartRecord( (inUseByte & 0x2) == 0 );
+        record.setLength( read3B( cursor ) );
+        record.setNextBlock( read6B( cursor ) );
+        cursor.getInt();
+        cursor.getInt();
+
         int dataSize = getBlockSize() - AbstractDynamicStore.BLOCK_HEADER_SIZE;
-
-        int nrOfBytes = (int) (firstInteger & 0xFFFFFF);
-
-        /*
-         * Pointer to next block 4b (low bits of the pointer)
-         */
-        long nextBlock = cursor.getUnsignedInt();
-        long nextModifier = (firstInteger & 0xF000000L) << 8;
-
-        long longNextBlock = CommonAbstractStore.longFromIntAndMod( nextBlock, nextModifier );
         boolean hasDataToRead = true;
-        record.setInUse( inUse );
-        record.setStartRecord( isStartRecord );
-        record.setLength( nrOfBytes );
-        record.setNextBlock( longNextBlock );
-        if ( longNextBlock != Record.NO_NEXT_BLOCK.intValue()
-             && nrOfBytes < dataSize || nrOfBytes > dataSize )
+        if ( record.getNextBlock() != Record.NO_NEXT_BLOCK.intValue() &&
+                record.getLength() < dataSize || record.getLength() > dataSize )
         {
             hasDataToRead = false;
             if ( !force )
@@ -618,12 +594,6 @@ public abstract class AbstractDynamicStore extends CommonAbstractStore implement
     {
         long nextId = record.getNextBlock();
         return Record.NO_NEXT_BLOCK.is( nextId ) ? null : nextId;
-    }
-
-    @Override
-    protected boolean isInUse( byte inUseByte )
-    {
-        return ((inUseByte & (byte) 0x10) >> 4) == Record.IN_USE.byteValue();
     }
 
     @Override

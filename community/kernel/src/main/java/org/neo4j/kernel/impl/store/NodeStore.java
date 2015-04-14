@@ -46,6 +46,8 @@ import static org.neo4j.io.pagecache.PagedFile.PF_EXCLUSIVE_LOCK;
 import static org.neo4j.io.pagecache.PagedFile.PF_READ_AHEAD;
 import static org.neo4j.io.pagecache.PagedFile.PF_SHARED_LOCK;
 import static org.neo4j.kernel.impl.store.AbstractDynamicStore.readFullByteArrayFromHeavyRecords;
+import static org.neo4j.kernel.impl.store.PageCursorUtils.read6B;
+import static org.neo4j.kernel.impl.store.PageCursorUtils.write6B;
 
 /**
  * Implementation of the node store.
@@ -74,8 +76,17 @@ public class NodeStore extends AbstractRecordStore<NodeRecord> implements Store
 
     public static final String TYPE_DESCRIPTOR = "NodeStore";
 
-    // in_use(byte)+next_rel_id(int)+next_prop_id(int)+labels(5)+extra(byte)
-    public static final int RECORD_SIZE = 15;
+    /* Record format:
+     * 1B inUse/dense
+     * 5B labels
+     * 6B rel id
+     * 6B prop id
+     * 4B version
+     * 4B version pointer
+     * 6B <free>
+     *=32B
+     */
+    public static final int RECORD_SIZE = 32;
 
     private DynamicArrayStore dynamicLabelStore;
 
@@ -187,10 +198,6 @@ public class NodeStore extends AbstractRecordStore<NodeRecord> implements Store
                 do
                 {
                     cursor.setOffset( offset );
-
-                    // [    ,   x] in use bit
-                    // [    ,xxx ] higher bits for rel id
-                    // [xxxx,    ] higher bits for prop id
                     byte inUseByte = cursor.getByte();
                     isInUse = isInUse( inUseByte );
                     if ( isInUse )
@@ -266,21 +273,7 @@ public class NodeStore extends AbstractRecordStore<NodeRecord> implements Store
         cursor.setOffset( offset );
         if ( record.inUse() || force )
         {
-            long nextRel = record.getNextRel();
-            long nextProp = record.getNextProp();
-
-            short relModifier = nextRel == Record.NO_NEXT_RELATIONSHIP.intValue() ? 0 : (short)((nextRel & 0x700000000L) >> 31);
-            short propModifier = nextProp == Record.NO_NEXT_PROPERTY.intValue() ? 0 : (short)((nextProp & 0xF00000000L) >> 28);
-
-            // [    ,   x] in use bit
-            // [    ,xxx ] higher bits for rel id
-            // [xxxx,    ] higher bits for prop id
-            short inUseUnsignedByte = ( record.inUse() ? Record.IN_USE : Record.NOT_IN_USE ).byteValue();
-            inUseUnsignedByte = (short) ( inUseUnsignedByte | relModifier | propModifier );
-
-            cursor.putByte( (byte) inUseUnsignedByte );
-            cursor.putInt( (int) nextRel );
-            cursor.putInt( (int) nextProp );
+            cursor.putByte( (byte) ((record.isDense() ? 0x2 : 0) | Record.IN_USE.byteValue()) );
 
             // lsb of labels
             long labelField = record.getLabelField();
@@ -288,8 +281,11 @@ public class NodeStore extends AbstractRecordStore<NodeRecord> implements Store
             // msb of labels
             cursor.putByte( (byte) ((labelField & 0xFF00000000L) >> 32) );
 
-            byte extra = record.isDense() ? (byte)1 : (byte)0;
-            cursor.putByte( extra );
+            write6B( cursor, record.getNextRel() );
+            write6B( cursor, record.getNextProp() );
+
+            cursor.putInt( 0 ); // version
+            cursor.putInt( 0 ); // version pointer
         }
         else
         {
@@ -323,23 +319,15 @@ public class NodeStore extends AbstractRecordStore<NodeRecord> implements Store
 
     private void readIntoRecord( PageCursor cursor, NodeRecord record, byte inUseByte, boolean inUse )
     {
-        long nextRel = cursor.getUnsignedInt();
-        long nextProp = cursor.getUnsignedInt();
-
-        long relModifier = (inUseByte & 0xEL) << 31;
-        long propModifier = (inUseByte & 0xF0L) << 28;
-
         long lsbLabels = cursor.getUnsignedInt();
         long hsbLabels = cursor.getByte() & 0xFF; // so that a negative byte won't fill the "extended" bits with ones.
-        long labels = lsbLabels | (hsbLabels << 32);
-        byte extra = cursor.getByte();
-        boolean dense = (extra & 0x1) > 0;
-
-        record.setDense( dense );
-        record.setNextRel( longFromIntAndMod( nextRel, relModifier ) );
-        record.setNextProp( longFromIntAndMod( nextProp, propModifier ) );
+        record.setLabelField( lsbLabels | (hsbLabels << 32), Collections.<DynamicRecord>emptyList() );
+        record.setNextRel( read6B( cursor ) );
+        record.setNextProp( read6B( cursor ) );
+        record.setDense( (inUseByte & 0x2) != 0 );
         record.setInUse( inUse );
-        record.setLabelField( labels, Collections.<DynamicRecord>emptyList() );
+        cursor.getInt();
+        cursor.getInt();
     }
 
     /**

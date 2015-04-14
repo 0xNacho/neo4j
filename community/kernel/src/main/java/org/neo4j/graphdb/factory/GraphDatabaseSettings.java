@@ -51,6 +51,7 @@ import static org.neo4j.helpers.Settings.max;
 import static org.neo4j.helpers.Settings.min;
 import static org.neo4j.helpers.Settings.options;
 import static org.neo4j.helpers.Settings.setting;
+import static org.neo4j.kernel.impl.store.AbstractDynamicStore.DEFAULT_DATA_BLOCK_SIZE;
 
 /**
  * Settings for Neo4j. Use this with {@link GraphDatabaseBuilder}.
@@ -334,14 +335,14 @@ public abstract class GraphDatabaseSettings
             "bytes. " +
             "This means that if the block size is 120, the size of the stored records will be 128 bytes.")
     @Internal
-    public static final Setting<Integer> string_block_size = setting("string_block_size", INTEGER, "120",min(1));
+    public static final Setting<Integer> string_block_size = setting("string_block_size", INTEGER, String.valueOf( DEFAULT_DATA_BLOCK_SIZE ),min(1));
 
     @Description("Specifies the block size for storing arrays. This parameter is only honored when the store is " +
             "created, otherwise it is ignored. " +
             "The default block size is 120 bytes, and the overhead of each block is the same as for string blocks, " +
             "i.e., 8 bytes.")
     @Internal
-    public static final Setting<Integer> array_block_size = setting("array_block_size", INTEGER, "120",min(1));
+    public static final Setting<Integer> array_block_size = setting("array_block_size", INTEGER, String.valueOf( DEFAULT_DATA_BLOCK_SIZE ),min(1));
 
     @Description("Specifies the block size for storing labels exceeding in-lined space in node record. " +
     		"This parameter is only honored when the store is created, otherwise it is ignored. " +

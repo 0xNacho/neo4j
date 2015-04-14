@@ -29,7 +29,6 @@ import org.neo4j.kernel.IdGeneratorFactory;
 import org.neo4j.kernel.IdType;
 import org.neo4j.kernel.configuration.Config;
 import org.neo4j.kernel.impl.store.id.IdGenerator;
-import org.neo4j.kernel.impl.store.record.Record;
 import org.neo4j.logging.LogProvider;
 
 /**
@@ -62,6 +61,7 @@ public abstract class AbstractStore extends CommonAbstractStore
      *
      * @return The record size
      */
+    @Override
     public abstract int getRecordSize();
 
     @Override
@@ -92,11 +92,5 @@ public abstract class AbstractStore extends CommonAbstractStore
         {
             getFileChannel().truncate( fileSize - expectedVersionLength );
         }
-    }
-
-    @Override
-    protected boolean isInUse( byte inUseByte )
-    {
-        return (inUseByte & 0x1) == Record.IN_USE.intValue();
     }
 }

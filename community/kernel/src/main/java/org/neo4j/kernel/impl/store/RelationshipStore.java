@@ -36,6 +36,10 @@ import org.neo4j.kernel.monitoring.Monitors;
 
 import static org.neo4j.io.pagecache.PagedFile.PF_EXCLUSIVE_LOCK;
 import static org.neo4j.io.pagecache.PagedFile.PF_SHARED_LOCK;
+import static org.neo4j.kernel.impl.store.PageCursorUtils.read3B;
+import static org.neo4j.kernel.impl.store.PageCursorUtils.read6B;
+import static org.neo4j.kernel.impl.store.PageCursorUtils.write3B;
+import static org.neo4j.kernel.impl.store.PageCursorUtils.write6B;
 
 /**
  * Implementation of the relationship store.
@@ -49,11 +53,22 @@ public class RelationshipStore extends AbstractRecordStore<RelationshipRecord> i
 
     public static final String TYPE_DESCRIPTOR = "RelationshipStore";
 
-    // record header size
-    // directed|in_use(byte)+first_node(int)+second_node(int)+rel_type(int)+
-    // first_prev_rel_id(int)+first_next_rel_id+second_prev_rel_id(int)+
-    // second_next_rel_id+next_prop_id(int)+first-in-chain-markers(1)
-    public static final int RECORD_SIZE = 34;
+    /*
+     * 1B inUse + first in start chain + first in end chain
+     * 6B start node
+     * 6B end node
+     * 3B type
+     * 6B startPrevRel/chain length
+     * 6B startNextRel
+     * 6B endPrevRel/chain length
+     * 6B endNextRel
+     * 6B prop
+     * 4B version
+     * 4B version pointer
+     * 10B <free>
+     *=64B
+     */
+    public static final int RECORD_SIZE = 64;
 
     public RelationshipStore(
             File fileName,
@@ -218,56 +233,20 @@ public class RelationshipStore extends AbstractRecordStore<RelationshipRecord> i
         cursor.setOffset( offsetForId( id ) );
         if ( record.inUse() || force )
         {
-            long firstNode = record.getFirstNode();
-            short firstNodeMod = (short)((firstNode & 0x700000000L) >> 31);
-
-            long secondNode = record.getSecondNode();
-            long secondNodeMod = (secondNode & 0x700000000L) >> 4;
-
-            long firstPrevRel = record.getFirstPrevRel();
-            long firstPrevRelMod = firstPrevRel == Record.NO_NEXT_RELATIONSHIP.intValue() ? 0 : (firstPrevRel & 0x700000000L) >> 7;
-
-            long firstNextRel = record.getFirstNextRel();
-            long firstNextRelMod = firstNextRel == Record.NO_NEXT_RELATIONSHIP.intValue() ? 0 : (firstNextRel & 0x700000000L) >> 10;
-
-            long secondPrevRel = record.getSecondPrevRel();
-            long secondPrevRelMod = secondPrevRel == Record.NO_NEXT_RELATIONSHIP.intValue() ? 0 : (secondPrevRel & 0x700000000L) >> 13;
-
-            long secondNextRel = record.getSecondNextRel();
-            long secondNextRelMod = secondNextRel == Record.NO_NEXT_RELATIONSHIP.intValue() ? 0 : (secondNextRel & 0x700000000L) >> 16;
-
-            long nextProp = record.getNextProp();
-            long nextPropMod = nextProp == Record.NO_NEXT_PROPERTY.intValue() ? 0 : (nextProp & 0xF00000000L) >> 28;
-
-            // [    ,   x] in use flag
-            // [    ,xxx ] first node high order bits
-            // [xxxx,    ] next prop high order bits
-            short inUseUnsignedByte = (short)((record.inUse() ? Record.IN_USE : Record.NOT_IN_USE).byteValue() | firstNodeMod | nextPropMod);
-
-            // [ xxx,    ][    ,    ][    ,    ][    ,    ] second node high order bits,     0x70000000
-            // [    ,xxx ][    ,    ][    ,    ][    ,    ] first prev rel high order bits,  0xE000000
-            // [    ,   x][xx  ,    ][    ,    ][    ,    ] first next rel high order bits,  0x1C00000
-            // [    ,    ][  xx,x   ][    ,    ][    ,    ] second prev rel high order bits, 0x380000
-            // [    ,    ][    , xxx][    ,    ][    ,    ] second next rel high order bits, 0x70000
-            // [    ,    ][    ,    ][xxxx,xxxx][xxxx,xxxx] type
-            int typeInt = (int)(record.getType() | secondNodeMod | firstPrevRelMod | firstNextRelMod | secondPrevRelMod | secondNextRelMod);
-
-            // [    ,   x] 1:st in start node chain, 0x1
-            // [    ,  x ] 1:st in end node chain,   0x2
-            long firstInStartNodeChain = record.isFirstInFirstChain() ? 0x1 : 0;
-            long firstInEndNodeChain = record.isFirstInSecondChain() ? 0x2 : 0;
-            byte extraByte = (byte) (firstInEndNodeChain | firstInStartNodeChain);
-
-            cursor.putByte( (byte)inUseUnsignedByte );
-            cursor.putInt( (int) firstNode );
-            cursor.putInt( (int) secondNode );
-            cursor.putInt( typeInt );
-            cursor.putInt( (int) firstPrevRel );
-            cursor.putInt( (int) firstNextRel );
-            cursor.putInt( (int) secondPrevRel );
-            cursor.putInt( (int) secondNextRel );
-            cursor.putInt( (int) nextProp );
-            cursor.putByte( extraByte );
+            cursor.putByte( (byte) (
+                    (record.isFirstInFirstChain() ? 0x2 : 0) |
+                    (record.isFirstInSecondChain() ? 0x4 : 0) |
+                    (record.inUse() ? 0x1 : 0) ));
+            write6B( cursor, record.getFirstNode() );
+            write6B( cursor, record.getSecondNode() );
+            write3B( cursor, record.getType() );
+            write6B( cursor, record.getFirstPrevRel() );
+            write6B( cursor, record.getFirstNextRel() );
+            write6B( cursor, record.getSecondPrevRel() );
+            write6B( cursor, record.getSecondNextRel() );
+            write6B( cursor, record.getNextProp() );
+            cursor.putInt( 0 ); // version
+            cursor.putInt( 0 ); // version pointer
         }
         else
         {
@@ -280,61 +259,23 @@ public class RelationshipStore extends AbstractRecordStore<RelationshipRecord> i
         RelationshipRecord record )
     {
         cursor.setOffset( offsetForId( id ) );
-
-        // [    ,   x] in use flag
-        // [    ,xxx ] first node high order bits
-        // [xxxx,    ] next prop high order bits
-        long inUseByte = cursor.getByte();
-
-        boolean inUse = (inUseByte & 0x1) == Record.IN_USE.intValue();
-
-        long firstNode = cursor.getUnsignedInt();
-        long firstNodeMod = (inUseByte & 0xEL) << 31;
-
-        long secondNode = cursor.getUnsignedInt();
-
-        // [ xxx,    ][    ,    ][    ,    ][    ,    ] second node high order bits,     0x70000000
-        // [    ,xxx ][    ,    ][    ,    ][    ,    ] first prev rel high order bits,  0xE000000
-        // [    ,   x][xx  ,    ][    ,    ][    ,    ] first next rel high order bits,  0x1C00000
-        // [    ,    ][  xx,x   ][    ,    ][    ,    ] second prev rel high order bits, 0x380000
-        // [    ,    ][    , xxx][    ,    ][    ,    ] second next rel high order bits, 0x70000
-        // [    ,    ][    ,    ][xxxx,xxxx][xxxx,xxxx] type
-        long typeInt = cursor.getInt();
-        long secondNodeMod = (typeInt & 0x70000000L) << 4;
-        int type = (int)(typeInt & 0xFFFF);
-
+        byte inUseByte = cursor.getByte();
         record.setId( id );
-        record.setFirstNode( longFromIntAndMod( firstNode, firstNodeMod ) );
-        record.setSecondNode( longFromIntAndMod( secondNode, secondNodeMod ) );
-        record.setType( type );
-        record.setInUse( inUse );
+        record.setInUse( (inUseByte & 0x1) != 0 );
+        record.setFirstInFirstChain( (inUseByte & 0x2) != 0 );
+        record.setFirstInSecondChain( (inUseByte & 0x4) != 0 );
 
-        long firstPrevRel = cursor.getUnsignedInt();
-        long firstPrevRelMod = (typeInt & 0xE000000L) << 7;
-        record.setFirstPrevRel( longFromIntAndMod( firstPrevRel, firstPrevRelMod ) );
-
-        long firstNextRel = cursor.getUnsignedInt();
-        long firstNextRelMod = (typeInt & 0x1C00000L) << 10;
-        record.setFirstNextRel( longFromIntAndMod( firstNextRel, firstNextRelMod ) );
-
-        long secondPrevRel = cursor.getUnsignedInt();
-        long secondPrevRelMod = (typeInt & 0x380000L) << 13;
-        record.setSecondPrevRel( longFromIntAndMod( secondPrevRel, secondPrevRelMod ) );
-
-        long secondNextRel = cursor.getUnsignedInt();
-        long secondNextRelMod = (typeInt & 0x70000L) << 16;
-        record.setSecondNextRel( longFromIntAndMod( secondNextRel, secondNextRelMod ) );
-
-        long nextProp = cursor.getUnsignedInt();
-        long nextPropMod = (inUseByte & 0xF0L) << 28;
-
-        byte extraByte = cursor.getByte();
-
-        record.setFirstInFirstChain( (extraByte & 0x1) != 0 );
-        record.setFirstInSecondChain( (extraByte & 0x2) != 0 );
-
-        record.setNextProp( longFromIntAndMod( nextProp, nextPropMod ) );
-        return inUse;
+        record.setFirstNode( read6B( cursor ) );
+        record.setSecondNode( read6B( cursor ) );
+        record.setType( read3B( cursor ) );
+        record.setFirstPrevRel( read6B( cursor ) );
+        record.setFirstNextRel( read6B( cursor ) );
+        record.setSecondPrevRel( read6B( cursor ) );
+        record.setSecondNextRel( read6B( cursor ) );
+        record.setNextProp( read6B( cursor ) );
+        cursor.getInt();
+        cursor.getInt();
+        return record.inUse();
     }
 
     public boolean fillChainRecord( long id, RelationshipRecord record )

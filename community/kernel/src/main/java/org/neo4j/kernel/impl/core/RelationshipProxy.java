@@ -82,11 +82,18 @@ public class RelationshipProxy implements Relationship, RelationshipVisitor<Runt
     @Override
     public void visit( long id, int type, long startNode, long endNode ) throws RuntimeException
     {
-        assert (0xFFFF_FFF0_0000_0000L & id) == 0 &&        // 36 bits
-               (0xFFFF_FFF0_0000_0000L & startNode) == 0 && // 36 bits
-               (0xFFFF_FFF0_0000_0000L & endNode) == 0 &&   // 36 bits
-               (0xFFFF_0000 & type) == 0                    // 16 bits
-               : "For id:" + id + ", type:" + type + ", source:" + startNode + ", target:" + endNode;
+        try
+        {
+            assert (0xFFFF_FFF0_0000_0000L & id) == 0 &&        // 36 bits
+                   (0xFFFF_FFF0_0000_0000L & startNode) == 0 && // 36 bits
+                   (0xFFFF_FFF0_0000_0000L & endNode) == 0 &&   // 36 bits
+                   (0xFFFF_0000 & type) == 0                    // 16 bits
+                   : "For id:" + id + ", type:" + type + ", source:" + startNode + ", target:" + endNode;
+        }
+        catch ( AssertionError e )
+        {
+            throw e;
+        }
         this.hiBits = (short) ((id >> 32) | ((startNode >> 28) & 0x00F0) | ((endNode >> 24) & 0x0F00));
         this.type = (short) type;
         this.loId = (int) id;

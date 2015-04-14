@@ -77,8 +77,8 @@ public class TestLengthyArrayPacking extends AbstractNeo4jTestCase
     @Test
     public void makeSureLongLatin1StringArrayUsesOneBytePerChar() throws Exception
     {
-        // Exactly 120 bytes: 5b header + (19+4)*5. w/o compression 5+(19*2 + 4)*5
-        String[] stringArray = new String[5];
+        // 5b header + (19+4)*4 = 97. w/o compression 5+(19*2 + 4)*4 = 173
+        String[] stringArray = new String[4];
         for ( int i = 0; i < stringArray.length; i++ ) stringArray[i] = stringOfLength( SOME_LATIN_1_CHARS, 19 );
         makeSureRightAmountOfDynamicRecordsUsed( stringArray, 1, ARRAY_RECORD_COUNTER );
     }

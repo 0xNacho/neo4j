@@ -36,16 +36,27 @@ import org.neo4j.kernel.monitoring.Monitors;
 
 import static org.neo4j.io.pagecache.PagedFile.PF_EXCLUSIVE_LOCK;
 import static org.neo4j.io.pagecache.PagedFile.PF_SHARED_LOCK;
+import static org.neo4j.kernel.impl.store.PageCursorUtils.read3B;
+import static org.neo4j.kernel.impl.store.PageCursorUtils.read6B;
+import static org.neo4j.kernel.impl.store.PageCursorUtils.write3B;
+import static org.neo4j.kernel.impl.store.PageCursorUtils.write6B;
 
 public class RelationshipGroupStore extends AbstractRecordStore<RelationshipGroupRecord> implements Store
 {
-    /* Record layout
-     *
-     * [type+inUse+highbits,next,firstOut,firstIn,firstLoop,owningNode] = 25B
-     *
-     * One record holds first relationship links (out,in,loop) to relationships for one type for one entity.
+    /*
+     * 1B  inUse
+     * 3B  type
+     * 6B  firstOut
+     * 6B  firstIn
+     * 6B  firstLoop
+     * 6B  next
+     * 6B  owner
+     * 4B  version
+     * 4B  version pointer
+     * 22B <free>
+     *=64B
      */
-    public static final int RECORD_SIZE = 25;
+    public static final int RECORD_SIZE = 64;
     public static final String TYPE_DESCRIPTOR = "RelationshipGroupStore";
 
     private int denseNodeThreshold;
@@ -115,40 +126,23 @@ public class RelationshipGroupStore extends AbstractRecordStore<RelationshipGrou
     private RelationshipGroupRecord getRecord( long id, PageCursor cursor )
     {
         cursor.setOffset( offsetForId( id ) );
-
-        // [    ,   x] in use
-        // [    ,xxx ] high next id bits
-        // [ xxx,    ] high firstOut bits
-        long inUseByte = cursor.getByte();
+        byte inUseByte = cursor.getByte();
         boolean inUse = (inUseByte&0x1) > 0;
         if ( !inUse )
         {
             return null;
         }
 
-        // [    ,xxx ] high firstIn bits
-        // [ xxx,    ] high firstLoop bits
-        long highByte = cursor.getByte();
-
-        int type = cursor.getShort();
-        long nextLowBits = cursor.getUnsignedInt();
-        long nextOutLowBits = cursor.getUnsignedInt();
-        long nextInLowBits = cursor.getUnsignedInt();
-        long nextLoopLowBits = cursor.getUnsignedInt();
-        long owningNode = cursor.getUnsignedInt() | (((long)cursor.getByte()) << 32);
-
-        long nextMod = (inUseByte & 0xE) << 31;
-        long nextOutMod = (inUseByte & 0x70) << 28;
-        long nextInMod = (highByte & 0xE) << 31;
-        long nextLoopMod = (highByte & 0x70) << 28;
-
+        int type = read3B( cursor );
         RelationshipGroupRecord record = new RelationshipGroupRecord( id, type );
         record.setInUse( inUse );
-        record.setNext( longFromIntAndMod( nextLowBits, nextMod ) );
-        record.setFirstOut( longFromIntAndMod( nextOutLowBits, nextOutMod ) );
-        record.setFirstIn( longFromIntAndMod( nextInLowBits, nextInMod ) );
-        record.setFirstLoop( longFromIntAndMod( nextLoopLowBits, nextLoopMod ) );
-        record.setOwningNode( owningNode );
+        record.setFirstOut( read6B( cursor ) );
+        record.setFirstIn( read6B( cursor ) );
+        record.setFirstLoop( read6B( cursor ) );
+        record.setNext( read6B( cursor ) );
+        record.setOwningNode( read6B( cursor ) );
+        cursor.getInt();
+        cursor.getInt();
         return record;
     }
 
@@ -178,27 +172,15 @@ public class RelationshipGroupStore extends AbstractRecordStore<RelationshipGrou
         cursor.setOffset( offsetForId( id ) );
         if ( record.inUse() || force )
         {
-            long nextMod = record.getNext() == Record.NO_NEXT_RELATIONSHIP.intValue() ? 0 : (record.getNext() & 0x700000000L) >> 31;
-            long nextOutMod = record.getFirstOut() == Record.NO_NEXT_RELATIONSHIP.intValue() ? 0 : (record.getFirstOut() & 0x700000000L) >> 28;
-            long nextInMod = record.getFirstIn() == Record.NO_NEXT_RELATIONSHIP.intValue() ? 0 : (record.getFirstIn() & 0x700000000L) >> 31;
-            long nextLoopMod = record.getFirstLoop() == Record.NO_NEXT_RELATIONSHIP.intValue() ? 0 : (record.getFirstLoop() & 0x700000000L) >> 28;
-
-            // [    ,   x] in use
-            // [    ,xxx ] high next id bits
-            // [ xxx,    ] high firstOut bits
-            cursor.putByte( (byte) (nextOutMod | nextMod | 1) );
-
-            // [    ,xxx ] high firstIn bits
-            // [ xxx,    ] high firstLoop bits
-            cursor.putByte( (byte) (nextLoopMod | nextInMod) );
-
-            cursor.putShort( (short) record.getType() );
-            cursor.putInt( (int) record.getNext() );
-            cursor.putInt( (int) record.getFirstOut() );
-            cursor.putInt( (int) record.getFirstIn() );
-            cursor.putInt( (int) record.getFirstLoop() );
-            cursor.putInt( (int) record.getOwningNode() );
-            cursor.putByte( (byte) (record.getOwningNode() >> 32) );
+            cursor.putByte( record.inUse() ? Record.IN_USE.byteValue() : Record.NOT_IN_USE.byteValue() );
+            write3B( cursor, record.getType() );
+            write6B( cursor, record.getFirstOut() );
+            write6B( cursor, record.getFirstIn() );
+            write6B( cursor, record.getFirstLoop() );
+            write6B( cursor, record.getNext() );
+            write6B( cursor, record.getOwningNode() );
+            cursor.putInt( 0 );
+            cursor.putInt( 0 );
         }
         else
         {
