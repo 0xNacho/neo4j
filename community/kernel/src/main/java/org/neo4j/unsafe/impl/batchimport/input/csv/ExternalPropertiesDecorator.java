@@ -27,6 +27,8 @@ import org.neo4j.unsafe.impl.batchimport.input.Groups;
 import org.neo4j.unsafe.impl.batchimport.input.InputNode;
 import org.neo4j.unsafe.impl.batchimport.input.UpdateBehaviour;
 
+import static org.neo4j.unsafe.impl.batchimport.input.Inputs.INPUT_NODE_FACTORY;
+
 /**
  * Pulls in properties from an external CSV source and amends them to the "main" input nodes.
  * Imagine some node input source:
@@ -65,7 +67,7 @@ public class ExternalPropertiesDecorator implements Function<InputNode,InputNode
         Header header = headerFactory.create( dataStream, config, idType );
         this.deserializer = new InputEntityDeserializer<>( header, dataStream, config.delimiter(),
                 new InputNodeDeserialization( dataStream, header, new Groups(), idType.idsAreExternal() ),
-                Functions.<InputNode>identity(), Validators.<InputNode>emptyValidator() );
+                Functions.<InputNode>identity(), Validators.<InputNode>emptyValidator(), INPUT_NODE_FACTORY );
     }
 
     @Override

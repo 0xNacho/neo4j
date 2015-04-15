@@ -37,7 +37,7 @@ import org.neo4j.unsafe.impl.batchimport.stats.StepStats;
  * @param <IN> the type of batch objects received from upstream.
  * @param <OUT> the type of batch objects sent downstream.
  */
-public interface Step<IN,OUT> extends Parallelizable
+public interface Step<IN,OUT> extends Parallelizable, RecycleAware<OUT>
 {
     /**
      * Whether or not tickets arrive in {@link #receive(long, Object)} ordered by ticket number.
@@ -117,5 +117,6 @@ public interface Step<IN,OUT> extends Parallelizable
      *
      * @param fromDownstream batch object previously sent to a downstream step, perhaps multiple steps out.
      */
+    @Override
     void recycled( OUT fromDownstream );
 }

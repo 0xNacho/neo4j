@@ -591,7 +591,7 @@ public class StoreMigrator implements StoreMigrationParticipant
                         }
 
                         RelationshipRecord record = source.next();
-                        InputRelationship result = new InputRelationship(
+                        InputRelationship result = new InputRelationship().initialize(
                                 "legacy store", record.getId(), record.getId()*RelationshipStore.RECORD_SIZE,
                                 InputEntity.NO_PROPERTIES, record.getNextProp(),
                                 GLOBAL, record.getFirstNode(), GLOBAL, record.getSecondNode(), null, record.getType() );
@@ -647,7 +647,7 @@ public class StoreMigrator implements StoreMigrationParticipant
 
                         NodeRecord record = source.next();
                         traceability.atId( record.getId() );
-                        return new InputNode(
+                        return new InputNode().initialize(
                                 "legacy store", record.getId(), record.getId()*NodeStore.RECORD_SIZE, GLOBAL,
                                 record.getId(), InputEntity.NO_PROPERTIES, record.getNextProp(),
                                 InputNode.NO_LABELS, record.getLabelField() );

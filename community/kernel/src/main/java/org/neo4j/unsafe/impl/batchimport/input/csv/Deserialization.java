@@ -46,9 +46,9 @@ public interface Deserialization<ENTITY>
 
     /**
      * Takes values received in {@link #handle(org.neo4j.unsafe.impl.batchimport.input.csv.Header.Entry, Object)}
-     * and materializes an entity from them.
+     * and materializes an entity from that into the specified object.
      */
-    ENTITY materialize();
+    ENTITY materialize( ENTITY into );
 
     /**
      * Clears the mutable state, preparing for the next entity.

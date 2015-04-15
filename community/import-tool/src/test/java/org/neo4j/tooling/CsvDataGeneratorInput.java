@@ -34,6 +34,7 @@ import org.neo4j.unsafe.impl.batchimport.input.Groups;
 import org.neo4j.unsafe.impl.batchimport.input.Input;
 import org.neo4j.unsafe.impl.batchimport.input.InputNode;
 import org.neo4j.unsafe.impl.batchimport.input.InputRelationship;
+import org.neo4j.unsafe.impl.batchimport.input.Inputs;
 import org.neo4j.unsafe.impl.batchimport.input.csv.Configuration;
 import org.neo4j.unsafe.impl.batchimport.input.csv.Deserialization;
 import org.neo4j.unsafe.impl.batchimport.input.csv.Header;
@@ -60,7 +61,7 @@ public class CsvDataGeneratorInput extends CsvDataGenerator<InputNode,InputRelat
                     {
                         return new InputNodeDeserialization( source, nodeHeader, groups, idType.idsAreExternal() );
                     }
-                },
+                }, Inputs.INPUT_NODE_FACTORY,
                 new Function<SourceTraceability,Deserialization<InputRelationship>>()
                 {
                     @Override
@@ -68,7 +69,7 @@ public class CsvDataGeneratorInput extends CsvDataGenerator<InputNode,InputRelat
                     {
                         return new InputRelationshipDeserialization( from, relationshipHeader, groups );
                     }
-                },
+                }, Inputs.INPUT_RELATIONSHIP_FACTORY,
                 numberOfLabels, numberOfRelationshipTypes );
         this.idType = idType;
     }

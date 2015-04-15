@@ -114,7 +114,7 @@ class StringDeserialization implements Deserialization<String>
     }
 
     @Override
-    public String materialize()
+    public String materialize( String ignore )
     {
         return builder.toString();
     }

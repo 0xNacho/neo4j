@@ -38,6 +38,9 @@ import org.neo4j.unsafe.impl.batchimport.input.Input;
 import org.neo4j.unsafe.impl.batchimport.input.InputNode;
 import org.neo4j.unsafe.impl.batchimport.input.InputRelationship;
 
+import static org.neo4j.unsafe.impl.batchimport.input.Inputs.INPUT_NODE_FACTORY;
+import static org.neo4j.unsafe.impl.batchimport.input.Inputs.INPUT_RELATIONSHIP_FACTORY;
+
 /**
  * Provides {@link Input} from data contained in tabular/csv form. Expects factories for instantiating
  * the {@link CharSeeker} objects seeking values in the csv data and header factories for how to
@@ -117,7 +120,7 @@ public class CsvInput implements Input
                     {
                         return new InputEntityDeserializer<>( dataHeader, dataStream, config.delimiter(),
                                 new InputNodeDeserialization( dataStream, dataHeader, groups, idType.idsAreExternal() ),
-                                decorator, Validators.<InputNode>emptyValidator() );
+                                decorator, Validators.<InputNode>emptyValidator(), INPUT_NODE_FACTORY );
                     }
                 };
             }
@@ -165,7 +168,7 @@ public class CsvInput implements Input
                                             throw new DataException( entity + " is missing " + Type.TYPE + " field" );
                                         }
                                     }
-                                } );
+                                }, INPUT_RELATIONSHIP_FACTORY );
                     }
                 };
             }

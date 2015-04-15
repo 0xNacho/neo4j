@@ -111,4 +111,10 @@ abstract class InputGroupsDeserializer<ENTITY extends InputEntity>
     {
         return currentInput.lineNumber();
     }
+
+    @Override
+    public void recycled( ENTITY[] object )
+    {
+        currentInput.recycled( object );
+    }
 }

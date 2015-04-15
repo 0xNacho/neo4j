@@ -31,27 +31,28 @@ public class InputRelationship extends InputEntity
     public static final long NO_SPECIFIC_ID = -1L;
 
     private long id = NO_SPECIFIC_ID;
-    private final Object startNode;
-    private final Object endNode;
+    private Object startNode;
+    private Object endNode;
     private String type;
-    private final Integer typeId;
-    private final Group startNodeGroup;
-    private final Group endNodeGroup;
+    private Integer typeId;
+    private Group startNodeGroup;
+    private Group endNodeGroup;
 
-    public InputRelationship(
+    public InputRelationship initialize(
             String sourceDescription, long lineNumber, long position,
             Object[] properties, Long firstPropertyId,
             Group startNodeGroups, Object startNode,
             Group endNodeGroups, Object endNode,
             String type, Integer typeId )
     {
-        super( sourceDescription, lineNumber, position, properties, firstPropertyId );
+        super.initialize( sourceDescription, lineNumber, position, properties, firstPropertyId );
         this.startNodeGroup = startNodeGroups;
         this.startNode = startNode;
         this.endNodeGroup = endNodeGroups;
         this.endNode = endNode;
         this.type = type;
         this.typeId = typeId;
+        return this;
     }
 
     public InputRelationship setSpecificId( long id )

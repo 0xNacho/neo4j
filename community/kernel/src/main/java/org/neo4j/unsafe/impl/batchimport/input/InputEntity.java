@@ -37,20 +37,18 @@ public abstract class InputEntity implements SourceTraceability
     public static final String[] NO_LABELS = new String[0];
 
     private Object[] properties;
-    private final Long firstPropertyId;
-    private final String sourceDescription;
-    private final long lineNumber;
-    private final long position;
+    private Long firstPropertyId;
+    private String sourceDescription;
+    private long lineNumber;
+    private long position;
 
-    public InputEntity( String sourceDescription, long sourceLineNumber, long sourcePosition,
+    protected void initialize( String sourceDescription, long sourceLineNumber, long sourcePosition,
             Object[] properties, Long firstPropertyId )
     {
         assert properties.length % 2 == 0 : Arrays.toString( properties );
-
         this.sourceDescription = sourceDescription;
         this.lineNumber = sourceLineNumber;
         this.position = sourcePosition;
-
         this.properties = properties;
         this.firstPropertyId = firstPropertyId;
     }

@@ -107,7 +107,7 @@ public class PropertyEncoderStepTest
 
     private Batch<InputNode,NodeRecord> smallbatch()
     {
-        return new Batch<>( new InputNode[] {new InputNode( "source", 1, 0, GLOBAL, "1", new Object[] {
+        return new Batch<>( new InputNode[] {new InputNode().initialize( "source", 1, 0, GLOBAL, "1", new Object[] {
                 "key1", "value1",
                 "key2", "value2",
                 "key3", "value3",

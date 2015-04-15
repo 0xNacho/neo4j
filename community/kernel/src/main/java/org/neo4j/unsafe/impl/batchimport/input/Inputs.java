@@ -22,6 +22,7 @@ package org.neo4j.unsafe.impl.batchimport.input;
 import java.io.File;
 import java.io.OutputStream;
 
+import org.neo4j.function.Factory;
 import org.neo4j.unsafe.impl.batchimport.InputIterable;
 import org.neo4j.unsafe.impl.batchimport.cache.idmapping.IdGenerator;
 import org.neo4j.unsafe.impl.batchimport.cache.idmapping.IdMapper;
@@ -95,4 +96,22 @@ public class Inputs
                 defaultFormatRelationshipFileHeader(), idType, configuration,
                 Collectors.badCollector( 0 ) );
     }
+
+    public static final Factory<InputNode> INPUT_NODE_FACTORY = new Factory<InputNode>()
+    {
+        @Override
+        public InputNode newInstance()
+        {
+            return new InputNode();
+        }
+    };
+
+    public static final Factory<InputRelationship> INPUT_RELATIONSHIP_FACTORY = new Factory<InputRelationship>()
+    {
+        @Override
+        public InputRelationship newInstance()
+        {
+            return new InputRelationship();
+        }
+    };
 }

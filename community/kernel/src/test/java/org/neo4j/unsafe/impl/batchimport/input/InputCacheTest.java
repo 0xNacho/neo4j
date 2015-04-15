@@ -173,14 +173,14 @@ public class InputCacheTest
     {
         if ( random.random().nextFloat() < 0.1f )
         {
-            return new InputRelationship( null, 0, 0,
+            return new InputRelationship().initialize( null, 0, 0,
                     NO_PROPERTIES, abs( random.random().nextLong() ),
                     randomGroup( random, 0 ), randomId( random ),
                     randomGroup( random, 1 ), randomId( random ),
                     null, abs( random.random().nextInt( Short.MAX_VALUE ) ) );
         }
 
-        return new InputRelationship( null, 0, 0,
+        return new InputRelationship().initialize( null, 0, 0,
                 randomProperties( random ), null,
                 randomGroup( random, 0 ), randomId( random ),
                 randomGroup( random, 1 ), randomId( random ),
@@ -223,12 +223,12 @@ public class InputCacheTest
     {
         if ( random.random().nextFloat() < 0.1f )
         {
-            return new InputNode( null, 0, 0, Group.GLOBAL, randomId( random ),
+            return new InputNode().initialize( null, 0, 0, Group.GLOBAL, randomId( random ),
                     NO_PROPERTIES, abs( random.random().nextLong() ),
                     NO_LABELS, abs( random.random().nextLong() ) );
         }
 
-        return new InputNode( null, 0, 0,
+        return new InputNode().initialize( null, 0, 0,
                 randomGroup( random, 0 ), randomId( random ),
                 randomProperties( random ), null,
                 randomLabels( random ), null );

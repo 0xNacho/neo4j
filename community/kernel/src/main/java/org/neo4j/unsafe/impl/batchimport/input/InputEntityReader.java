@@ -23,6 +23,7 @@ import java.io.IOException;
 
 import org.neo4j.collection.primitive.Primitive;
 import org.neo4j.collection.primitive.PrimitiveIntObjectMap;
+import org.neo4j.function.Factory;
 import org.neo4j.helpers.collection.PrefetchingIterator;
 import org.neo4j.io.fs.StoreChannel;
 import org.neo4j.kernel.impl.transaction.log.LogPositionMarker;
@@ -30,6 +31,7 @@ import org.neo4j.kernel.impl.transaction.log.PhysicalLogVersionedStoreChannel;
 import org.neo4j.kernel.impl.transaction.log.ReadAheadLogChannel;
 import org.neo4j.kernel.impl.transaction.log.ReadableLogChannel;
 import org.neo4j.unsafe.impl.batchimport.InputIterator;
+import org.neo4j.unsafe.impl.batchimport.RecycleStation;
 
 import static org.neo4j.helpers.Format.KB;
 import static org.neo4j.kernel.impl.transaction.log.LogVersionBridge.NO_MORE_CHANNELS;
@@ -50,9 +52,12 @@ abstract class InputEntityReader<ENTITY extends InputEntity> extends Prefetching
     private int lineNumber;
     private final Group[] previousGroups;
     private final PrimitiveIntObjectMap<String> tokens = Primitive.intObjectMap();
+    private final RecycleStation<ENTITY> itemSource;
 
-    InputEntityReader( StoreChannel channel, StoreChannel header, int bufferSize, int groupSlots ) throws IOException
+    InputEntityReader( StoreChannel channel, StoreChannel header, int bufferSize, int groupSlots,
+            Factory<ENTITY> itemFactory ) throws IOException
     {
+        this.itemSource = new RecycleStation<>( itemFactory );
         this.previousGroups = new Group[groupSlots];
         for ( int i = 0; i < groupSlots; i++ )
         {
@@ -91,7 +96,9 @@ abstract class InputEntityReader<ENTITY extends InputEntity> extends Prefetching
                 return null;
             }
 
-            return readNextOrNull( properties );
+            ENTITY entity = itemSource.get();
+            readNextOrNull( properties, entity );
+            return entity;
         }
         catch ( IOException e )
         {
@@ -99,7 +106,7 @@ abstract class InputEntityReader<ENTITY extends InputEntity> extends Prefetching
         }
     }
 
-    protected abstract ENTITY readNextOrNull( Object properties ) throws IOException;
+    protected abstract void readNextOrNull( Object properties, ENTITY into ) throws IOException;
 
     private Object readProperties() throws IOException
     {
@@ -185,5 +192,11 @@ abstract class InputEntityReader<ENTITY extends InputEntity> extends Prefetching
         {
             throw new InputException( "Couldn't close channel for cached input data", e );
         }
+    }
+
+    @Override
+    public void recycled( ENTITY[] object )
+    {
+        itemSource.recycled( object );
     }
 }

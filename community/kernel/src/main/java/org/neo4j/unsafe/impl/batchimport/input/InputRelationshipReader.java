@@ -23,11 +23,12 @@ import java.io.IOException;
 
 import org.neo4j.io.fs.StoreChannel;
 
+import static org.neo4j.unsafe.impl.batchimport.input.InputCache.HAS_TYPE_ID;
 import static org.neo4j.unsafe.impl.batchimport.input.InputCache.NEW_TYPE;
 import static org.neo4j.unsafe.impl.batchimport.input.InputCache.SAME_TYPE;
 import static org.neo4j.unsafe.impl.batchimport.input.InputCache.SPECIFIC_ID;
-import static org.neo4j.unsafe.impl.batchimport.input.InputCache.HAS_TYPE_ID;
 import static org.neo4j.unsafe.impl.batchimport.input.InputEntity.NO_PROPERTIES;
+import static org.neo4j.unsafe.impl.batchimport.input.Inputs.INPUT_RELATIONSHIP_FACTORY;
 
 /**
  * Reads cached {@link InputRelationship} previously stored using {@link InputRelationshipCacher}.
@@ -38,11 +39,11 @@ public class InputRelationshipReader extends InputEntityReader<InputRelationship
 
     public InputRelationshipReader( StoreChannel channel, StoreChannel header, int bufferSize ) throws IOException
     {
-        super( channel, header, bufferSize, 2 );
+        super( channel, header, bufferSize, 2, INPUT_RELATIONSHIP_FACTORY );
     }
 
     @Override
-    protected InputRelationship readNextOrNull( Object properties ) throws IOException
+    protected void readNextOrNull( Object properties, InputRelationship relationship ) throws IOException
     {
         // id
         long specificId = channel.get() == SPECIFIC_ID ? channel.getLong() : -1;
@@ -66,13 +67,16 @@ public class InputRelationshipReader extends InputEntityReader<InputRelationship
         default: throw new IllegalArgumentException( "Unrecognized type mode " + typeMode );
         }
 
-        InputRelationship relationship = new InputRelationship( sourceDescription(), lineNumber(), position(),
+        relationship.initialize( sourceDescription(), lineNumber(), position(),
                 properties.getClass().isArray() ? (Object[]) properties : NO_PROPERTIES,
                 properties.getClass().isArray() ? null : (Long) properties,
                 startNodeGroup, startNodeId,
                 endNodeGroup, endNodeId,
                 type instanceof String ? (String) type : null,
                 type instanceof String ? null : (Integer) type );
-        return specificId != -1 ? relationship.setSpecificId( specificId ) : relationship;
+        if ( specificId != -1 )
+        {
+            relationship.setSpecificId( specificId );
+        }
     }
 }

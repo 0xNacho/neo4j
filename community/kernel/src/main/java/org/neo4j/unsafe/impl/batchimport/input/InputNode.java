@@ -29,22 +29,23 @@ import org.neo4j.helpers.Pair;
  */
 public class InputNode extends InputEntity
 {
-    private final Group group;
-    private final Object id;
+    private Group group;
+    private Object id;
     private String[] labels;
-    private final Long labelField;
+    private Long labelField;
 
     /**
      * @param labelField is a hack to bypass String[] labels, consumers should check that field first.
      */
-    public InputNode( String sourceDescription, long lineNumber, long position,
+    public InputNode initialize( String sourceDescription, long lineNumber, long position,
             Group group, Object id, Object[] properties, Long firstPropertyId, String[] labels, Long labelField )
     {
-        super( sourceDescription, lineNumber, position, properties, firstPropertyId );
+        super.initialize( sourceDescription, lineNumber, position, properties, firstPropertyId );
         this.group = group;
         this.id = id;
         this.labels = labels;
         this.labelField = labelField;
+        return this;
     }
 
     public Group group()

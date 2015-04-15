@@ -29,7 +29,9 @@ import java.util.Random;
 
 import org.neo4j.csv.reader.Extractors;
 import org.neo4j.csv.reader.SourceTraceability;
+import org.neo4j.function.Factory;
 import org.neo4j.function.Function;
+import org.neo4j.function.Functions;
 import org.neo4j.helpers.Args;
 import org.neo4j.helpers.progress.ProgressListener;
 import org.neo4j.unsafe.impl.batchimport.InputIterator;
@@ -60,11 +62,15 @@ public class CsvDataGenerator<NODEFORMAT,RELFORMAT>
     private final Function<SourceTraceability,Deserialization<RELFORMAT>> relDeserialization;
     private final int numberOfLabels;
     private final int numberOfRelationshipTypes;
+    private final Factory<NODEFORMAT> nodeFactory;
+    private final Factory<RELFORMAT> relationshipFactory;
 
     public CsvDataGenerator( Header nodeHeader, Header relationshipHeader, Configuration config,
             long nodes, long relationships,
             Function<SourceTraceability,Deserialization<NODEFORMAT>> nodeDeserialization,
+            Factory<NODEFORMAT> nodeFactory,
             Function<SourceTraceability,Deserialization<RELFORMAT>> relDeserialization,
+            Factory<RELFORMAT> relationshipFactory,
             int numberOfLabels, int numberOfRelationshipTypes )
     {
         this.nodeHeader = nodeHeader;
@@ -73,7 +79,9 @@ public class CsvDataGenerator<NODEFORMAT,RELFORMAT>
         this.nodes = nodes;
         this.relationships = relationships;
         this.nodeDeserialization = nodeDeserialization;
+        this.nodeFactory = nodeFactory;
         this.relDeserialization = relDeserialization;
+        this.relationshipFactory = relationshipFactory;
         this.numberOfLabels = numberOfLabels;
         this.numberOfRelationshipTypes = numberOfRelationshipTypes;
         this.nodesSeed = currentTimeMillis();
@@ -124,13 +132,13 @@ public class CsvDataGenerator<NODEFORMAT,RELFORMAT>
     public InputIterator<NODEFORMAT> nodeData()
     {
         return new RandomDataIterator<>( nodeHeader, nodes, new Random( nodesSeed ), nodeDeserialization, nodes,
-                numberOfLabels, numberOfRelationshipTypes );
+                numberOfLabels, numberOfRelationshipTypes, nodeFactory );
     }
 
     public InputIterator<RELFORMAT> relationshipData()
     {
         return new RandomDataIterator<>( relationshipHeader, relationships, new Random( relationshipsSeed ),
-                relDeserialization, nodes, numberOfLabels, numberOfRelationshipTypes );
+                relDeserialization, nodes, numberOfLabels, numberOfRelationshipTypes, relationshipFactory );
     }
 
     public static void main( String[] arguments ) throws IOException
@@ -149,10 +157,11 @@ public class CsvDataGenerator<NODEFORMAT,RELFORMAT>
 
         ProgressListener progress = textual( System.out ).singlePart( "Generating", nodeCount + relationshipCount );
         Function<SourceTraceability,Deserialization<String>> deserialization = StringDeserialization.factory( config );
+        Factory<String> nullFactory = Functions.constantly( null );
         CsvDataGenerator<String,String> generator = new CsvDataGenerator<>(
                 nodeHeader, relationshipHeader,
                 config, nodeCount, relationshipCount,
-                deserialization, deserialization,
+                deserialization, nullFactory, deserialization, nullFactory,
                 labelCount, relationshipTypeCount );
         writeData( generator.serializeNodeHeader(), generator.nodeData(),
                 new File( "target", "nodes.csv" ), progress );

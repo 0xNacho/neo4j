@@ -25,11 +25,12 @@ import org.neo4j.csv.reader.Readables;
 import org.neo4j.csv.reader.SourceTraceability;
 import org.neo4j.graphdb.ResourceIterator;
 import org.neo4j.unsafe.impl.batchimport.input.Input;
+import org.neo4j.unsafe.impl.batchimport.staging.RecycleAware;
 
 /**
  * A {@link ResourceIterator} with added methods suitable for {@link Input} into a {@link BatchImporter}.
  */
-public interface InputIterator<T> extends ResourceIterator<T>, SourceTraceability
+public interface InputIterator<T> extends ResourceIterator<T>, SourceTraceability, RecycleAware<T[]>
 {
     public static class Adapter<T> extends SourceTraceability.Adapter implements InputIterator<T>
     {
@@ -60,6 +61,11 @@ public interface InputIterator<T> extends ResourceIterator<T>, SourceTraceabilit
         public void remove()
         {
             throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void recycled( T[] object )
+        {   // Nice that I was told, but I won't do anything with it
         }
     }
 }

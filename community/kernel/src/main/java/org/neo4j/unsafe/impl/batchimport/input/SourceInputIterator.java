@@ -23,6 +23,7 @@ import org.neo4j.csv.reader.SourceTraceability;
 import org.neo4j.helpers.collection.PrefetchingIterator;
 import org.neo4j.kernel.impl.store.record.NodeRecord;
 import org.neo4j.kernel.impl.store.record.RelationshipRecord;
+import org.neo4j.kernel.impl.storemigration.StoreMigrator;
 import org.neo4j.unsafe.impl.batchimport.BatchImporter;
 import org.neo4j.unsafe.impl.batchimport.InputIterator;
 
@@ -57,5 +58,10 @@ public abstract class SourceInputIterator<T,U>
     public long position()
     {
         return source.position();
+    }
+
+    @Override
+    public void recycled( T[] object )
+    {
     }
 }

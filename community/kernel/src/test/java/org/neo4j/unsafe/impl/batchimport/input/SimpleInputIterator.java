@@ -65,4 +65,9 @@ public abstract class SimpleInputIterator<T> extends PrefetchingResourceIterator
     {
         return itemNumber;
     }
+
+    @Override
+    public void recycled( T[] object )
+    {
+    }
 }

@@ -22,10 +22,12 @@ package org.neo4j.tooling;
 import java.util.Random;
 
 import org.neo4j.csv.reader.SourceTraceability;
+import org.neo4j.function.Factory;
 import org.neo4j.function.Function;
 import org.neo4j.helpers.collection.PrefetchingIterator;
 import org.neo4j.test.Randoms;
 import org.neo4j.unsafe.impl.batchimport.InputIterator;
+import org.neo4j.unsafe.impl.batchimport.RecycleStation;
 import org.neo4j.unsafe.impl.batchimport.input.InputEntity;
 import org.neo4j.unsafe.impl.batchimport.input.csv.Deserialization;
 import org.neo4j.unsafe.impl.batchimport.input.csv.Header;
@@ -47,13 +49,14 @@ public class RandomDataIterator<T> extends PrefetchingIterator<T> implements Inp
     private final Distribution<String> labels;
     private final Distribution<String> relationshipTypes;
     private final String sourceDescription;
+    private final RecycleStation<T> itemSource;
 
     private long cursor;
     private long position;
 
     public RandomDataIterator( Header header, long limit, Random random,
             Function<SourceTraceability,Deserialization<T>> deserialization, long nodeCount,
-            int labelCount, int relationshipTypeCount )
+            int labelCount, int relationshipTypeCount, Factory<T> itemFactory )
     {
         this.header = header;
         this.limit = limit;
@@ -64,6 +67,7 @@ public class RandomDataIterator<T> extends PrefetchingIterator<T> implements Inp
         this.labels = new Distribution<>( tokens( "Label", labelCount ) );
         this.relationshipTypes = new Distribution<>( tokens( "TYPE", relationshipTypeCount ) );
         this.sourceDescription = getClass().getSimpleName() + ":" + header;
+        this.itemSource = new RecycleStation<>( itemFactory );
 
         this.deserialization.initialize();
     }
@@ -122,7 +126,7 @@ public class RandomDataIterator<T> extends PrefetchingIterator<T> implements Inp
         }
         try
         {
-            return deserialization.materialize();
+            return deserialization.materialize( itemSource.get() );
         }
         finally
         {
@@ -208,5 +212,11 @@ public class RandomDataIterator<T> extends PrefetchingIterator<T> implements Inp
     public long position()
     {
         return position;
+    }
+
+    @Override
+    public void recycled( T[] object )
+    {
+        itemSource.recycled( object );
     }
 }

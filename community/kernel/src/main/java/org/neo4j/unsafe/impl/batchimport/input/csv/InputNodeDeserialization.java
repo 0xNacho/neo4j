@@ -82,9 +82,9 @@ public class InputNodeDeserialization extends InputEntityDeserialization<InputNo
     }
 
     @Override
-    public InputNode materialize()
+    public InputNode materialize( InputNode node )
     {
-        return new InputNode(
+        return node.initialize(
                 source.sourceDescription(), source.lineNumber(), source.position(),
                 group, id, properties(), null, labels(), null );
     }

@@ -545,7 +545,7 @@ public class ParallelBatchImporterTest
                                 startNode = idGenerator.miss( random, startNode, 0.001f );
                                 endNode = idGenerator.miss( random, endNode, 0.001f );
 
-                                return new InputRelationship(
+                                return new InputRelationship().initialize(
                                         sourceDescription, itemNumber, itemNumber,
                                         properties, null,
                                         startNodeGroup, startNode, endNodeGroup, endNode,
@@ -600,7 +600,7 @@ public class ParallelBatchImporterTest
                             try
                             {
                                 Group group = groups.groupOf( cursor );
-                                return new InputNode( sourceDescription, itemNumber, itemNumber, group,
+                                return new InputNode().initialize( sourceDescription, itemNumber, itemNumber, group,
                                         nodeId, properties, null, labels, null );
                             }
                             finally

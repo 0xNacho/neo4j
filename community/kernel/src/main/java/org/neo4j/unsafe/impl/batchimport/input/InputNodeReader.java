@@ -30,6 +30,7 @@ import static org.neo4j.unsafe.impl.batchimport.input.InputCache.LABEL_ADDITION;
 import static org.neo4j.unsafe.impl.batchimport.input.InputCache.LABEL_REMOVAL;
 import static org.neo4j.unsafe.impl.batchimport.input.InputEntity.NO_LABELS;
 import static org.neo4j.unsafe.impl.batchimport.input.InputEntity.NO_PROPERTIES;
+import static org.neo4j.unsafe.impl.batchimport.input.Inputs.INPUT_NODE_FACTORY;
 
 /**
  * Reads cached {@link InputNode} previously stored using {@link InputNodeCacher}.
@@ -40,11 +41,11 @@ public class InputNodeReader extends InputEntityReader<InputNode>
 
     public InputNodeReader( StoreChannel channel, StoreChannel header, int bufferSize ) throws IOException
     {
-        super( channel, header, bufferSize, 1 );
+        super( channel, header, bufferSize, 1, INPUT_NODE_FACTORY );
     }
 
     @Override
-    protected InputNode readNextOrNull( Object properties ) throws IOException
+    protected void readNextOrNull( Object properties, InputNode node ) throws IOException
     {
         // group
         Group group = readGroup( 0 );
@@ -81,7 +82,7 @@ public class InputNodeReader extends InputEntityReader<InputNode>
             labels = previousLabels = cursor == newLabels.length ? newLabels : Arrays.copyOf( newLabels, cursor );
         }
 
-        return new InputNode( sourceDescription(), lineNumber(), position(),
+        node.initialize( sourceDescription(), lineNumber(), position(),
                 group, id,
                 properties.getClass().isArray() ? (Object[]) properties : NO_PROPERTIES,
                 properties.getClass().isArray() ? null : (Long) properties,
