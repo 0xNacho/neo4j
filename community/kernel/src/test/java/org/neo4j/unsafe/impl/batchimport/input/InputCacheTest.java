@@ -223,7 +223,7 @@ public class InputCacheTest
     {
         if ( random.random().nextFloat() < 0.1f )
         {
-            return new InputNode( null, 0, 0, randomId( random ),
+            return new InputNode( null, 0, 0, Group.GLOBAL, randomId( random ),
                     NO_PROPERTIES, abs( random.random().nextLong() ),
                     NO_LABELS, abs( random.random().nextLong() ) );
         }

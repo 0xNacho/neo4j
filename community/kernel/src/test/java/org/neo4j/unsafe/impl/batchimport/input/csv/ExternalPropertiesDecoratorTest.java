@@ -28,6 +28,7 @@ import org.neo4j.csv.reader.CharReadable;
 import org.neo4j.csv.reader.Readables;
 import org.neo4j.function.Factory;
 import org.neo4j.function.Function;
+import org.neo4j.unsafe.impl.batchimport.input.Group;
 import org.neo4j.unsafe.impl.batchimport.input.InputEntity;
 import org.neo4j.unsafe.impl.batchimport.input.InputNode;
 import org.neo4j.unsafe.impl.batchimport.input.UpdateBehaviour;
@@ -121,7 +122,7 @@ public class ExternalPropertiesDecoratorTest
 
     private InputNode node( Object id, Object... props )
     {
-        return new InputNode( "source", 1, 0, id, props, null, InputEntity.NO_LABELS, null );
+        return new InputNode( "source", 1, 0, Group.GLOBAL, id, props, null, InputEntity.NO_LABELS, null );
     }
 
     private Factory<CharReadable> readable( final String data )

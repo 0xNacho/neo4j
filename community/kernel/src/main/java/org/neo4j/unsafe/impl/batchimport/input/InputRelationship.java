@@ -23,8 +23,6 @@ import java.util.Collection;
 
 import org.neo4j.helpers.Pair;
 
-import static org.neo4j.unsafe.impl.batchimport.input.Group.GLOBAL;
-
 /**
  * Represents a relationship from an input source, for example a .csv file.
  */
@@ -39,14 +37,6 @@ public class InputRelationship extends InputEntity
     private final Integer typeId;
     private final Group startNodeGroup;
     private final Group endNodeGroup;
-
-    public InputRelationship( String sourceDescription, long lineNumber, long position,
-            Object[] properties, Long firstPropertyId, Object startNode, Object endNode,
-            String type, Integer typeId )
-    {
-        this( sourceDescription, lineNumber, position,
-                properties, firstPropertyId, GLOBAL, startNode, GLOBAL, endNode, type, typeId );
-    }
 
     public InputRelationship(
             String sourceDescription, long lineNumber, long position,

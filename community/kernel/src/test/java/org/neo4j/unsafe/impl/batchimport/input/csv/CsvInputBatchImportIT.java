@@ -65,15 +65,18 @@ import org.neo4j.unsafe.impl.batchimport.ParallelBatchImporter;
 import org.neo4j.unsafe.impl.batchimport.input.InputNode;
 import org.neo4j.unsafe.impl.batchimport.input.InputRelationship;
 
-import static java.lang.String.format;
-import static java.lang.System.currentTimeMillis;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
+
+import static java.lang.String.format;
+import static java.lang.System.currentTimeMillis;
+
 import static org.neo4j.helpers.collection.IteratorUtil.asSet;
 import static org.neo4j.kernel.impl.util.AutoCreatingHashMap.nested;
 import static org.neo4j.kernel.impl.util.AutoCreatingHashMap.values;
 import static org.neo4j.register.Registers.newDoubleLongRegister;
+import static org.neo4j.unsafe.impl.batchimport.input.Group.GLOBAL;
 import static org.neo4j.unsafe.impl.batchimport.input.InputEntity.NO_PROPERTIES;
 import static org.neo4j.unsafe.impl.batchimport.input.Inputs.csv;
 import static org.neo4j.unsafe.impl.batchimport.input.csv.Configuration.COMMAS;
@@ -133,7 +136,7 @@ public class CsvInputBatchImportIT
         {
             Object[] properties = new Object[] { "name", "Node " + i };
             String id = UUID.randomUUID().toString();
-            nodes.add( new InputNode( "source", i, i, id, properties, null,
+            nodes.add( new InputNode( "source", i, i, GLOBAL, id, properties, null,
                     randomLabels( random ), null ) );
         }
         return nodes;
@@ -230,8 +233,8 @@ public class CsvInputBatchImportIT
             relationships.add( new InputRelationship(
                     "source", i, i,
                     NO_PROPERTIES, null,
-                    nodeData.get( random.nextInt( nodeData.size() ) ).id(),
-                    nodeData.get( random.nextInt( nodeData.size() ) ).id(),
+                    GLOBAL, nodeData.get( random.nextInt( nodeData.size() ) ).id(),
+                    GLOBAL, nodeData.get( random.nextInt( nodeData.size() ) ).id(),
                     "TYPE_" + random.nextInt( 3 ), null ) );
         }
         return relationships;

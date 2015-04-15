@@ -103,6 +103,7 @@ import static org.neo4j.kernel.impl.storemigration.FileOperation.DELETE;
 import static org.neo4j.kernel.impl.storemigration.FileOperation.MOVE;
 import static org.neo4j.kernel.impl.util.StringLogger.DEV_NULL;
 import static org.neo4j.unsafe.impl.batchimport.WriterFactories.parallel;
+import static org.neo4j.unsafe.impl.batchimport.input.Group.GLOBAL;
 import static org.neo4j.unsafe.impl.batchimport.staging.ExecutionSupervisors.withDynamicProcessorAssignment;
 
 /**
@@ -593,7 +594,7 @@ public class StoreMigrator implements StoreMigrationParticipant
                         InputRelationship result = new InputRelationship(
                                 "legacy store", record.getId(), record.getId()*RelationshipStore.RECORD_SIZE,
                                 InputEntity.NO_PROPERTIES, record.getNextProp(),
-                                record.getFirstNode(), record.getSecondNode(), null, record.getType() );
+                                GLOBAL, record.getFirstNode(), GLOBAL, record.getSecondNode(), null, record.getType() );
                         result.setSpecificId( record.getId() );
                         traceability.atId( record.getId() );
                         return result;
@@ -647,7 +648,7 @@ public class StoreMigrator implements StoreMigrationParticipant
                         NodeRecord record = source.next();
                         traceability.atId( record.getId() );
                         return new InputNode(
-                                "legacy store", record.getId(), record.getId()*NodeStore.RECORD_SIZE,
+                                "legacy store", record.getId(), record.getId()*NodeStore.RECORD_SIZE, GLOBAL,
                                 record.getId(), InputEntity.NO_PROPERTIES, record.getNextProp(),
                                 InputNode.NO_LABELS, record.getLabelField() );
                     }

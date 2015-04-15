@@ -46,6 +46,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import static org.neo4j.kernel.impl.util.StringLogger.DEV_NULL;
 import static org.neo4j.unsafe.impl.batchimport.Configuration.DEFAULT;
+import static org.neo4j.unsafe.impl.batchimport.input.Group.GLOBAL;
 import static org.neo4j.unsafe.impl.batchimport.store.BatchingPageCache.SYNCHRONOUS;
 import static org.neo4j.unsafe.impl.batchimport.store.io.Monitor.NO_MONITOR;
 
@@ -106,7 +107,7 @@ public class PropertyEncoderStepTest
 
     private Batch<InputNode,NodeRecord> smallbatch()
     {
-        return new Batch<>( new InputNode[] {new InputNode( "source", 1, 0, "1", new Object[] {
+        return new Batch<>( new InputNode[] {new InputNode( "source", 1, 0, GLOBAL, "1", new Object[] {
                 "key1", "value1",
                 "key2", "value2",
                 "key3", "value3",

@@ -34,13 +34,6 @@ public class InputNode extends InputEntity
     private String[] labels;
     private final Long labelField;
 
-    public InputNode( String sourceDescription, long lineNumber, long position,
-            Object id, Object[] properties, Long firstPropertyId, String[] labels, Long labelField )
-    {
-        this( sourceDescription, lineNumber, position,
-                Group.GLOBAL, id, properties, firstPropertyId, labels, labelField );
-    }
-
     /**
      * @param labelField is a hack to bypass String[] labels, consumers should check that field first.
      */

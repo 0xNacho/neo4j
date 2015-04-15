@@ -23,6 +23,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertArrayEquals;
 
+import static org.neo4j.unsafe.impl.batchimport.input.Group.GLOBAL;
 import static org.neo4j.unsafe.impl.batchimport.input.UpdateBehaviour.ADD;
 
 public class InputEntityTest
@@ -31,7 +32,7 @@ public class InputEntityTest
     public void shouldAddProperties() throws Exception
     {
         // GIVEN
-        InputNode node = new InputNode( "source", 1, 0, "id", new Object[] {
+        InputNode node = new InputNode( "source", 1, 0, GLOBAL, "id", new Object[] {
                 "first", "Yeah",
                 "second", "Yo"
         }, null, InputEntity.NO_LABELS, null );
@@ -51,7 +52,7 @@ public class InputEntityTest
     public void shouldAddToExistingProperty() throws Exception
     {
         // GIVEN
-        InputNode node = new InputNode( "source", 1, 0, "id", new Object[] {
+        InputNode node = new InputNode( "source", 1, 0, GLOBAL, "id", new Object[] {
                 "first", "Yeah",
                 "second", "Yo"
         }, null, InputEntity.NO_LABELS, null );
@@ -70,7 +71,7 @@ public class InputEntityTest
     public void shouldAddToExistingArrayProperty() throws Exception
     {
         // GIVEN
-        InputNode node = new InputNode( "source", 1, 0, "id", new Object[] {
+        InputNode node = new InputNode( "source", 1, 0, GLOBAL, "id", new Object[] {
                 "first", "Yeah",
                 "second", "Yo"
         }, null, InputEntity.NO_LABELS, null );
@@ -90,7 +91,7 @@ public class InputEntityTest
     public void shouldSetProperties() throws Exception
     {
         // GIVEN
-        InputNode node = new InputNode( "source", 1, 0, "id", new Object[] {
+        InputNode node = new InputNode( "source", 1, 0, GLOBAL, "id", new Object[] {
                 "first", "Yeah",
                 "second", "Yo"
         }, null, InputEntity.NO_LABELS, null );
