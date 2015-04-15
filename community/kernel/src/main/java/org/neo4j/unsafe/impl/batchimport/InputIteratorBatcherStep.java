@@ -20,6 +20,7 @@
 package org.neo4j.unsafe.impl.batchimport;
 
 import org.neo4j.unsafe.impl.batchimport.staging.IteratorBatcherStep;
+import org.neo4j.unsafe.impl.batchimport.staging.RecycleAware;
 import org.neo4j.unsafe.impl.batchimport.staging.StageControl;
 
 /**
@@ -28,10 +29,13 @@ import org.neo4j.unsafe.impl.batchimport.staging.StageControl;
  */
 public class InputIteratorBatcherStep<T> extends IteratorBatcherStep<T>
 {
+    private final RecycleAware<T[]> recycler;
+
     public InputIteratorBatcherStep( StageControl control, Configuration config,
             InputIterator<T> data, Class<T> itemClass )
     {
         super( control, config, data, itemClass );
+        this.recycler = data;
     }
 
     @SuppressWarnings( { "unchecked", "rawtypes" } )
@@ -40,5 +44,13 @@ public class InputIteratorBatcherStep<T> extends IteratorBatcherStep<T>
     {
         Object batch = super.nextBatchOrNull( ticket, batchSize );
         return batch != null ? new Batch( (Object[]) batch ) : null;
+    }
+
+    @SuppressWarnings( { "rawtypes", "unchecked" } )
+    @Override
+    public void recycled( T fromDownstream )
+    {
+        Batch batch = (Batch)fromDownstream;
+        recycler.recycled( (T[]) batch.input );
     }
 }

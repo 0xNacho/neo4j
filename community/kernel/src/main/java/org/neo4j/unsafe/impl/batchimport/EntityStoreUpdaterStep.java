@@ -124,6 +124,7 @@ public class EntityStoreUpdaterStep<RECORD extends PrimitiveRecord,INPUT extends
         {
             propertyStore.updateRecord( propertyRecord );
         }
+        doRecycle( batch );
     }
 
     private void reassignDynamicRecordIds( PropertyBlock[] blocks, int offset, int length )

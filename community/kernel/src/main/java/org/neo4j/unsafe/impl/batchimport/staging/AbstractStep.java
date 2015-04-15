@@ -293,12 +293,25 @@ public abstract class AbstractStep<IN,OUT> implements Step<IN,OUT>
         return format( "Step[%s, processors:%d, batches:%d", name, numberOfProcessors(), doneBatches.get() );
     }
 
+    /**
+     * Called by a downstream step when something is to be recycled.
+     */
     @Override
     public void recycled( OUT fromDownstream )
     {
+        // Default implementation is to just send on upwards. Subclasses which care about the environment
+        // should be grateful for the opportunity to take care of and reuse the objects coming in here
         if ( upstream != null )
         {
             upstream.recycled( fromDownstream );
         }
+    }
+
+    /**
+     * Called by this step when a batch is processed and is about to be thrown away.
+     */
+    protected final void doRecycle( IN batch )
+    {
+        upstream.recycled( batch );
     }
 }

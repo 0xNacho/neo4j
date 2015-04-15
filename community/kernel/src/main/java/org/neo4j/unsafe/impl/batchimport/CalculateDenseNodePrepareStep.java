@@ -74,6 +74,7 @@ public class CalculateDenseNodePrepareStep extends ProcessorStep<Batch<InputRela
                 processNodeId( endNodeId, sender, relationship, relationship.endNode() );
             }
         }
+        doRecycle( batch );
     }
 
     private void processNodeId( long nodeId, BatchSender<long[]> sender, InputRelationship relationship, Object inputId )

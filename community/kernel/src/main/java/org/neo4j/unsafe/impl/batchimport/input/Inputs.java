@@ -21,6 +21,7 @@ package org.neo4j.unsafe.impl.batchimport.input;
 
 import java.io.File;
 import java.io.OutputStream;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.neo4j.function.Factory;
 import org.neo4j.unsafe.impl.batchimport.InputIterable;
@@ -97,11 +98,14 @@ public class Inputs
                 Collectors.badCollector( 0 ) );
     }
 
+    private static final AtomicInteger nodeCount = new AtomicInteger();
+    private static final AtomicInteger relationshipCount = new AtomicInteger();
     public static final Factory<InputNode> INPUT_NODE_FACTORY = new Factory<InputNode>()
     {
         @Override
         public InputNode newInstance()
         {
+            nodeCount.incrementAndGet();
             return new InputNode();
         }
     };
@@ -111,7 +115,20 @@ public class Inputs
         @Override
         public InputRelationship newInstance()
         {
+            relationshipCount.incrementAndGet();
             return new InputRelationship();
         }
     };
+
+    static
+    {
+        Runtime.getRuntime().addShutdownHook( new Thread()
+        {
+            @Override
+            public void run()
+            {
+                System.out.println( "InputNodes created:" + nodeCount.get() + ", InputRelationships created:" + relationshipCount.get() );
+            }
+        } );
+    }
 }
