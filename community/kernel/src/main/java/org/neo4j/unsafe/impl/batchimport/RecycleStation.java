@@ -19,6 +19,8 @@
  */
 package org.neo4j.unsafe.impl.batchimport;
 
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Supplier;
 
 import org.neo4j.function.Factory;
@@ -27,6 +29,9 @@ import org.neo4j.unsafe.impl.batchimport.staging.RecycleAware;
 public class RecycleStation<T> implements RecycleAware<T[]>, Supplier<T>
 {
     private final Factory<T> factory;
+    private final Queue<T[]> batches = new ConcurrentLinkedQueue<>();
+    private T[] current;
+    private int cursor;
 
     public RecycleStation( Factory<T> factory )
     {
@@ -36,13 +41,21 @@ public class RecycleStation<T> implements RecycleAware<T[]>, Supplier<T>
     @Override
     public void recycled( T[] object )
     {
-        // TODO recycle
+        batches.add( object );
     }
 
     @Override
     public T get()
     {
-        // TODO use recycled instances
+        if ( current == null || cursor == current.length )
+        {
+            current = batches.poll();
+            cursor = 0;
+        }
+        if ( current != null )
+        {
+            return current[cursor++];
+        }
         return factory.newInstance();
     }
 }
