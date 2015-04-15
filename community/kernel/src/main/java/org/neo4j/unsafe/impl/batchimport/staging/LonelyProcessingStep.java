@@ -26,7 +26,7 @@ import static java.lang.System.currentTimeMillis;
 /**
  * {@link Step} that doesn't receive batches, doesn't send batches downstream; just processes data.
  */
-public abstract class LonelyProcessingStep extends AbstractStep<Void>
+public abstract class LonelyProcessingStep<OUT> extends AbstractStep<Void,OUT>
 {
     private final int batchSize;
     private int batch;

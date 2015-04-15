@@ -36,7 +36,7 @@ import org.neo4j.unsafe.impl.batchimport.staging.StageControl;
  * Each id in the long[] has the 0x40000000_00000000 bit set if end node. End node on loop relationships
  * are not counted.
  */
-public class CalculateDenseNodePrepareStep extends ProcessorStep<Batch<InputRelationship,RelationshipRecord>>
+public class CalculateDenseNodePrepareStep extends ProcessorStep<Batch<InputRelationship,RelationshipRecord>,long[]>
 {
     public static final int RADIXES = 10;
 
@@ -55,7 +55,7 @@ public class CalculateDenseNodePrepareStep extends ProcessorStep<Batch<InputRela
     }
 
     @Override
-    protected void process( Batch<InputRelationship,RelationshipRecord> batch, BatchSender sender )
+    protected void process( Batch<InputRelationship,RelationshipRecord> batch, BatchSender<long[]> sender )
     {
         long[] batchIds = batch.ids;
         InputRelationship[] input = batch.input;
@@ -76,7 +76,7 @@ public class CalculateDenseNodePrepareStep extends ProcessorStep<Batch<InputRela
         }
     }
 
-    private void processNodeId( long nodeId, BatchSender sender, InputRelationship relationship, Object inputId )
+    private void processNodeId( long nodeId, BatchSender<long[]> sender, InputRelationship relationship, Object inputId )
     {
         if ( nodeId != -1 )
         {
@@ -96,7 +96,7 @@ public class CalculateDenseNodePrepareStep extends ProcessorStep<Batch<InputRela
     }
 
     @Override
-    protected void lastCallForEmittingOutstandingBatches( BatchSender sender )
+    protected void lastCallForEmittingOutstandingBatches( BatchSender<long[]> sender )
     {
         for ( int i = 0; i < cursors.length; i++ )
         {

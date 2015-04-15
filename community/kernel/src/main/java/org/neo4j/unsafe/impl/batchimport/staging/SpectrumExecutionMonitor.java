@@ -118,13 +118,13 @@ public class SpectrumExecutionMonitor extends ExecutionMonitor.Adpter
         // reduce the width with the known extra characters we know we'll print in and around the spectrum
         width -= 2/*'[]' chars*/ + 4/*progress chars*/;
 
-        Pair<Step<?>,Float> bottleNeck = execution.stepsOrderedBy( Keys.avg_processing_time, false ).iterator().next();
+        Pair<Step<?,?>,Float> bottleNeck = execution.stepsOrderedBy( Keys.avg_processing_time, false ).iterator().next();
         QuantizedProjection projection = new QuantizedProjection( total, width );
         long lastDoneBatches = 0;
         int stepIndex = 0;
         boolean hasProgressed = false;
         builder.append( '[' );
-        for ( Step<?> step : execution.steps() )
+        for ( Step<?,?> step : execution.steps() )
         {
             StepStats stats = step.stats();
             if ( !projection.next( avg( stats ) ) )
@@ -201,7 +201,7 @@ public class SpectrumExecutionMonitor extends ExecutionMonitor.Adpter
     {
         long[] values = new long[execution.size()];
         int i = 0;
-        for ( Step<?> step : execution.steps() )
+        for ( Step<?,?> step : execution.steps() )
         {
             values[i++] = avg( step.stats() );
         }

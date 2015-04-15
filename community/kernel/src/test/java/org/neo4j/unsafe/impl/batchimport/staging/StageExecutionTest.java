@@ -41,21 +41,21 @@ public class StageExecutionTest
     public void shouldOrderStepsAscending() throws Exception
     {
         // GIVEN
-        Collection<Step<?>> steps = new ArrayList<>();
+        Collection<Step<?,?>> steps = new ArrayList<>();
         steps.add( stepWithAverageOf( "step1", 0, 10 ) );
         steps.add( stepWithAverageOf( "step2", 0, 5 ) );
         steps.add( stepWithAverageOf( "step3", 0, 30 ) );
         StageExecution execution = new StageExecution( "Test", DEFAULT, steps, ORDER_SEND_DOWNSTREAM );
 
         // WHEN
-        Iterator<Pair<Step<?>,Float>> ordered = execution.stepsOrderedBy( Keys.avg_processing_time, true ).iterator();
+        Iterator<Pair<Step<?,?>,Float>> ordered = execution.stepsOrderedBy( Keys.avg_processing_time, true ).iterator();
 
         // THEN
-        Pair<Step<?>,Float> fastest = ordered.next();
+        Pair<Step<?,?>,Float> fastest = ordered.next();
         assertEquals( 1f/2f, fastest.other().floatValue(), 0f );
-        Pair<Step<?>,Float> faster = ordered.next();
+        Pair<Step<?,?>,Float> faster = ordered.next();
         assertEquals( 1f/3f, faster.other().floatValue(), 0f );
-        Pair<Step<?>,Float> fast = ordered.next();
+        Pair<Step<?,?>,Float> fast = ordered.next();
         assertEquals( 1f, fast.other().floatValue(), 0f );
         assertFalse( ordered.hasNext() );
     }
@@ -64,7 +64,7 @@ public class StageExecutionTest
     public void shouldOrderStepsDescending() throws Exception
     {
         // GIVEN
-        Collection<Step<?>> steps = new ArrayList<>();
+        Collection<Step<?,?>> steps = new ArrayList<>();
         steps.add( stepWithAverageOf( "step1", 0, 10 ) );
         steps.add( stepWithAverageOf( "step2", 0, 5 ) );
         steps.add( stepWithAverageOf( "step3", 0, 30 ) );
@@ -72,16 +72,16 @@ public class StageExecutionTest
         StageExecution execution = new StageExecution( "Test", DEFAULT, steps, ORDER_SEND_DOWNSTREAM );
 
         // WHEN
-        Iterator<Pair<Step<?>,Float>> ordered = execution.stepsOrderedBy( Keys.avg_processing_time, false ).iterator();
+        Iterator<Pair<Step<?,?>,Float>> ordered = execution.stepsOrderedBy( Keys.avg_processing_time, false ).iterator();
 
         // THEN
-        Pair<Step<?>,Float> slowest = ordered.next();
+        Pair<Step<?,?>,Float> slowest = ordered.next();
         assertEquals( 3f, slowest.other().floatValue(), 0f );
-        Pair<Step<?>,Float> slower = ordered.next();
+        Pair<Step<?,?>,Float> slower = ordered.next();
         assertEquals( 2f, slower.other().floatValue(), 0f );
-        Pair<Step<?>,Float> slow = ordered.next();
+        Pair<Step<?,?>,Float> slow = ordered.next();
         assertEquals( 1f, slow.other().floatValue(), 0f );
-        Pair<Step<?>,Float> alsoSlow = ordered.next();
+        Pair<Step<?,?>,Float> alsoSlow = ordered.next();
         assertEquals( 1f, alsoSlow.other().floatValue(), 0f );
         assertFalse( ordered.hasNext() );
     }

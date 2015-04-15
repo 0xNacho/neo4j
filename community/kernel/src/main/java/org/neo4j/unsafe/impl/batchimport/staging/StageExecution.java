@@ -42,12 +42,12 @@ public class StageExecution implements StageControl
 {
     private final String stageName;
     private final Configuration config;
-    private final Collection<Step<?>> pipeline;
+    private final Collection<Step<?,?>> pipeline;
     private volatile Throwable panicCause;
     private long startTime;
     private final int orderingGuarantees;
 
-    public StageExecution( String stageName, Configuration config, Collection<Step<?>> pipeline, int orderingGuarantees )
+    public StageExecution( String stageName, Configuration config, Collection<Step<?,?>> pipeline, int orderingGuarantees )
     {
         this.stageName = stageName;
         this.config = config;
@@ -64,7 +64,7 @@ public class StageExecution implements StageControl
             throw launderedException( message == null? "Panic" : message, panic );
         }
 
-        for ( Step<?> step : pipeline )
+        for ( Step<?,?> step : pipeline )
         {
             if ( !step.isCompleted() )
             {
@@ -77,7 +77,7 @@ public class StageExecution implements StageControl
     public void start()
     {
         this.startTime = currentTimeMillis();
-        for ( Step<?> step : pipeline )
+        for ( Step<?,?> step : pipeline )
         {
             step.start( orderingGuarantees );
         }
@@ -98,7 +98,7 @@ public class StageExecution implements StageControl
         return config;
     }
 
-    public Iterable<Step<?>> steps()
+    public Iterable<Step<?,?>> steps()
     {
         return pipeline;
     }
@@ -111,13 +111,13 @@ public class StageExecution implements StageControl
      * {@code 1.0} signals them being close to equal, and a value of for example {@code 0.5} signals that
      * the value of the current step is half that of the next step.
      */
-    public Iterable<Pair<Step<?>,Float>> stepsOrderedBy( final Key stat, final boolean trueForAscending )
+    public Iterable<Pair<Step<?,?>,Float>> stepsOrderedBy( final Key stat, final boolean trueForAscending )
     {
-        final List<Step<?>> steps = new ArrayList<>( pipeline );
-        Collections.sort( steps, new Comparator<Step<?>>()
+        final List<Step<?,?>> steps = new ArrayList<>( pipeline );
+        Collections.sort( steps, new Comparator<Step<?,?>>()
         {
             @Override
-            public int compare( Step<?> o1, Step<?> o2 )
+            public int compare( Step<?,?> o1, Step<?,?> o2 )
             {
                 Long stat1 = o1.stats().stat( stat ).asLong();
                 Long stat2 = o2.stats().stat( stat ).asLong();
@@ -127,33 +127,33 @@ public class StageExecution implements StageControl
             }
         } );
 
-        return new Iterable<Pair<Step<?>,Float>>()
+        return new Iterable<Pair<Step<?,?>,Float>>()
         {
             @Override
-            public Iterator<Pair<Step<?>,Float>> iterator()
+            public Iterator<Pair<Step<?,?>,Float>> iterator()
             {
-                return new PrefetchingIterator<Pair<Step<?>,Float>>()
+                return new PrefetchingIterator<Pair<Step<?,?>,Float>>()
                 {
-                    private final Iterator<Step<?>> source = steps.iterator();
-                    private Step<?> next = source.hasNext() ? source.next() : null;
+                    private final Iterator<Step<?,?>> source = steps.iterator();
+                    private Step<?,?> next = source.hasNext() ? source.next() : null;
 
                     @Override
-                    protected Pair<Step<?>,Float> fetchNextOrNull()
+                    protected Pair<Step<?,?>,Float> fetchNextOrNull()
                     {
                         if ( next == null )
                         {
                             return null;
                         }
 
-                        Step<?> current = next;
+                        Step<?,?> current = next;
                         next = source.hasNext() ? source.next() : null;
                         float factor = next != null
                                 ? (float) stat( current, stat ) / (float) stat( next, stat )
                                 : 1.0f;
-                        return Pair.<Step<?>, Float> of( current, factor );
+                        return Pair.<Step<?,?>, Float> of( current, factor );
                     }
 
-                    private long stat( Step<?> step, Key stat )
+                    private long stat( Step<?,?> step, Key stat )
                     {
                         return step.stats().stat( stat ).asLong();
                     }
@@ -171,7 +171,7 @@ public class StageExecution implements StageControl
     public void panic( Throwable cause )
     {
         panicCause = cause;
-        for ( Step<?> step : pipeline )
+        for ( Step<?,?> step : pipeline )
         {
             step.receivePanic( cause );
         }

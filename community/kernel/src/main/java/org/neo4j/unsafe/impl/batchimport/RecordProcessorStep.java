@@ -29,7 +29,7 @@ import org.neo4j.unsafe.impl.batchimport.stats.StatsProvider;
 /**
  * {@link RecordProcessor} in {@link Step Step-form}.
  */
-public class RecordProcessorStep<T extends AbstractBaseRecord> extends ProcessorStep<T[]>
+public class RecordProcessorStep<T extends AbstractBaseRecord> extends ProcessorStep<T[],T[]>
 {
     private final RecordProcessor<T> processor;
     private final boolean endOfLine;
@@ -43,7 +43,7 @@ public class RecordProcessorStep<T extends AbstractBaseRecord> extends Processor
     }
 
     @Override
-    protected void process( T[] batch, BatchSender sender )
+    protected void process( T[] batch, BatchSender<T[]> sender )
     {
         for ( T item : batch )
         {

@@ -49,7 +49,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 public class DynamicProcessorAssigner extends ExecutionMonitor.Adpter
 {
     private final Configuration config;
-    private final Map<Step<?>,Long/*done batches*/> lastChangedProcessors = new HashMap<>();
+    private final Map<Step<?,?>,Long/*done batches*/> lastChangedProcessors = new HashMap<>();
     private final int availableProcessors;
 
     public DynamicProcessorAssigner( Configuration config, int availableProcessors )
@@ -94,8 +94,8 @@ public class DynamicProcessorAssigner extends ExecutionMonitor.Adpter
 
     private int assignProcessorsToPotentialBottleNeck( StageExecution execution, int permits )
     {
-        Pair<Step<?>,Float> bottleNeck = execution.stepsOrderedBy( Keys.avg_processing_time, false ).iterator().next();
-        Step<?> bottleNeckStep = bottleNeck.first();
+        Pair<Step<?,?>,Float> bottleNeck = execution.stepsOrderedBy( Keys.avg_processing_time, false ).iterator().next();
+        Step<?,?> bottleNeckStep = bottleNeck.first();
         long doneBatches = batches( bottleNeckStep );
         int usedPermits = 0;
         if ( bottleNeck.other() > 1.0f &&
@@ -116,7 +116,7 @@ public class DynamicProcessorAssigner extends ExecutionMonitor.Adpter
 
     private boolean removeProcessorFromPotentialIdleStep( StageExecution execution )
     {
-        for ( Pair<Step<?>,Float> fast : execution.stepsOrderedBy( Keys.avg_processing_time, true ) )
+        for ( Pair<Step<?,?>,Float> fast : execution.stepsOrderedBy( Keys.avg_processing_time, true ) )
         {
             int numberOfProcessors = fast.first().numberOfProcessors();
             if ( numberOfProcessors == 1 )
@@ -131,7 +131,7 @@ public class DynamicProcessorAssigner extends ExecutionMonitor.Adpter
                     fast.other().floatValue()*numberOfProcessors/(numberOfProcessors-1);
             if ( factorWithDecrementedProcessorCount < 0.8f )
             {
-                Step<?> fastestStep = fast.first();
+                Step<?,?> fastestStep = fast.first();
                 long doneBatches = batches( fastestStep );
                 if ( batchesPassedSinceLastChange( fastestStep, doneBatches ) >= config.movingAverageSize() )
                 {
@@ -146,12 +146,12 @@ public class DynamicProcessorAssigner extends ExecutionMonitor.Adpter
         return false;
     }
 
-    private int avg( Step<?> step )
+    private int avg( Step<?,?> step )
     {
         return (int) step.stats().stat( Keys.avg_processing_time ).asLong();
     }
 
-    private long batches( Step<?> step )
+    private long batches( Step<?,?> step )
     {
         return step.stats().stat( Keys.done_batches ).asLong();
     }
@@ -165,7 +165,7 @@ public class DynamicProcessorAssigner extends ExecutionMonitor.Adpter
             {
                 long highestAverage = avg( execution.stepsOrderedBy(
                         Keys.avg_processing_time, false ).iterator().next().first() );
-                for ( Step<?> step : execution.steps() )
+                for ( Step<?,?> step : execution.steps() )
                 {
                     // Calculate how active each step is so that a step that is very cheap
                     // and idles a lot counts for less than 1 processor, so that bottlenecks can
@@ -179,7 +179,7 @@ public class DynamicProcessorAssigner extends ExecutionMonitor.Adpter
         return Math.round( processors );
     }
 
-    private long batchesPassedSinceLastChange( Step<?> step, long doneBatches )
+    private long batchesPassedSinceLastChange( Step<?,?> step, long doneBatches )
     {
         return lastChangedProcessors.containsKey( step )
                 // <doneBatches> number of batches have passed since the last change to this step

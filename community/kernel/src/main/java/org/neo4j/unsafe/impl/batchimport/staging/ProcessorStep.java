@@ -39,7 +39,7 @@ import static org.neo4j.unsafe.impl.batchimport.executor.DynamicTaskExecutor.DEF
  * Subclasses implement {@link #process(Object, BatchSender)} receiving the batch to process
  * and an {@link BatchSender} for sending the modified batch, or other batches downstream.
  */
-public abstract class ProcessorStep<T> extends AbstractStep<T>
+public abstract class ProcessorStep<IN,OUT> extends AbstractStep<IN,OUT>
 {
     private TaskExecutor<Sender> executor;
     private final int workAheadSize;
@@ -84,7 +84,7 @@ public abstract class ProcessorStep<T> extends AbstractStep<T>
                 DEFAULT_PARK_STRATEGY, name(), new Factory<Sender>()
                 {
                     @Override
-                    public ProcessorStep<T>.Sender newInstance()
+                    public Sender newInstance()
                     {
                         return new Sender();
                     }
@@ -92,7 +92,7 @@ public abstract class ProcessorStep<T> extends AbstractStep<T>
     }
 
     @Override
-    public long receive( final long ticket, final T batch )
+    public long receive( final long ticket, final IN batch )
     {
         // Don't go too far ahead
         long idleTime = await( catchUp, workAheadSize );
@@ -145,7 +145,7 @@ public abstract class ProcessorStep<T> extends AbstractStep<T>
      * Coordination with other processors should happen in here.
      * If total ordering is enabled then calls will arrive in order of ticket.
      */
-    protected Resource permit( T batch ) throws Throwable
+    protected Resource permit( IN batch ) throws Throwable
     {
         return Resource.EMPTY;
     }
@@ -187,7 +187,7 @@ public abstract class ProcessorStep<T> extends AbstractStep<T>
      * @param batch batch to process.
      * @param sender {@link BatchSender} for sending zero or more batches downstream.
      */
-    protected abstract void process( T batch, BatchSender sender ) throws Throwable;
+    protected abstract void process( IN batch, BatchSender<OUT> sender ) throws Throwable;
 
     @Override
     public void close()
@@ -215,7 +215,7 @@ public abstract class ProcessorStep<T> extends AbstractStep<T>
     }
 
     @SuppressWarnings( "unchecked" )
-    private void sendDownstream( long ticket, Object batch )
+    private void sendDownstream( long ticket, OUT batch )
     {
         if ( guarantees( ORDER_SEND_DOWNSTREAM ) )
         {
@@ -232,17 +232,17 @@ public abstract class ProcessorStep<T> extends AbstractStep<T>
         super.done();
     }
 
-    protected void lastCallForEmittingOutstandingBatches( BatchSender sender )
+    protected void lastCallForEmittingOutstandingBatches( BatchSender<OUT> sender )
     {   // Nothing to emit, subclasses might have though
     }
 
-    private class Sender implements BatchSender
+    private class Sender implements BatchSender<OUT>
     {
         private long sendTime;
         private long ticket;
 
         @Override
-        public void send( Object batch )
+        public void send( OUT batch )
         {
             long time = currentTimeMillis();
             try

@@ -36,17 +36,17 @@ import static org.junit.Assert.assertTrue;
 /**
  * A bit like a mocked {@link Step}, but easier to work with.
  */
-public class ControlledStep<T> implements Step<T>, StatsProvider
+public class ControlledStep<IN,OUT> implements Step<IN,OUT>, StatsProvider
 {
-    public static ControlledStep<?> stepWithAverageOf( String name, int maxProcessors, long avg )
+    public static ControlledStep<?,?> stepWithAverageOf( String name, int maxProcessors, long avg )
     {
         return stepWithStats( name, maxProcessors, Keys.avg_processing_time, avg );
     }
 
-    public static ControlledStep<?> stepWithStats( String name, int maxProcessors,
+    public static ControlledStep<?,?> stepWithStats( String name, int maxProcessors,
             Map<Key,Long> statistics )
     {
-        ControlledStep<?> step = new ControlledStep<>( name, maxProcessors );
+        ControlledStep<?,?> step = new ControlledStep<>( name, maxProcessors );
         for ( Map.Entry<Key,Long> statistic : statistics.entrySet() )
         {
             step.setStat( statistic.getKey(), statistic.getValue().longValue() );
@@ -54,7 +54,7 @@ public class ControlledStep<T> implements Step<T>, StatsProvider
         return step;
     }
 
-    public static ControlledStep<?> stepWithStats( String name, int maxProcessors, Object... statisticsAltKeyAndValue )
+    public static ControlledStep<?,?> stepWithStats( String name, int maxProcessors, Object... statisticsAltKeyAndValue )
     {
         return stepWithStats( name, maxProcessors, MapUtil.<Key,Long>genericMap( statisticsAltKeyAndValue ) );
     }
@@ -82,7 +82,7 @@ public class ControlledStep<T> implements Step<T>, StatsProvider
         return numberOfProcessors;
     }
 
-    public ControlledStep<T> setNumberOfProcessors( int numberOfProcessors )
+    public ControlledStep<IN,OUT> setNumberOfProcessors( int numberOfProcessors )
     {
         assertTrue( numberOfProcessors <= maxProcessors );
         this.numberOfProcessors = numberOfProcessors;
@@ -118,7 +118,7 @@ public class ControlledStep<T> implements Step<T>, StatsProvider
     }
 
     @Override
-    public long receive( long ticket, T batch )
+    public long receive( long ticket, IN batch )
     {
         throw new UnsupportedOperationException( "Cannot participate in actual processing yet" );
     }
@@ -146,12 +146,22 @@ public class ControlledStep<T> implements Step<T>, StatsProvider
     }
 
     @Override
-    public void setDownstream( Step<?> downstreamStep )
+    public void setDownstream( Step<OUT,?> downstreamStep )
+    {
+    }
+
+    @Override
+    public void setUpstream( Step<?,IN> downstreamStep )
     {
     }
 
     @Override
     public void receivePanic( Throwable cause )
+    {
+    }
+
+    @Override
+    public void recycled( OUT fromDownstream )
     {
     }
 

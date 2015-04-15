@@ -30,7 +30,7 @@ import java.util.List;
  */
 public class Stage
 {
-    private final List<Step<?>> pipeline = new ArrayList<>();
+    private final List<Step<?,?>> pipeline = new ArrayList<>();
     private final StageExecution execution;
 
     public Stage( String name, Configuration config )
@@ -48,7 +48,7 @@ public class Stage
         return execution;
     }
 
-    public void add( Step<?> step )
+    public void add( Step<?,?> step )
     {
         pipeline.add( step );
     }
@@ -61,14 +61,16 @@ public class Stage
         return execution;
     }
 
+    @SuppressWarnings( { "rawtypes", "unchecked" } )
     private void linkSteps()
     {
-        Step<?> previous = null;
-        for ( Step<?> step : pipeline )
+        Step previous = null;
+        for ( Step step : pipeline )
         {
             if ( previous != null )
             {
                 previous.setDownstream( step );
+                step.setUpstream( previous );
             }
             previous = step;
         }
@@ -76,7 +78,7 @@ public class Stage
 
     public void close()
     {
-        for ( Step<?> step : pipeline )
+        for ( Step<?,?> step : pipeline )
         {
             step.close();
         }

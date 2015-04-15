@@ -49,7 +49,7 @@ public class CalculateDenseNodesStepTest
         };
         Configuration config = Configuration.DEFAULT;
         NodeRelationshipCache cache = new NodeRelationshipCache( NumberArrayFactory.HEAP, -1 );
-        Step<long[]> step = new CalculateDenseNodesStep( control, config, cache );
+        Step<long[],Void> step = new CalculateDenseNodesStep( control, config, cache );
         step.start( 0 );
         maxOutNumberOfProcessors( step );
 
@@ -72,7 +72,7 @@ public class CalculateDenseNodesStepTest
         }
     }
 
-    private void waitUntilCompleted( Step<?> step ) throws InterruptedException
+    private void waitUntilCompleted( Step<?,?> step ) throws InterruptedException
     {
         while ( !step.isCompleted() )
         {
@@ -90,7 +90,7 @@ public class CalculateDenseNodesStepTest
         return ids;
     }
 
-    private void maxOutNumberOfProcessors( Step<?> step )
+    private void maxOutNumberOfProcessors( Step<?,?> step )
     {
         for ( int i = 0; i < 100 && step.incrementNumberOfProcessors(); i++ )
         {

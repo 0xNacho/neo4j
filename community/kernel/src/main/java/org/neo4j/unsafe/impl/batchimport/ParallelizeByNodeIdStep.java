@@ -56,7 +56,8 @@ import static org.neo4j.unsafe.impl.batchimport.Utils.mergeSortedInto;
  * consecutive parallelizable batches, such that even if there would theoretically be 11 consecutive
  * parallelizable batches, the 11:th will not be marked as parallelizable with the other previous 10.
  */
-public class ParallelizeByNodeIdStep extends ProcessorStep<Batch<InputRelationship,RelationshipRecord>>
+public class ParallelizeByNodeIdStep
+        extends ProcessorStep<Batch<InputRelationship,RelationshipRecord>,Batch<InputRelationship,RelationshipRecord>>
 {
     private static final int MAX_PARALLELIZABLE_BATCHES = 10;
 
@@ -79,7 +80,8 @@ public class ParallelizeByNodeIdStep extends ProcessorStep<Batch<InputRelationsh
     }
 
     @Override
-    protected void process( Batch<InputRelationship,RelationshipRecord> batch, BatchSender sender ) throws Throwable
+    protected void process( Batch<InputRelationship,RelationshipRecord> batch,
+            BatchSender<Batch<InputRelationship,RelationshipRecord>> sender ) throws Throwable
     {
         // Compare ids with concurrent ids
         int concurrentNodeIdsRange = concurrentBatches*idBatchSize;

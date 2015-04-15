@@ -32,7 +32,7 @@ import org.neo4j.unsafe.impl.batchimport.staging.StageControl;
  * Caches the incoming {@link InputEntity} to disk, for later use.
  */
 public class InputEntityCacherStep<INPUT extends InputEntity>
-        extends ProcessorStep<Batch<INPUT,? extends PrimitiveRecord>>
+        extends ProcessorStep<Batch<INPUT,? extends PrimitiveRecord>,Batch<INPUT,? extends PrimitiveRecord>>
 {
     private final Receiver<INPUT[],IOException> cacher;
 
@@ -43,7 +43,8 @@ public class InputEntityCacherStep<INPUT extends InputEntity>
     }
 
     @Override
-    protected void process( Batch<INPUT,? extends PrimitiveRecord> batch, BatchSender sender ) throws IOException
+    protected void process( Batch<INPUT,? extends PrimitiveRecord> batch,
+            BatchSender<Batch<INPUT,? extends PrimitiveRecord>> sender ) throws IOException
     {
         cacher.receive( batch.input );
         sender.send( batch );

@@ -34,9 +34,10 @@ import org.neo4j.unsafe.impl.batchimport.stats.StepStats;
  * received batches in any order, but must make sure to send batches to its downstream
  * (i.e. calling {@link #receive(long, Object)} on its downstream step) ordered by ticket.
  *
- * @param <T> the type of batch objects received from upstream.
+ * @param <IN> the type of batch objects received from upstream.
+ * @param <OUT> the type of batch objects sent downstream.
  */
-public interface Step<T> extends Parallelizable
+public interface Step<IN,OUT> extends Parallelizable
 {
     /**
      * Whether or not tickets arrive in {@link #receive(long, Object)} ordered by ticket number.
@@ -68,7 +69,7 @@ public interface Step<T> extends Parallelizable
      * @param batch the batch object to queue for processing.
      * @return how long it time (millis) was spent waiting for a spot in the queue.
      */
-    long receive( long ticket, T batch );
+    long receive( long ticket, IN batch );
 
     /**
      * @return statistics about this step at this point in time.
@@ -91,7 +92,9 @@ public interface Step<T> extends Parallelizable
      * making up the stage.
      * @param downstreamStep {@link Step} to send batches to downstream.
      */
-    void setDownstream( Step<?> downstreamStep );
+    void setDownstream( Step<OUT,?> downstreamStep );
+
+    void setUpstream( Step<?,IN> upstreamStep );
 
     /**
      * Receives a panic, asking to shut down as soon as possible.
@@ -103,4 +106,16 @@ public interface Step<T> extends Parallelizable
      * Closes any resources kept open by this step. Called after a {@link Stage} is executed, whether successful or not.
      */
     void close();
+
+    /**
+     * Steps either create batch objects, or modify received batch objects. A step that creates batch objects
+     * cannot tell itself when those objects have passed through all necessary downstream steps before
+     * fully processed. Downstream steps, however, knows when a batch object is replaced with some other object
+     * to send downstream or when the end of the line has been reached, therefore a step that has processed
+     * a batch object can tell its upstream step that object can now be recycled. If a step doesn't actually
+     * recycle it should send further upwards to its own upstream.
+     *
+     * @param fromDownstream batch object previously sent to a downstream step, perhaps multiple steps out.
+     */
+    void recycled( OUT fromDownstream );
 }

@@ -33,7 +33,7 @@ import org.neo4j.unsafe.impl.batchimport.staging.StageControl;
  * Processes relationship count data received from {@link ReadRelationshipCountsDataStep} and keeps
  * the accumulated counts per thread. Aggregated when {@link #done()}.
  */
-public class ProcessRelationshipCountsDataStep extends ProcessorStep<long[]>
+public class ProcessRelationshipCountsDataStep extends ProcessorStep<long[],Void>
 {
     private final NodeLabelsCache cache;
     private final Map<Thread,RelationshipCountsProcessor> processors = new ConcurrentHashMap<>();
@@ -55,7 +55,7 @@ public class ProcessRelationshipCountsDataStep extends ProcessorStep<long[]>
     }
 
     @Override
-    protected void process( long[] batch, BatchSender sender )
+    protected void process( long[] batch, BatchSender<Void> sender )
     {
         RelationshipCountsProcessor processor = processor();
         for ( int i = 0; i < batch.length; i++ )

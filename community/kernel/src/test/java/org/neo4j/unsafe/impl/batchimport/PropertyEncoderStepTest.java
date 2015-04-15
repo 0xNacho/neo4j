@@ -78,7 +78,7 @@ public class PropertyEncoderStepTest
         StageControl control = mock( StageControl.class );
         BatchingPropertyKeyTokenRepository tokens =
                 new BatchingPropertyKeyTokenRepository( neoStore.getPropertyKeyTokenStore(), 0 );
-        Step<Batch<InputNode,NodeRecord>> step =
+        Step<Batch<InputNode,NodeRecord>,Batch<InputNode,NodeRecord>> step =
                 new PropertyEncoderStep<>( control, DEFAULT, tokens, neoStore.getPropertyStore() );
         @SuppressWarnings( "rawtypes" )
         Step downstream = mock( Step.class );
@@ -95,7 +95,7 @@ public class PropertyEncoderStepTest
         verifyNoMoreInteractions( control );
     }
 
-    private void awaitCompleted( Step<?> step, StageControl control ) throws InterruptedException
+    private void awaitCompleted( Step<?,?> step, StageControl control ) throws InterruptedException
     {
         while ( !step.isCompleted() )
         {

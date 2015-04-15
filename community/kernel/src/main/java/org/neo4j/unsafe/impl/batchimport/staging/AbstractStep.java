@@ -39,12 +39,12 @@ import static java.util.Arrays.asList;
 /**
  * Basic implementation of a {@link Step}. Does the most plumbing job of building a step implementation.
  */
-public abstract class AbstractStep<T> implements Step<T>
+public abstract class AbstractStep<IN,OUT> implements Step<IN,OUT>
 {
     private final StageControl control;
     private volatile String name;
     @SuppressWarnings( "rawtypes" )
-    protected volatile Step downstream;
+    protected volatile Step downstream, upstream;
     private volatile boolean endOfUpstream;
     protected volatile Throwable panic;
     private volatile boolean completed;
@@ -202,9 +202,15 @@ public abstract class AbstractStep<T> implements Step<T>
     }
 
     @Override
-    public void setDownstream( Step<?> downstream )
+    public void setDownstream( Step<OUT,?> downstream )
     {
         this.downstream = downstream;
+    }
+
+    @Override
+    public void setUpstream( Step<?,IN> upstreamStep )
+    {
+        this.upstream = upstreamStep;
     }
 
     @Override
@@ -285,5 +291,14 @@ public abstract class AbstractStep<T> implements Step<T>
     public String toString()
     {
         return format( "Step[%s, processors:%d, batches:%d", name, numberOfProcessors(), doneBatches.get() );
+    }
+
+    @Override
+    public void recycled( OUT fromDownstream )
+    {
+        if ( upstream != null )
+        {
+            upstream.recycled( fromDownstream );
+        }
     }
 }

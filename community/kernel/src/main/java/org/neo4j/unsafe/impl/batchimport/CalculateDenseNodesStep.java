@@ -31,7 +31,7 @@ import static org.neo4j.unsafe.impl.batchimport.CalculateDenseNodePrepareStep.ra
 /**
  * Runs through relationship input and counts relationships per node so that dense nodes can be designated.
  */
-public class CalculateDenseNodesStep extends ProcessorStep<long[]>
+public class CalculateDenseNodesStep extends ProcessorStep<long[],Void>
 {
     private final NodeRelationshipCache cache;
     private final StripedLock lock = new StripedLock( RADIXES );
@@ -44,7 +44,7 @@ public class CalculateDenseNodesStep extends ProcessorStep<long[]>
     }
 
     @Override
-    protected void process( long[] ids, BatchSender sender )
+    protected void process( long[] ids, BatchSender<Void> sender )
     {
         // We lock because we only want at most one processor processing ids of a certain radix.
         try ( Resource automaticallyUnlocked = lock.lock( radixOf( ids[0] ) ) )

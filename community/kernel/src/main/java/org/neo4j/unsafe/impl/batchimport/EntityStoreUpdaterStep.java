@@ -50,7 +50,7 @@ import static java.lang.Math.max;
  * @param <INPUT> type of input.
  */
 public class EntityStoreUpdaterStep<RECORD extends PrimitiveRecord,INPUT extends InputEntity>
-        extends ProcessorStep<Batch<INPUT,RECORD>>
+        extends ProcessorStep<Batch<INPUT,RECORD>,Void>
 {
     private final AbstractRecordStore<RECORD> entityStore;
     private final PropertyStore propertyStore;
@@ -76,7 +76,7 @@ public class EntityStoreUpdaterStep<RECORD extends PrimitiveRecord,INPUT extends
     }
 
     @Override
-    protected void process( Batch<INPUT,RECORD> batch, BatchSender sender )
+    protected void process( Batch<INPUT,RECORD> batch, BatchSender<Void> sender )
     {
         // Clear reused data structures
         propertyRecords.close();

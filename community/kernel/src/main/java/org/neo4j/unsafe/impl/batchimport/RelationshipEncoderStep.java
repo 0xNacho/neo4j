@@ -39,7 +39,8 @@ import static org.neo4j.graphdb.Direction.OUTGOING;
  * relationship ids are kept in {@link NodeRelationshipCache node cache}, which is a point of scalability issues,
  * although mitigated using multi-pass techniques.
  */
-public class RelationshipEncoderStep extends ProcessorStep<Batch<InputRelationship,RelationshipRecord>>
+public class RelationshipEncoderStep
+        extends ProcessorStep<Batch<InputRelationship,RelationshipRecord>,Batch<InputRelationship,RelationshipRecord>>
 {
     private final BatchingTokenRepository<?> relationshipTypeRepository;
     private final NodeRelationshipCache cache;
@@ -71,7 +72,8 @@ public class RelationshipEncoderStep extends ProcessorStep<Batch<InputRelationsh
     }
 
     @Override
-    protected void process( Batch<InputRelationship,RelationshipRecord> batch, BatchSender sender ) throws Throwable
+    protected void process( Batch<InputRelationship,RelationshipRecord> batch,
+            BatchSender<Batch<InputRelationship,RelationshipRecord>> sender )
     {
         InputRelationship[] input = batch.input;
         batch.records = new RelationshipRecord[input.length];

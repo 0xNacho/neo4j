@@ -58,7 +58,7 @@ public class ProcessorAssignmentStrategies
                 {
                     for ( StageExecution execution : executions )
                     {
-                        for ( Step<?> step : execution.steps() )
+                        for ( Step<?,?> step : execution.steps() )
                         {
                             if ( random.nextBoolean() && step.incrementNumberOfProcessors() && --processors == 0 )
                             {
@@ -103,7 +103,7 @@ public class ProcessorAssignmentStrategies
                 int maxThisCheck = random.nextInt( processors-1 )+1;
                 for ( StageExecution execution : executions )
                 {
-                    for ( Step<?> step : execution.steps() )
+                    for ( Step<?,?> step : execution.steps() )
                     {
                         if ( random.nextBoolean() && step.incrementNumberOfProcessors() )
                         {
@@ -134,7 +134,7 @@ public class ProcessorAssignmentStrategies
             {
                 Map<String,Integer> byStage = new HashMap<>();
                 processors.put( execution.getStageName(), byStage );
-                for ( Step<?> step : execution.steps() )
+                for ( Step<?,?> step : execution.steps() )
                 {
                     byStage.put( step.name(), step.numberOfProcessors() );
                 }

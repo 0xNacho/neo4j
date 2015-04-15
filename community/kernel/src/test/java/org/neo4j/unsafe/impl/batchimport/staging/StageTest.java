@@ -54,7 +54,7 @@ public class StageTest
         Stage stage = new Stage( "Test stage", config, ORDER_SEND_DOWNSTREAM );
         long batches = 1000;
         final long items = batches*config.batchSize();
-        stage.add( new ProducerStep( stage.control(), "Producer", config )
+        stage.add( new ProducerStep<Object>( stage.control(), "Producer", config )
         {
             private final Object theObject = new Object();
             private long i;
@@ -82,7 +82,7 @@ public class StageTest
 
         // WHEN
         StageExecution execution = stage.execute();
-        for ( Step<?> step : execution.steps() )
+        for ( Step<?,?> step : execution.steps() )
         {
             // we start off with two in each step
             step.incrementNumberOfProcessors();
@@ -90,14 +90,14 @@ public class StageTest
         new ExecutionSupervisor( ExecutionMonitors.invisible() ).supervise( execution );
 
         // THEN
-        for ( Step<?> step : execution.steps() )
+        for ( Step<?,?> step : execution.steps() )
         {
             assertEquals( "For " + step, batches, step.stats().stat( Keys.done_batches ).asLong() );
         }
         stage.close();
     }
 
-    private static class ReceiveOrderAssertingStep extends ProcessorStep<Object>
+    private static class ReceiveOrderAssertingStep extends ProcessorStep<Object,Object>
     {
         private final AtomicLong lastTicket = new AtomicLong();
         private final long processingTime;
@@ -119,7 +119,7 @@ public class StageTest
         }
 
         @Override
-        protected void process( Object batch, BatchSender sender )
+        protected void process( Object batch, BatchSender<Object> sender )
         {
             try
             {

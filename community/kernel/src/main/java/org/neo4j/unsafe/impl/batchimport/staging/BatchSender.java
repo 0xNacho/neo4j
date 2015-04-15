@@ -23,7 +23,7 @@ package org.neo4j.unsafe.impl.batchimport.staging;
  * Sends a batch downstream, typically when a batch is processed by {@link ProcessorStep} it can get
  * sent downstream, if there is a downstream {@link Step}, for further processing.
  */
-public interface BatchSender
+public interface BatchSender<OUT>
 {
-    void send( Object batch );
+    void send( OUT batch );
 }

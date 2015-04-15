@@ -33,7 +33,8 @@ import org.neo4j.unsafe.impl.batchimport.staging.StageControl;
  * This step is also parallelizable so if it becomes a bottleneck then more processors will automatically
  * be assigned to it.
  */
-public class RelationshipPreparationStep extends ProcessorStep<Batch<InputRelationship,RelationshipRecord>>
+public class RelationshipPreparationStep
+        extends ProcessorStep<Batch<InputRelationship,RelationshipRecord>,Batch<InputRelationship,RelationshipRecord>>
 {
     private final IdMapper idMapper;
 
@@ -44,7 +45,8 @@ public class RelationshipPreparationStep extends ProcessorStep<Batch<InputRelati
     }
 
     @Override
-    protected void process( Batch<InputRelationship,RelationshipRecord> batch, BatchSender sender )
+    protected void process( Batch<InputRelationship,RelationshipRecord> batch,
+            BatchSender<Batch<InputRelationship,RelationshipRecord>> sender )
     {
         InputRelationship[] input = batch.input;
         long[] ids = batch.ids = new long[input.length*2];

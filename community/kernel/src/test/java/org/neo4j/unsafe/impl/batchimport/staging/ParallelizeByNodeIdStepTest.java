@@ -39,8 +39,8 @@ public class ParallelizeByNodeIdStepTest
     {
         // GIVEN
         StageControl control = mock( StageControl.class );
-        ProcessorStep<Batch<InputRelationship,RelationshipRecord>> step = new ParallelizeByNodeIdStep(
-                control, Configuration.DEFAULT );
+        ProcessorStep<Batch<InputRelationship,RelationshipRecord>,Batch<InputRelationship,RelationshipRecord>> step =
+                new ParallelizeByNodeIdStep( control, Configuration.DEFAULT );
         int batchSize = Configuration.DEFAULT.batchSize();
         Batch<InputRelationship,RelationshipRecord> a = new Batch<>( new InputRelationship[batchSize] );
         setIds( a, 0, 2, batchSize*2 );
@@ -50,7 +50,8 @@ public class ParallelizeByNodeIdStepTest
         setIds( aa, 0, 2, batchSize*2 );
         Batch<InputRelationship,RelationshipRecord> bb = new Batch<>( new InputRelationship[batchSize] );
         setIds( bb, 1, 2, batchSize*2 );
-        BatchSender sender = mock( BatchSender.class );
+        @SuppressWarnings( "unchecked" )
+        BatchSender<Batch<InputRelationship,RelationshipRecord>> sender = mock( BatchSender.class );
 
         // WHEN
         step.process( a, sender );

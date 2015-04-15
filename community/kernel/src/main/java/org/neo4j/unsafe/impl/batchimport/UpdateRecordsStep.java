@@ -38,7 +38,7 @@ import org.neo4j.unsafe.impl.batchimport.stats.StatsProvider;
  * {@link Predicate#accept(Object) accept} a record, which will have that record be written as unused instead.
  */
 public class UpdateRecordsStep<RECORD extends AbstractBaseRecord>
-        extends ProcessorStep<RECORD[]>
+        extends ProcessorStep<RECORD[],Void>
         implements StatsProvider
 {
     private final RecordStore<RECORD> store;

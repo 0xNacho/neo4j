@@ -62,7 +62,7 @@ public class ProcessorStepTest
         step.close();
     }
 
-    public class MyProcessorStep extends ProcessorStep<Integer>
+    public class MyProcessorStep extends ProcessorStep<Integer,Void>
     {
         private final AtomicInteger nextExpected = new AtomicInteger();
 
@@ -82,7 +82,7 @@ public class ProcessorStepTest
         }
 
         @Override
-        protected void process( Integer batch, BatchSender sender ) throws Throwable
+        protected void process( Integer batch, BatchSender<Void> sender ) throws Throwable
         {   // No processing in this test
         }
     }

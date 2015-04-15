@@ -40,7 +40,7 @@ import static org.neo4j.kernel.impl.store.record.Record.NO_NEXT_RELATIONSHIP;
 /**
  * Creates {@link NodeRecord nodes} with labels from input.
  */
-public final class NodeEncoderStep extends ProcessorStep<Batch<InputNode,NodeRecord>>
+public final class NodeEncoderStep extends ProcessorStep<Batch<InputNode,NodeRecord>,Batch<InputNode,NodeRecord>>
 {
     private final IdMapper idMapper;
     private final IdGenerator idGenerator;
@@ -61,7 +61,7 @@ public final class NodeEncoderStep extends ProcessorStep<Batch<InputNode,NodeRec
     }
 
     @Override
-    protected void process( Batch<InputNode,NodeRecord> batch, BatchSender sender )
+    protected void process( Batch<InputNode,NodeRecord> batch, BatchSender<Batch<InputNode,NodeRecord>> sender )
     {
         InputNode[] input = batch.input;
         batch.records = new NodeRecord[input.length];

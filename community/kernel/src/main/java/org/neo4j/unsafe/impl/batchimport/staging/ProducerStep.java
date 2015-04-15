@@ -25,7 +25,7 @@ import static java.lang.System.currentTimeMillis;
  * Step that generally sits first in a {@link Stage} and produces batches that will flow downstream
  * to other {@link Step steps}.
  */
-public abstract class ProducerStep extends AbstractStep<Void>
+public abstract class ProducerStep<OUT> extends AbstractStep<Void,OUT>
 {
     protected final int batchSize;
 

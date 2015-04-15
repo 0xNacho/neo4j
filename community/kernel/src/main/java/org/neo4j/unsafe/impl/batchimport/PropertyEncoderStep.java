@@ -40,7 +40,7 @@ import static java.util.Arrays.copyOf;
  * since property encoding is potentially the most costly step in this {@link Stage}.
  */
 public class PropertyEncoderStep<RECORD extends PrimitiveRecord,INPUT extends InputEntity>
-        extends ProcessorStep<Batch<INPUT,RECORD>>
+        extends ProcessorStep<Batch<INPUT,RECORD>,Batch<INPUT,RECORD>>
 {
     private final BatchingPropertyKeyTokenRepository propertyKeyHolder;
     private final int arrayDataSize;
@@ -58,7 +58,7 @@ public class PropertyEncoderStep<RECORD extends PrimitiveRecord,INPUT extends In
     }
 
     @Override
-    protected void process( Batch<INPUT,RECORD> batch, BatchSender sender )
+    protected void process( Batch<INPUT,RECORD> batch, BatchSender<Batch<INPUT,RECORD>> sender )
     {
         RelativeIdRecordAllocator stringAllocator = new RelativeIdRecordAllocator( stringDataSize );
         RelativeIdRecordAllocator arrayAllocator = new RelativeIdRecordAllocator( arrayDataSize );

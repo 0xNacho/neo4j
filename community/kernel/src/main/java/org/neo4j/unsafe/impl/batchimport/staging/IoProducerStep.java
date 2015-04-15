@@ -30,7 +30,7 @@ import org.neo4j.unsafe.impl.batchimport.stats.StatsProvider;
 /**
  * {@link ProducerStep} that has built-in support for I/O stats.
  */
-public abstract class IoProducerStep extends ProducerStep implements StatsProvider
+public abstract class IoProducerStep<OUT> extends ProducerStep<OUT> implements StatsProvider
 {
     public IoProducerStep( StageControl control, Configuration config )
     {

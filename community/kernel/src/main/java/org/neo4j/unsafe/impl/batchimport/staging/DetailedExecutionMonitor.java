@@ -79,11 +79,11 @@ public class DetailedExecutionMonitor extends ExecutionMonitor.Adpter
 
     private void printStats( StageExecution execution, boolean first )
     {
-        Step<?> bottleNeck = execution.stepsOrderedBy( Keys.avg_processing_time, false ).iterator().next().first();
+        Step<?,?> bottleNeck = execution.stepsOrderedBy( Keys.avg_processing_time, false ).iterator().next().first();
 
         StringBuilder builder = new StringBuilder();
         int i = 0;
-        for ( Step<?> step : execution.steps() )
+        for ( Step<?,?> step : execution.steps() )
         {
             StepStats stats = step.stats();
             builder.append( i > 0 ? format( "%n  " ) : (first ? "--" : " -") )
