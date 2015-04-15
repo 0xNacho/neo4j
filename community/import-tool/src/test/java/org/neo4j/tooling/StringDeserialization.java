@@ -114,13 +114,13 @@ class StringDeserialization implements Deserialization<String>
     }
 
     @Override
-    public String materialize( String ignore )
+    public String materialize()
     {
         return builder.toString();
     }
 
     @Override
-    public void clear()
+    public void prepare( String ignore )
     {
         builder.delete( 0, builder.length() );
     }

@@ -20,7 +20,6 @@
 package org.neo4j.unsafe.impl.batchimport.input;
 
 import java.io.IOException;
-import java.util.Arrays;
 
 import org.neo4j.io.fs.StoreChannel;
 
@@ -28,8 +27,6 @@ import static org.neo4j.unsafe.impl.batchimport.input.InputCache.END_OF_LABEL_CH
 import static org.neo4j.unsafe.impl.batchimport.input.InputCache.HAS_LABEL_FIELD;
 import static org.neo4j.unsafe.impl.batchimport.input.InputCache.LABEL_ADDITION;
 import static org.neo4j.unsafe.impl.batchimport.input.InputCache.LABEL_REMOVAL;
-import static org.neo4j.unsafe.impl.batchimport.input.InputEntity.NO_LABELS;
-import static org.neo4j.unsafe.impl.batchimport.input.InputEntity.NO_PROPERTIES;
 import static org.neo4j.unsafe.impl.batchimport.input.Inputs.INPUT_NODE_FACTORY;
 
 /**
@@ -37,7 +34,7 @@ import static org.neo4j.unsafe.impl.batchimport.input.Inputs.INPUT_NODE_FACTORY;
  */
 public class InputNodeReader extends InputEntityReader<InputNode>
 {
-    private String[] previousLabels = InputNode.NO_LABELS;
+    private GrowableArray<String> previousLabels = GrowableArray.empty();
 
     public InputNodeReader( StoreChannel channel, StoreChannel header, int bufferSize ) throws IOException
     {
@@ -45,7 +42,7 @@ public class InputNodeReader extends InputEntityReader<InputNode>
     }
 
     @Override
-    protected void readNextOrNull( Object properties, InputNode node ) throws IOException
+    protected void readNextOrNull( Long firstPropertyId, InputNode node ) throws IOException
     {
         // group
         Group group = readGroup( 0 );
@@ -66,47 +63,31 @@ public class InputNodeReader extends InputEntityReader<InputNode>
         }
         else
         {
-            String[] newLabels = previousLabels.clone();
-            int cursor = newLabels.length;
+            GrowableArray<String> newLabels = node.labels();
+            newLabels.mirrorFrom( previousLabels );
             while ( labelsMode != END_OF_LABEL_CHANGES )
             {
                 switch ( labelsMode )
                 {
-                case LABEL_REMOVAL: remove( readToken(), newLabels, cursor-- ); break;
-                case LABEL_ADDITION:
-                    (newLabels = ensureRoomForOneMore( newLabels, cursor ))[cursor++] = readToken(); break;
+                case LABEL_REMOVAL: remove( readToken(), newLabels ); break;
+                case LABEL_ADDITION: newLabels.add( readToken() ); break;
                 default: throw new IllegalArgumentException( "Unrecognized label mode " + labelsMode );
                 }
                 labelsMode = channel.get();
             }
-            labels = previousLabels = cursor == newLabels.length ? newLabels : Arrays.copyOf( newLabels, cursor );
+            labels = previousLabels = newLabels;
         }
 
-        node.initialize( sourceDescription(), lineNumber(), position(),
-                group, id,
-                properties.getClass().isArray() ? (Object[]) properties : NO_PROPERTIES,
-                properties.getClass().isArray() ? null : (Long) properties,
-                labels.getClass().isArray() ? (String[]) labels : NO_LABELS,
-                labels.getClass().isArray() ? null : (Long) labels );
+        node.initialize( sourceDescription(), lineNumber(), position(), group, id, firstPropertyId,
+                labelsMode == HAS_LABEL_FIELD ? (Long) labels : null );
     }
 
-    private String[] ensureRoomForOneMore( String[] labels, int cursor )
+    private void remove( String item, GrowableArray<String> from )
     {
-        return cursor >= labels.length ? Arrays.copyOf( labels, cursor+1 ) : labels;
-    }
-
-    private void remove( String item, String[] from, int cursor )
-    {
-        for ( int i = 0; i < cursor; i++ )
+        if ( !from.remove( item ) )
         {
-            if ( item.equals( from[i] ) )
-            {
-                from[i] = from[cursor-1];
-                from[cursor-1] = null;
-                return;
-            }
+            throw new IllegalArgumentException( "Diff said to remove " + item + " from " +
+                        from + ", but it didn't contain it" );
         }
-        throw new IllegalArgumentException( "Diff said to remove " + item + " from " +
-                    Arrays.toString( from ) + ", but it didn't contain it" );
     }
 }

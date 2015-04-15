@@ -101,6 +101,7 @@ public class RandomDataIterator<T> extends PrefetchingIterator<T> implements Inp
 
     private T generateDataLine()
     {
+        deserialization.prepare( itemSource.get() );
         for ( Entry entry : header.entries() )
         {
             switch ( entry.type() )
@@ -124,14 +125,7 @@ public class RandomDataIterator<T> extends PrefetchingIterator<T> implements Inp
                 throw new IllegalArgumentException( entry.toString() );
             }
         }
-        try
-        {
-            return deserialization.materialize( itemSource.get() );
-        }
-        finally
-        {
-            deserialization.clear();
-        }
+        return deserialization.materialize();
     }
 
     private Object idValue( Entry entry, long id )

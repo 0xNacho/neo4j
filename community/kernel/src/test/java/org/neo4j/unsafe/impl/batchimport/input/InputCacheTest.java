@@ -35,7 +35,6 @@ import org.neo4j.test.TargetDirectory;
 import org.neo4j.test.TargetDirectory.TestDirectory;
 import org.neo4j.unsafe.impl.batchimport.InputIterator;
 
-import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -44,8 +43,6 @@ import static java.lang.Math.abs;
 
 import static org.neo4j.helpers.Format.KB;
 import static org.neo4j.helpers.collection.IteratorUtil.asSet;
-import static org.neo4j.unsafe.impl.batchimport.input.InputEntity.NO_LABELS;
-import static org.neo4j.unsafe.impl.batchimport.input.InputEntity.NO_PROPERTIES;
 
 public class InputCacheTest
 {
@@ -165,7 +162,7 @@ public class InputCacheTest
         }
         else
         {
-            assertArrayEquals( expected.properties(), entity.properties() );
+            assertEquals( expected.properties(), entity.properties() );
         }
     }
 
@@ -174,14 +171,15 @@ public class InputCacheTest
         if ( random.random().nextFloat() < 0.1f )
         {
             return new InputRelationship().initialize( null, 0, 0,
-                    NO_PROPERTIES, abs( random.random().nextLong() ),
+                    abs( random.random().nextLong() ),
                     randomGroup( random, 0 ), randomId( random ),
                     randomGroup( random, 1 ), randomId( random ),
                     null, abs( random.random().nextInt( Short.MAX_VALUE ) ) );
         }
 
-        return new InputRelationship().initialize( null, 0, 0,
-                randomProperties( random ), null,
+        InputRelationship relationship = new InputRelationship();
+        randomProperties( random, relationship.properties() );
+        return relationship.initialize( null, 0, 0, null,
                 randomGroup( random, 0 ), randomId( random ),
                 randomGroup( random, 1 ), randomId( random ),
                 randomType( random ), null );
@@ -207,7 +205,7 @@ public class InputCacheTest
         }
         else
         {
-            assertArrayEquals( expectedNode.properties(), node.properties() );
+            assertEquals( expectedNode.properties(), node.properties() );
         }
         if ( expectedNode.hasLabelField() )
         {
@@ -224,14 +222,15 @@ public class InputCacheTest
         if ( random.random().nextFloat() < 0.1f )
         {
             return new InputNode().initialize( null, 0, 0, Group.GLOBAL, randomId( random ),
-                    NO_PROPERTIES, abs( random.random().nextLong() ),
-                    NO_LABELS, abs( random.random().nextLong() ) );
+                    abs( random.random().nextLong() ),
+                    abs( random.random().nextLong() ) );
         }
 
-        return new InputNode().initialize( null, 0, 0,
-                randomGroup( random, 0 ), randomId( random ),
-                randomProperties( random ), null,
-                randomLabels( random ), null );
+        InputNode node = new InputNode();
+        randomProperties( random, node.properties() );
+        randomLabels( random, node.labels() );
+        return node.initialize( null, 0, 0,
+                randomGroup( random, 0 ), randomId( random ), null, null );
     }
 
     private Group randomGroup( Randoms random, int slot )
@@ -244,27 +243,26 @@ public class InputCacheTest
         return previousGroups[slot];
     }
 
-    private String[] randomLabels( Randoms random )
+    private void randomLabels( Randoms random, GrowableArray<String> into )
     {
         if ( previousLabels == null || random.random().nextFloat() < 0.1 )
         {   // Change set of labels
-            return previousLabels = random.selection( TOKENS, 1, 5, false );
+            previousLabels = random.selection( TOKENS, 1, 5, false );
         }
+        // else keep same as previous
 
-        // Keep same as previous
-        return previousLabels;
+        into.clear();
+        into.addAll( previousLabels );
     }
 
-    private Object[] randomProperties( Randoms random )
+    private void randomProperties( Randoms random, GrowableArray<Object> into )
     {
         int length = random.random().nextInt( 10 );
-        Object[] properties = new Object[length*2];
-        for ( int i = 0; i < properties.length; i++ )
+        for ( int i = 0; i < length; i++ )
         {
-            properties[i++] = random.among( TOKENS );
-            properties[i] = random.propertyValue();
+            into.add( random.among( TOKENS ) );
+            into.add( random.propertyValue() );
         }
-        return properties;
     }
 
     private Object randomId( Randoms random )

@@ -19,7 +19,6 @@
  */
 package org.neo4j.unsafe.impl.batchimport.input;
 
-import java.util.Arrays;
 import java.util.Collection;
 
 import org.neo4j.helpers.Pair;
@@ -31,19 +30,21 @@ public class InputNode extends InputEntity
 {
     private Group group;
     private Object id;
-    private String[] labels;
+    private final GrowableArray<String> labels = new GrowableArray<>( String.class, 5 );
     private Long labelField;
 
     /**
+     * Initializes everything except {@link #properties()} and {@link #labels()} which are designed to be
+     * accessed and modified externally.
+     *
      * @param labelField is a hack to bypass String[] labels, consumers should check that field first.
      */
     public InputNode initialize( String sourceDescription, long lineNumber, long position,
-            Group group, Object id, Object[] properties, Long firstPropertyId, String[] labels, Long labelField )
+            Group group, Object id, Long firstPropertyId, Long labelField )
     {
-        super.initialize( sourceDescription, lineNumber, position, properties, firstPropertyId );
+        super.initialize( sourceDescription, lineNumber, position, firstPropertyId );
         this.group = group;
         this.id = id;
-        this.labels = labels;
         this.labelField = labelField;
         return this;
     }
@@ -58,7 +59,7 @@ public class InputNode extends InputEntity
         return id;
     }
 
-    public String[] labels()
+    public GrowableArray<String> labels()
     {
         return labels;
     }
@@ -83,14 +84,9 @@ public class InputNode extends InputEntity
         {
             fields.add( Pair.of( "labelField", labelField ) );
         }
-        else if ( labels != null && labels.length > 0 )
+        else if ( labels.length() > 0 )
         {
-            fields.add( Pair.of( "labels", Arrays.toString( labels ) ) );
+            fields.add( Pair.of( "labels", labels ) );
         }
-    }
-
-    public void setLabels( String[] labels )
-    {
-        this.labels = labels;
     }
 }

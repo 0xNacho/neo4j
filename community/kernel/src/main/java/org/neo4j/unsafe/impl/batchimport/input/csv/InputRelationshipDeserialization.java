@@ -74,17 +74,17 @@ public class InputRelationshipDeserialization extends InputEntityDeserialization
     }
 
     @Override
-    public InputRelationship materialize( InputRelationship relationship )
+    public InputRelationship materialize()
     {
-        return relationship.initialize(
+        return entity.initialize(
                 source.sourceDescription(), source.lineNumber(), source.position(),
-                properties(), null, startNodeGroup, startNode, endNodeGroup, endNode, type, null );
+                null, startNodeGroup, startNode, endNodeGroup, endNode, type, null );
     }
 
     @Override
-    public void clear()
+    public void prepare( InputRelationship relationship )
     {
-        super.clear();
+        super.prepare( relationship );
         type = null;
         startNode = endNode = null;
     }

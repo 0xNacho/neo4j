@@ -20,9 +20,9 @@
 package org.neo4j.unsafe.impl.batchimport.input.csv;
 
 import java.lang.reflect.Array;
-import java.util.Arrays;
 
 import org.neo4j.csv.reader.SourceTraceability;
+import org.neo4j.unsafe.impl.batchimport.input.GrowableArray;
 import org.neo4j.unsafe.impl.batchimport.input.InputEntity;
 import org.neo4j.unsafe.impl.batchimport.input.csv.Header.Entry;
 
@@ -34,9 +34,8 @@ import org.neo4j.unsafe.impl.batchimport.input.csv.Header.Entry;
 public abstract class InputEntityDeserialization<ENTITY extends InputEntity> implements Deserialization<ENTITY>
 {
     protected final SourceTraceability source;
-
-    private Object[] properties = new Object[10*2];
-    private int propertiesCursor;
+    protected GrowableArray<Object> properties;
+    protected ENTITY entity;
 
     public InputEntityDeserialization( SourceTraceability source )
     {
@@ -47,18 +46,10 @@ public abstract class InputEntityDeserialization<ENTITY extends InputEntity> imp
     {
         if ( value != null )
         {
-            ensurePropertiesArrayCapacity( propertiesCursor+2 );
-            properties[propertiesCursor++] = name;
-            properties[propertiesCursor++] = value;
+            properties.add( name );
+            properties.add( value );
         }
         // else it's fine because no value was specified
-    }
-
-    protected Object[] properties()
-    {
-        return propertiesCursor > 0
-                ? Arrays.copyOf( properties, propertiesCursor )
-                : InputEntity.NO_PROPERTIES;
     }
 
     @Override
@@ -84,17 +75,11 @@ public abstract class InputEntityDeserialization<ENTITY extends InputEntity> imp
         }
     }
 
-    private void ensurePropertiesArrayCapacity( int length )
-    {
-        if ( length > properties.length )
-        {
-            properties = Arrays.copyOf( properties, length );
-        }
-    }
-
     @Override
-    public void clear()
+    public void prepare( ENTITY nextEntity )
     {
-        propertiesCursor = 0;
+        entity = nextEntity;
+        properties = nextEntity.properties();
+        properties.clear();
     }
 }

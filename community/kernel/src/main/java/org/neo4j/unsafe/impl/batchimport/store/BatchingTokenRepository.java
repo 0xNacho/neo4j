@@ -32,6 +32,7 @@ import org.neo4j.kernel.impl.store.record.RelationshipTypeTokenRecord;
 import org.neo4j.kernel.impl.store.record.TokenRecord;
 import org.neo4j.kernel.impl.transaction.state.PropertyCreator;
 import org.neo4j.kernel.impl.transaction.state.TokenCreator;
+import org.neo4j.unsafe.impl.batchimport.input.GrowableArray;
 
 import static java.lang.Math.max;
 
@@ -75,13 +76,13 @@ public abstract class BatchingTokenRepository<T extends TokenRecord>
     /**
      * Converts label names into label ids. Also sorts and deduplicates.
      */
-    public long[] getOrCreateIds( String[] labels )
+    public long[] getOrCreateIds( GrowableArray<String> labels )
     {
-        long[] result = new long[labels.length];
+        long[] result = new long[labels.length()];
         int from, to;
-        for ( from = 0, to = 0; from < labels.length; from++ )
+        for ( from = 0, to = 0; from < result.length; from++ )
         {
-            int id = getOrCreateId( labels[from] );
+            int id = getOrCreateId( labels.get( from ) );
             if ( !contains( result, id, to ) )
             {
                 result[to++] = id;
@@ -168,14 +169,14 @@ public abstract class BatchingTokenRepository<T extends TokenRecord>
             return new PropertyKeyTokenRecord( key );
         }
 
-        public void propertyKeysAndValues( PropertyBlock[] target, int offset, Object[] properties,
+        public void propertyKeysAndValues( PropertyBlock[] target, int offset, GrowableArray<Object> properties,
                 PropertyCreator creator )
         {
-            int count = properties.length >> 1;
+            int count = properties.length() >> 1;
             for ( int i = 0, cursor = 0; i < count; i++ )
             {
-                int key = getOrCreateId( (String)properties[cursor++] );
-                Object value = properties[cursor++];
+                int key = getOrCreateId( (String)properties.get( cursor++ ) );
+                Object value = properties.get( cursor++ );
                 target[offset+i] = creator.encodeValue( new PropertyBlock(), key, value );
             }
         }

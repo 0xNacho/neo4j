@@ -21,7 +21,6 @@ package org.neo4j.unsafe.impl.batchimport.input;
 
 import org.neo4j.function.Function;
 import org.neo4j.function.Functions;
-import org.neo4j.helpers.ArrayUtil;
 
 /**
  * Common {@link InputEntity} decorators, able to provide defaults or overrides.
@@ -48,11 +47,7 @@ public class InputEntityDecorators
                     return node;
                 }
 
-                String[] union = ArrayUtil.union( node.labels(), labelNamesToAdd );
-                if ( union != node.labels() )
-                {
-                    node.setLabels( union );
-                }
+                node.labels().addMissing( labelNamesToAdd );
                 return node;
             }
         };

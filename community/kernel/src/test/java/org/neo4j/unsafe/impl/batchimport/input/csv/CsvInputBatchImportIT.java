@@ -62,6 +62,7 @@ import org.neo4j.unsafe.impl.batchimport.BatchImporter;
 import org.neo4j.unsafe.impl.batchimport.Configuration;
 import org.neo4j.unsafe.impl.batchimport.Configuration.Default;
 import org.neo4j.unsafe.impl.batchimport.ParallelBatchImporter;
+import org.neo4j.unsafe.impl.batchimport.input.GrowableArray;
 import org.neo4j.unsafe.impl.batchimport.input.InputNode;
 import org.neo4j.unsafe.impl.batchimport.input.InputRelationship;
 
@@ -77,7 +78,6 @@ import static org.neo4j.kernel.impl.util.AutoCreatingHashMap.nested;
 import static org.neo4j.kernel.impl.util.AutoCreatingHashMap.values;
 import static org.neo4j.register.Registers.newDoubleLongRegister;
 import static org.neo4j.unsafe.impl.batchimport.input.Group.GLOBAL;
-import static org.neo4j.unsafe.impl.batchimport.input.InputEntity.NO_PROPERTIES;
 import static org.neo4j.unsafe.impl.batchimport.input.Inputs.csv;
 import static org.neo4j.unsafe.impl.batchimport.input.csv.Configuration.COMMAS;
 import static org.neo4j.unsafe.impl.batchimport.staging.ExecutionMonitors.invisible;
@@ -134,22 +134,22 @@ public class CsvInputBatchImportIT
         List<InputNode> nodes = new ArrayList<>();
         for ( int i = 0; i < 300; i++ )
         {
-            Object[] properties = new Object[] { "name", "Node " + i };
             String id = UUID.randomUUID().toString();
-            nodes.add( new InputNode().initialize( "source", i, i, GLOBAL, id, properties, null,
-                    randomLabels( random ), null ) );
+            InputNode node = new InputNode().initialize( "source", i, i, GLOBAL, id, null, null );
+            node.properties().addAll( new Object[] { "name", "Node " + i } );
+            randomLabels( random, node.labels() );
+            nodes.add( node );
         }
         return nodes;
     }
 
-    private String[] randomLabels( Random random )
+    private void randomLabels( Random random, GrowableArray<String> into )
     {
-        String[] labels = new String[random.nextInt( 3 )];
-        for ( int i = 0; i < labels.length; i++ )
+        int length = random.nextInt( 3 );
+        for ( int i = 0; i < length; i++ )
         {
-            labels[i] = "Label" + random.nextInt( 4 );
+            into.add( "Label" + random.nextInt( 4 ) );
         }
-        return labels;
     }
 
     private Default smallBatchSizeConfig()
@@ -198,26 +198,11 @@ public class CsvInputBatchImportIT
             // Data
             for ( InputNode node : nodeData )
             {
-                String csvLabels = csvLabels( node.labels() );
-                println( writer, node.id() + "," + node.properties()[1] +
-                        (csvLabels != null && csvLabels.length() > 0 ? "," + csvLabels : "") );
+                println( writer, node.id() + "," + node.properties().get( 1 ) +
+                        (node.labels().length() > 0 ? "," + node.labels().toString( "", ";", "" ) : "") );
             }
         }
         return file;
-    }
-
-    private String csvLabels( String[] labels )
-    {
-        if ( labels == null || labels.length == 0 )
-        {
-            return null;
-        }
-        StringBuilder builder = new StringBuilder();
-        for ( String label : labels )
-        {
-            builder.append( builder.length() > 0 ? ";" : "" ).append( label );
-        }
-        return builder.toString();
     }
 
     private void println( Writer writer, String string ) throws IOException
@@ -230,9 +215,7 @@ public class CsvInputBatchImportIT
         List<InputRelationship> relationships = new ArrayList<>();
         for ( int i = 0; i < 1000; i++ )
         {
-            relationships.add( new InputRelationship().initialize(
-                    "source", i, i,
-                    NO_PROPERTIES, null,
+            relationships.add( new InputRelationship().initialize( "source", i, i, null,
                     GLOBAL, nodeData.get( random.nextInt( nodeData.size() ) ).id(),
                     GLOBAL, nodeData.get( random.nextInt( nodeData.size() ) ).id(),
                     "TYPE_" + random.nextInt( 3 ), null ) );
@@ -424,8 +407,8 @@ public class CsvInputBatchImportIT
         for ( InputNode node : nodeData )
         {
             expectedNodes.put( (String) node.id(), node );
-            expectedNodeNames.put( nameOf( node ), node.labels() );
-            countNodeLabels( nodeCounts, node.labels() );
+            expectedNodeNames.put( nameOf( node ), node.labels().copyToArray() );
+            countNodeLabels( nodeCounts, node.labels().copyToArray() );
         }
         for ( InputRelationship relationship : relationshipData )
         {
@@ -443,7 +426,7 @@ public class CsvInputBatchImportIT
             // Let's do what CountsState#addRelationship does, roughly
             relationshipCounts.get( null ).get( null ).get( null ).incrementAndGet();
             relationshipCounts.get( null ).get( relationship.type() ).get( null ).incrementAndGet();
-            for ( String startNodeLabelName : asSet( startNode.labels() ) )
+            for ( String startNodeLabelName : asSet( startNode.labels().copyToArray() ) )
             {
                 Map<String, Map<String, AtomicLong>> startLabelCounts = relationshipCounts.get( startNodeLabelName );
                 startLabelCounts.get( null ).get( null ).incrementAndGet();
@@ -451,14 +434,14 @@ public class CsvInputBatchImportIT
                 typeCounts.get( null ).incrementAndGet();
                 if ( COMPUTE_DOUBLE_SIDED_RELATIONSHIP_COUNTS )
                 {
-                    for ( String endNodeLabelName : asSet( endNode.labels() ) )
+                    for ( String endNodeLabelName : asSet( endNode.labels().copyToArray() ) )
                     {
                         startLabelCounts.get( null ).get( endNodeLabelName ).incrementAndGet();
                         typeCounts.get( endNodeLabelName ).incrementAndGet();
                     }
                 }
             }
-            for ( String endNodeLabelName : asSet( endNode.labels() ) )
+            for ( String endNodeLabelName : asSet( endNode.labels().copyToArray() ) )
             {
                 relationshipCounts.get( null ).get( null ).get( endNodeLabelName ).incrementAndGet();
                 relationshipCounts.get( null ).get( relationship.type() ).get( endNodeLabelName ).incrementAndGet();
@@ -482,7 +465,7 @@ public class CsvInputBatchImportIT
     private static final boolean COMPUTE_DOUBLE_SIDED_RELATIONSHIP_COUNTS = false;
     private String nameOf( InputNode node )
     {
-        return (String) node.properties()[1];
+        return (String) node.properties().get( 1 );
     }
 
     private final FileSystemAbstraction fs = new DefaultFileSystemAbstraction();

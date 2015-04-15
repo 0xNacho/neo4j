@@ -25,9 +25,7 @@ import org.mockito.InOrder;
 import org.neo4j.function.Function;
 import org.neo4j.helpers.ArrayUtil;
 
-import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -47,7 +45,7 @@ public class InputEntityDecoratorsTest
                 InputEntityDecorators.defaultRelationshipType( defaultType );
 
         // WHEN
-        InputRelationship relationship = new InputRelationship().initialize( "source", 1, 0, InputEntity.NO_PROPERTIES, null,
+        InputRelationship relationship = new InputRelationship().initialize( "source", 1, 0, null,
                 GLOBAL, "start", GLOBAL, "end", null, null );
         relationship = decorator.apply( relationship );
 
@@ -65,7 +63,7 @@ public class InputEntityDecoratorsTest
 
         // WHEN
         String customType = "CUSTOM_TYPE";
-        InputRelationship relationship = new InputRelationship().initialize( "source", 1, 0, InputEntity.NO_PROPERTIES, null,
+        InputRelationship relationship = new InputRelationship().initialize( "source", 1, 0, null,
                 GLOBAL, "start", GLOBAL, "end", customType, null );
         relationship = decorator.apply( relationship );
 
@@ -83,7 +81,7 @@ public class InputEntityDecoratorsTest
 
         // WHEN
         Integer typeId = 5;
-        InputRelationship relationship = new InputRelationship().initialize( "source", 1, 0, InputEntity.NO_PROPERTIES, null,
+        InputRelationship relationship = new InputRelationship().initialize( "source", 1, 0, null,
                 GLOBAL, "start", GLOBAL, "end", null, typeId );
         relationship = decorator.apply( relationship );
 
@@ -100,11 +98,11 @@ public class InputEntityDecoratorsTest
         Function<InputNode,InputNode> decorator = InputEntityDecorators.additiveLabels( toAdd );
 
         // WHEN
-        InputNode node = new InputNode().initialize( "source", 1, 0, GLOBAL, "id", InputEntity.NO_PROPERTIES, null, null, null );
+        InputNode node = new InputNode().initialize( "source", 1, 0, GLOBAL, "id", null, null );
         node = decorator.apply( node );
 
         // THEN
-        assertArrayEquals( toAdd, node.labels() );
+        assertEquals( new GrowableArray<>( toAdd ), node.labels() );
     }
 
     @Test
@@ -115,12 +113,13 @@ public class InputEntityDecoratorsTest
         Function<InputNode,InputNode> decorator = InputEntityDecorators.additiveLabels( toAdd );
 
         // WHEN
-        String[] nodeLabels = new String[] {"SomeOther"};
-        InputNode node = new InputNode().initialize( "source", 1, 0, GLOBAL, "id", InputEntity.NO_PROPERTIES, null, nodeLabels, null );
+        String[] nodeLabels = new String[] { "SomeOther" };
+        InputNode node = new InputNode().initialize( "source", 1, 0, GLOBAL, "id", null, null );
+        node.labels().addAll( nodeLabels );
         node = decorator.apply( node );
 
         // THEN
-        assertEquals( asSet( ArrayUtil.union( toAdd, nodeLabels ) ), asSet( node.labels() ) );
+        assertEquals( asSet( ArrayUtil.union( toAdd, nodeLabels ) ), asSet( node.labels().copyToArray() ) );
     }
 
     @Test
@@ -132,11 +131,11 @@ public class InputEntityDecoratorsTest
 
         // WHEN
         long labelField = 123L;
-        InputNode node = new InputNode().initialize( "source", 1, 0, GLOBAL, "id", InputEntity.NO_PROPERTIES, null, null, labelField );
+        InputNode node = new InputNode().initialize( "source", 1, 0, GLOBAL, "id", null, labelField );
         node = decorator.apply( node );
 
         // THEN
-        assertNull( node.labels() );
+        assertEquals( 0, node.labels().length() );
         assertEquals( labelField, node.labelField().longValue() );
     }
 

@@ -39,6 +39,11 @@ public interface Deserialization<ENTITY>
     void initialize();
 
     /**
+     * Clears the mutable state, preparing for the next entity.
+     */
+    void prepare( ENTITY nextEntity );
+
+    /**
      * Handles one value of a type described by the {@code entry}. One or more values will be able to
      * {@link #materialize()} into an entity later on.
      */
@@ -48,10 +53,5 @@ public interface Deserialization<ENTITY>
      * Takes values received in {@link #handle(org.neo4j.unsafe.impl.batchimport.input.csv.Header.Entry, Object)}
      * and materializes an entity from that into the specified object.
      */
-    ENTITY materialize( ENTITY into );
-
-    /**
-     * Clears the mutable state, preparing for the next entity.
-     */
-    void clear();
+    ENTITY materialize();
 }

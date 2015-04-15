@@ -19,16 +19,12 @@
  */
 package org.neo4j.unsafe.impl.batchimport.input.csv;
 
-import java.util.Arrays;
-
 import org.neo4j.csv.reader.SourceTraceability;
 import org.neo4j.unsafe.impl.batchimport.input.Group;
 import org.neo4j.unsafe.impl.batchimport.input.Groups;
-import org.neo4j.unsafe.impl.batchimport.input.InputEntity;
+import org.neo4j.unsafe.impl.batchimport.input.GrowableArray;
 import org.neo4j.unsafe.impl.batchimport.input.InputNode;
 import org.neo4j.unsafe.impl.batchimport.input.csv.Header.Entry;
-
-import static java.util.Arrays.copyOf;
 
 /**
  * Builds {@link InputNode} from CSV data.
@@ -41,8 +37,7 @@ public class InputNodeDeserialization extends InputEntityDeserialization<InputNo
     private final boolean idsAreExternal;
     private Group group;
     private Object id;
-    private String[] labels = new String[10];
-    private int labelsCursor;
+    private GrowableArray<String> labels;
 
     public InputNodeDeserialization( SourceTraceability source, Header header, Groups groups, boolean idsAreExternal )
     {
@@ -73,7 +68,7 @@ public class InputNodeDeserialization extends InputEntityDeserialization<InputNo
             id = value;
             break;
         case LABEL:
-            addLabels( entry, value );
+            addLabels( value );
             break;
         default:
             super.handle( entry, value );
@@ -82,56 +77,35 @@ public class InputNodeDeserialization extends InputEntityDeserialization<InputNo
     }
 
     @Override
-    public InputNode materialize( InputNode node )
+    public InputNode materialize()
     {
-        return node.initialize(
+        return entity.initialize(
                 source.sourceDescription(), source.lineNumber(), source.position(),
-                group, id, properties(), null, labels(), null );
+                group, id, null, null );
     }
 
     @Override
-    public void clear()
+    public void prepare( InputNode node )
     {
-        super.clear();
-        labelsCursor = 0;
-        id = null;
+        super.prepare( node );
+        labels = node.labels();
+        labels.clear();
     }
 
-    private void ensureLabelsCapacity( int length )
-    {
-        if ( length > labels.length )
-        {
-            labels = Arrays.copyOf( labels, length );
-        }
-    }
-
-    private void addLabels( Entry entry, Object value )
+    private void addLabels( Object value )
     {
         if ( value instanceof String )
         {
-            ensureLabelsCapacity( labelsCursor+1 );
-            labels[labelsCursor++] = (String) value;
+            labels.add( (String) value );
         }
         else if ( value instanceof String[] )
         {
-            String[] labelsToAdd = (String[]) value;
-            ensureLabelsCapacity( labelsCursor+labelsToAdd.length );
-            for ( String label : (String[]) value )
-            {
-                labels[labelsCursor++] = label;
-            }
+            labels.addAll( (String[]) value );
         }
         else
         {
             throw new IllegalArgumentException( "Unexpected label value type " +
                     value.getClass() + ": " + value );
         }
-    }
-
-    private String[] labels()
-    {
-        return labelsCursor > 0
-                ? copyOf( labels, labelsCursor )
-                : InputEntity.NO_LABELS;
     }
 }

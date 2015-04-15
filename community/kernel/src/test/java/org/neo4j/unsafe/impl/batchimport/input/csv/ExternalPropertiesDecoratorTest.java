@@ -29,7 +29,6 @@ import org.neo4j.csv.reader.Readables;
 import org.neo4j.function.Factory;
 import org.neo4j.function.Function;
 import org.neo4j.unsafe.impl.batchimport.input.Group;
-import org.neo4j.unsafe.impl.batchimport.input.InputEntity;
 import org.neo4j.unsafe.impl.batchimport.input.InputNode;
 import org.neo4j.unsafe.impl.batchimport.input.UpdateBehaviour;
 import org.neo4j.unsafe.impl.batchimport.input.csv.Configuration.OverrideFromConfig;
@@ -102,7 +101,7 @@ public class ExternalPropertiesDecoratorTest
     private void assertProperties( InputNode decoratedNode, Object... expectedKeyValuePairs )
     {
         Map<String,Object> expectedProperties = map( expectedKeyValuePairs );
-        Map<String,Object> properties = map( decoratedNode.properties() );
+        Map<String,Object> properties = map( decoratedNode.properties().copyToArray() );
         assertEquals( properties.toString(), expectedProperties.size(), properties.size() );
         for ( Map.Entry<String,Object> expectedProperty : expectedProperties.entrySet() )
         {
@@ -122,7 +121,9 @@ public class ExternalPropertiesDecoratorTest
 
     private InputNode node( Object id, Object... props )
     {
-        return new InputNode().initialize( "source", 1, 0, Group.GLOBAL, id, props, null, InputEntity.NO_LABELS, null );
+        InputNode node = new InputNode().initialize( "source", 1, 0, Group.GLOBAL, id, null, null );
+        node.properties().addAll( props );
+        return node;
     }
 
     private Factory<CharReadable> readable( final String data )

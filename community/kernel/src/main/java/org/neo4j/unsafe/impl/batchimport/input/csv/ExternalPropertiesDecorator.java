@@ -106,6 +106,7 @@ public class ExternalPropertiesDecorator implements Function<InputNode,InputNode
 
     private void decorate( InputNode from )
     {
-        from.updateProperties( updateBehaviour, currentExternal.properties() );
+        // TODO rather not use copyToArray here
+        from.updateProperties( updateBehaviour, currentExternal.properties().copyToArray() );
     }
 }

@@ -27,7 +27,6 @@ import static org.neo4j.unsafe.impl.batchimport.input.InputCache.HAS_TYPE_ID;
 import static org.neo4j.unsafe.impl.batchimport.input.InputCache.NEW_TYPE;
 import static org.neo4j.unsafe.impl.batchimport.input.InputCache.SAME_TYPE;
 import static org.neo4j.unsafe.impl.batchimport.input.InputCache.SPECIFIC_ID;
-import static org.neo4j.unsafe.impl.batchimport.input.InputEntity.NO_PROPERTIES;
 import static org.neo4j.unsafe.impl.batchimport.input.Inputs.INPUT_RELATIONSHIP_FACTORY;
 
 /**
@@ -43,7 +42,7 @@ public class InputRelationshipReader extends InputEntityReader<InputRelationship
     }
 
     @Override
-    protected void readNextOrNull( Object properties, InputRelationship relationship ) throws IOException
+    protected void readNextOrNull( Long firstPropertyId, InputRelationship relationship ) throws IOException
     {
         // id
         long specificId = channel.get() == SPECIFIC_ID ? channel.getLong() : -1;
@@ -67,9 +66,7 @@ public class InputRelationshipReader extends InputEntityReader<InputRelationship
         default: throw new IllegalArgumentException( "Unrecognized type mode " + typeMode );
         }
 
-        relationship.initialize( sourceDescription(), lineNumber(), position(),
-                properties.getClass().isArray() ? (Object[]) properties : NO_PROPERTIES,
-                properties.getClass().isArray() ? null : (Long) properties,
+        relationship.initialize( sourceDescription(), lineNumber(), position(), firstPropertyId,
                 startNodeGroup, startNodeId,
                 endNodeGroup, endNodeId,
                 type instanceof String ? (String) type : null,

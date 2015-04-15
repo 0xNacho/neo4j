@@ -84,7 +84,6 @@ import org.neo4j.unsafe.impl.batchimport.InputIterator;
 import org.neo4j.unsafe.impl.batchimport.ParallelBatchImporter;
 import org.neo4j.unsafe.impl.batchimport.cache.idmapping.IdGenerators;
 import org.neo4j.unsafe.impl.batchimport.cache.idmapping.IdMappers;
-import org.neo4j.unsafe.impl.batchimport.input.InputEntity;
 import org.neo4j.unsafe.impl.batchimport.input.InputNode;
 import org.neo4j.unsafe.impl.batchimport.input.InputRelationship;
 import org.neo4j.unsafe.impl.batchimport.input.Inputs;
@@ -593,7 +592,7 @@ public class StoreMigrator implements StoreMigrationParticipant
                         RelationshipRecord record = source.next();
                         InputRelationship result = new InputRelationship().initialize(
                                 "legacy store", record.getId(), record.getId()*RelationshipStore.RECORD_SIZE,
-                                InputEntity.NO_PROPERTIES, record.getNextProp(),
+                                record.getNextProp(),
                                 GLOBAL, record.getFirstNode(), GLOBAL, record.getSecondNode(), null, record.getType() );
                         result.setSpecificId( record.getId() );
                         traceability.atId( record.getId() );
@@ -649,8 +648,7 @@ public class StoreMigrator implements StoreMigrationParticipant
                         traceability.atId( record.getId() );
                         return new InputNode().initialize(
                                 "legacy store", record.getId(), record.getId()*NodeStore.RECORD_SIZE, GLOBAL,
-                                record.getId(), InputEntity.NO_PROPERTIES, record.getNextProp(),
-                                InputNode.NO_LABELS, record.getLabelField() );
+                                record.getId(), record.getNextProp(), record.getLabelField() );
                     }
 
                     @Override

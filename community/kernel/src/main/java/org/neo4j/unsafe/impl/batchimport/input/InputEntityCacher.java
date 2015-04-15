@@ -30,12 +30,12 @@ import org.neo4j.kernel.impl.transaction.log.WritableLogChannel;
 
 import static org.neo4j.helpers.Format.KB;
 import static org.neo4j.unsafe.impl.batchimport.Utils.safeCastLongToShort;
-import static org.neo4j.unsafe.impl.batchimport.input.InputCache.HAS_FIRST_PROPERTY_ID;
-import static org.neo4j.unsafe.impl.batchimport.input.InputCache.NEW_GROUP;
 import static org.neo4j.unsafe.impl.batchimport.input.InputCache.END_OF_ENTITIES;
 import static org.neo4j.unsafe.impl.batchimport.input.InputCache.END_OF_HEADER;
-import static org.neo4j.unsafe.impl.batchimport.input.InputCache.TOKEN;
+import static org.neo4j.unsafe.impl.batchimport.input.InputCache.HAS_FIRST_PROPERTY_ID;
+import static org.neo4j.unsafe.impl.batchimport.input.InputCache.NEW_GROUP;
 import static org.neo4j.unsafe.impl.batchimport.input.InputCache.SAME_GROUP;
+import static org.neo4j.unsafe.impl.batchimport.input.InputCache.TOKEN;
 
 /**
  * Abstract class for caching {@link InputEntity} or derivative to disk using a binary format.
@@ -87,12 +87,13 @@ abstract class InputEntityCacher<ENTITY extends InputEntity> implements Receiver
         }
         else
         {
-            Object[] properties = entity.properties();
-            channel.putShort( safeCastLongToShort( properties.length/2 ) );
-            for ( int i = 0; i < properties.length; i++ )
+            GrowableArray<Object> properties = entity.properties();
+            int propertiesLength = properties.length();
+            channel.putShort( safeCastLongToShort( propertiesLength/2 ) );
+            for ( int i = 0; i < propertiesLength; i++ )
             {
-                String key = (String) properties[i++];
-                Object value = properties[i];
+                String key = (String) properties.get( i++ );
+                Object value = properties.get( i );
                 if ( value == null )
                 {
                     continue;

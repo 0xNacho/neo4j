@@ -835,7 +835,7 @@ public class CsvInputTest
         assertEquals( endNodeGroup.id(), relationship.endNodeGroup().id() );
         assertEquals( endNode, relationship.endNode() );
         assertEquals( type, relationship.type() );
-        assertArrayEquals( properties, relationship.properties() );
+        assertArrayEquals( properties, relationship.properties().copyToArray() );
     }
 
     private void assertNode( InputNode node, Object id, Object[] properties, Set<String> labels )
@@ -847,8 +847,8 @@ public class CsvInputTest
     {
         assertEquals( group.id(), node.group().id() );
         assertEquals( id, node.id() );
-        assertArrayEquals( properties, node.properties() );
-        assertEquals( labels, asSet( node.labels() ) );
+        assertArrayEquals( properties, node.properties().copyToArray() );
+        assertEquals( labels, asSet( node.labels().copyToArray() ) );
     }
 
     private Object[] properties( Object... keysAndValues )

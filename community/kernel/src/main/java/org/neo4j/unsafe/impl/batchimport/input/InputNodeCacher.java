@@ -23,7 +23,6 @@ import java.io.IOException;
 
 import org.neo4j.io.fs.StoreChannel;
 
-import static org.neo4j.helpers.ArrayUtil.contains;
 import static org.neo4j.unsafe.impl.batchimport.input.InputCache.END_OF_LABEL_CHANGES;
 import static org.neo4j.unsafe.impl.batchimport.input.InputCache.HAS_LABEL_FIELD;
 import static org.neo4j.unsafe.impl.batchimport.input.InputCache.LABEL_ADDITION;
@@ -34,7 +33,7 @@ import static org.neo4j.unsafe.impl.batchimport.input.InputCache.LABEL_REMOVAL;
  */
 public class InputNodeCacher extends InputEntityCacher<InputNode>
 {
-    private String[] previousLabels = InputEntity.NO_LABELS;
+    private GrowableArray<String> previousLabels = GrowableArray.empty();
 
     public InputNodeCacher( StoreChannel channel, StoreChannel header, int bufferSize ) throws IOException
     {
@@ -61,7 +60,7 @@ public class InputNodeCacher extends InputEntityCacher<InputNode>
         }
         else
         {   // diff from previous node
-            String[] labels = node.labels();
+            GrowableArray<String> labels = node.labels();
             writeDiff( LABEL_REMOVAL, previousLabels, labels );
             writeDiff( LABEL_ADDITION, labels, previousLabels );
             channel.put( END_OF_LABEL_CHANGES );
@@ -69,14 +68,16 @@ public class InputNodeCacher extends InputEntityCacher<InputNode>
         }
     }
 
-    protected void writeDiff( byte mode, String[] compare, String[] with ) throws IOException
+    protected void writeDiff( byte mode, GrowableArray<String> compare, GrowableArray<String> with ) throws IOException
     {
-        for ( int i = 0; i < compare.length; i++ )
+        int length = compare.length();
+        for ( int i = 0; i < length; i++ )
         {
-            if ( !contains( with, compare[i] ) )
+            String item = compare.get( i );
+            if ( !with.contains( item ) )
             {
                 channel.put( mode );
-                writeToken( compare[i] );
+                writeToken( item );
             }
         }
     }

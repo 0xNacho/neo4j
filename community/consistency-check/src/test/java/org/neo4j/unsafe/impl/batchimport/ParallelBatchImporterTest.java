@@ -69,6 +69,7 @@ import org.neo4j.tooling.GlobalGraphOperations;
 import org.neo4j.unsafe.impl.batchimport.cache.idmapping.IdGenerator;
 import org.neo4j.unsafe.impl.batchimport.cache.idmapping.IdMapper;
 import org.neo4j.unsafe.impl.batchimport.input.Group;
+import org.neo4j.unsafe.impl.batchimport.input.GrowableArray;
 import org.neo4j.unsafe.impl.batchimport.input.InputEntity;
 import org.neo4j.unsafe.impl.batchimport.input.InputNode;
 import org.neo4j.unsafe.impl.batchimport.input.InputRelationship;
@@ -402,12 +403,12 @@ public class ParallelBatchImporterTest
 
     private Object propertyOf( InputEntity input, String key )
     {
-        Object[] properties = input.properties();
-        for ( int i = 0; i < properties.length; i++ )
+        GrowableArray<Object> properties = input.properties();
+        for ( int i = 0; i < properties.length(); i++ )
         {
-            if ( properties[i++].equals( key ) )
+            if ( properties.get( i++ ).equals( key ) )
             {
-                return properties[i];
+                return properties.get( i );
             }
         }
         throw new IllegalStateException( key + " not found on " + input );
@@ -428,7 +429,7 @@ public class ParallelBatchImporterTest
         assertPropertiesEquals( input, node );
 
         // labels
-        Set<String> expectedLabels = asSet( input.labels() );
+        Set<String> expectedLabels = asSet( input.labels().copyToArray() );
         for ( Label label : node.getLabels() )
         {
             assertTrue( expectedLabels.remove( label.name() ) );
@@ -438,11 +439,11 @@ public class ParallelBatchImporterTest
 
     private void assertPropertiesEquals( InputEntity input, PropertyContainer entity )
     {
-        Object[] properties = input.properties();
-        for ( int i = 0; i < properties.length; i++ )
+        GrowableArray<Object> properties = input.properties();
+        for ( int i = 0; i < properties.length(); i++ )
         {
-            String key = (String) properties[i++];
-            Object value = properties[i];
+            String key = (String) properties.get( i++ );
+            Object value = properties.get( i );
             assertPropertyValueEquals( input, entity, key, value, entity.getProperty( key ) );
         }
     }
@@ -545,11 +546,12 @@ public class ParallelBatchImporterTest
                                 startNode = idGenerator.miss( random, startNode, 0.001f );
                                 endNode = idGenerator.miss( random, endNode, 0.001f );
 
-                                return new InputRelationship().initialize(
-                                        sourceDescription, itemNumber, itemNumber,
-                                        properties, null,
+                                InputRelationship relationship = new InputRelationship().initialize(
+                                        sourceDescription, itemNumber, itemNumber, null,
                                         startNodeGroup, startNode, endNodeGroup, endNode,
                                         idGenerator.randomType( random ), null );
+                                relationship.properties().addAll( properties );
+                                return relationship;
                             }
                             finally
                             {
@@ -595,13 +597,13 @@ public class ParallelBatchImporterTest
                         if ( cursor < count )
                         {
                             Object nodeId = inputIdGenerator.nextNodeId( random );
-                            Object[] properties = randomProperties( randoms, nodeId );
-                            String[] labels = randoms.selection( TOKENS, 0, TOKENS.length, true );
                             try
                             {
                                 Group group = groups.groupOf( cursor );
-                                return new InputNode().initialize( sourceDescription, itemNumber, itemNumber, group,
-                                        nodeId, properties, null, labels, null );
+                                InputNode node = new InputNode().initialize( sourceDescription, itemNumber, itemNumber,
+                                        group, nodeId, null, null );
+                                node.properties().addAll( randomProperties( randoms, nodeId ) );
+                                node.labels().addAll( randoms.selection( TOKENS, 0, TOKENS.length, true ) );
                             }
                             finally
                             {

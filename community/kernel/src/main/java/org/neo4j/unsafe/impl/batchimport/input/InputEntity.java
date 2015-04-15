@@ -36,24 +36,28 @@ public abstract class InputEntity implements SourceTraceability
     public static final Object[] NO_PROPERTIES = new Object[0];
     public static final String[] NO_LABELS = new String[0];
 
-    private Object[] properties;
+    private final GrowableArray<Object> properties = new GrowableArray<>( Object.class, 10 );
     private Long firstPropertyId;
     private String sourceDescription;
     private long lineNumber;
     private long position;
 
+    /**
+     * Initializes everything except {@link #properties()} which is designed to be accessed and modified externally.
+     *
+     * @param properties alternating key/value (two items per property)
+     * @param numberOfProperties number of key/value pairs. Actual items use in properties array is 2*numberOfProperties
+     */
     protected void initialize( String sourceDescription, long sourceLineNumber, long sourcePosition,
-            Object[] properties, Long firstPropertyId )
+            Long firstPropertyId )
     {
-        assert properties.length % 2 == 0 : Arrays.toString( properties );
         this.sourceDescription = sourceDescription;
         this.lineNumber = sourceLineNumber;
         this.position = sourcePosition;
-        this.properties = properties;
         this.firstPropertyId = firstPropertyId;
     }
 
-    public Object[] properties()
+    public GrowableArray<Object> properties()
     {
         return properties;
     }
@@ -67,16 +71,14 @@ public abstract class InputEntity implements SourceTraceability
         assert keyValuePairs.length % 2 == 0 : Arrays.toString( keyValuePairs );
 
         // There were no properties before, just set these and be done
-        if ( properties == null || properties.length == 0 )
+        if ( properties.length() == 0 )
         {
-            setProperties( keyValuePairs );
+            properties.addAll( keyValuePairs );
             return;
         }
 
         // We need to look at existing properties
         // First make room for any new properties
-        int newLength = collectiveNumberOfKeys( properties, keyValuePairs ) * 2;
-        properties = newLength == properties.length ? properties : Arrays.copyOf( properties, newLength );
         for ( int i = 0; i < keyValuePairs.length; i++ )
         {
             Object key = keyValuePairs[i++];
@@ -85,51 +87,22 @@ public abstract class InputEntity implements SourceTraceability
         }
     }
 
-    private int collectiveNumberOfKeys( Object[] properties, Object[] otherProperties )
-    {
-        int collidingKeys = 0;
-        for ( int i = 0; i < properties.length; i += 2 )
-        {
-            Object key = properties[i];
-            for ( int j = 0; j < otherProperties.length; j += 2 )
-            {
-                Object otherKey = otherProperties[j];
-                if ( otherKey.equals( key ) )
-                {
-                    collidingKeys++;
-                    break;
-                }
-            }
-        }
-        return properties.length/2 + otherProperties.length/2 - collidingKeys;
-    }
-
     private void updateProperty( Object key, Object value, UpdateBehaviour behaviour )
     {
-        int free = 0;
-        for ( int i = 0; i < properties.length; i++ )
+        int length = properties.length();
+        for ( int i = 0; i < length; i++ )
         {
-            Object existingKey = properties[i++];
-            if ( existingKey == null )
-            {
-                free = i-1;
-                break;
-            }
+            Object existingKey = properties.get( i++ );
             if ( existingKey.equals( key ) )
-            {   // update
-                properties[i] = behaviour.merge( properties[i], value );
+            {   // Update
+                properties.set( i, behaviour.merge( properties.get( i ), value ) );
                 return;
             }
         }
 
         // Add
-        properties[free++] = key;
-        properties[free] = value;
-    }
-
-    public void setProperties( Object... keyValuePairs )
-    {
-        properties = keyValuePairs;
+        properties.add( key );
+        properties.add( value );
     }
 
     public boolean hasFirstPropertyId()
@@ -186,9 +159,9 @@ public abstract class InputEntity implements SourceTraceability
         {
             fields.add( Pair.of( "nextProp", firstPropertyId ) );
         }
-        else if ( properties != null && properties.length > 0 )
+        else if ( properties.length() > 0 )
         {
-            fields.add( Pair.of( "properties", Arrays.toString( properties ) ) );
+            fields.add( Pair.of( "properties", properties ) );
         }
     }
 }

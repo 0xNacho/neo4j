@@ -32,10 +32,11 @@ public class InputEntityTest
     public void shouldAddProperties() throws Exception
     {
         // GIVEN
-        InputNode node = new InputNode().initialize( "source", 1, 0, GLOBAL, "id", new Object[] {
+        InputNode node = new InputNode().initialize( "source", 1, 0, GLOBAL, "id", null, null );
+        node.properties().addAll( new Object[] {
                 "first", "Yeah",
                 "second", "Yo"
-        }, null, InputEntity.NO_LABELS, null );
+        } );
 
         // WHEN
         node.updateProperties( ADD, "third", "Yee" );
@@ -45,17 +46,18 @@ public class InputEntityTest
                 "first", "Yeah",
                 "second", "Yo",
                 "third", "Yee"
-        }, node.properties() );
+        }, node.properties().copyToArray() );
     }
 
     @Test
     public void shouldAddToExistingProperty() throws Exception
     {
         // GIVEN
-        InputNode node = new InputNode().initialize( "source", 1, 0, GLOBAL, "id", new Object[] {
+        InputNode node = new InputNode().initialize( "source", 1, 0, GLOBAL, "id", null, null );
+        node.properties().addAll( new Object[] {
                 "first", "Yeah",
                 "second", "Yo"
-        }, null, InputEntity.NO_LABELS, null );
+        } );
 
         // WHEN
         node.updateProperties( ADD, "second", "Ya" );
@@ -64,17 +66,18 @@ public class InputEntityTest
         assertArrayEquals( new Object[] {
                 "first", "Yeah",
                 "second", new String[] {"Yo", "Ya"},
-        }, node.properties() );
+        }, node.properties().copyToArray() );
     }
 
     @Test
     public void shouldAddToExistingArrayProperty() throws Exception
     {
         // GIVEN
-        InputNode node = new InputNode().initialize( "source", 1, 0, GLOBAL, "id", new Object[] {
+        InputNode node = new InputNode().initialize( "source", 1, 0, GLOBAL, "id", null, null );
+        node.properties().addAll( new Object[] {
                 "first", "Yeah",
                 "second", "Yo"
-        }, null, InputEntity.NO_LABELS, null );
+        } );
 
         // WHEN
         node.updateProperties( ADD, "second", "Ya" );
@@ -84,22 +87,24 @@ public class InputEntityTest
         assertArrayEquals( new Object[] {
                 "first", "Yeah",
                 "second", new String[] {"Yo", "Ya", "Yi"},
-        }, node.properties() );
+        }, node.properties().copyToArray() );
     }
 
     @Test
     public void shouldSetProperties() throws Exception
     {
         // GIVEN
-        InputNode node = new InputNode().initialize( "source", 1, 0, GLOBAL, "id", new Object[] {
+        InputNode node = new InputNode().initialize( "source", 1, 0, GLOBAL, "id", null, null );
+        node.properties().addAll( new Object[] {
                 "first", "Yeah",
                 "second", "Yo"
-        }, null, InputEntity.NO_LABELS, null );
+        } );
 
         // WHEN
-        node.setProperties( "third", "Yee" );
+        node.properties().clear();
+        node.properties().addAll( new Object[] {"third", "Yee"} );
 
         // THEN
-        assertArrayEquals( new Object[] { "third", "Yee" }, node.properties() );
+        assertArrayEquals( new Object[] { "third", "Yee" }, node.properties().copyToArray() );
     }
 }

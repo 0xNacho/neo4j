@@ -90,14 +90,28 @@ abstract class InputEntityReader<ENTITY extends InputEntity> extends Prefetching
         try
         {
             lineNumber++;
-            Object properties = readProperties();
-            if ( properties == null )
+            ENTITY entity = itemSource.get();
+            GrowableArray<Object> properties = entity.properties();
+            properties.clear();
+
+            // Read properties
+            short count = channel.getShort();
+            Long firstPropertyId = null;
+            switch ( count )
             {
-                return null;
+            // This is a special value denoting the end of the stream. This is done like this since
+            // properties are the first thing read for every entity.
+            case END_OF_ENTITIES: return null;
+            case HAS_FIRST_PROPERTY_ID: firstPropertyId = channel.getLong(); break;
+            default:
+                for ( int i = 0; i < count; i++ )
+                {
+                    properties.add( readToken() );
+                    properties.add( readValue() );
+                }
             }
 
-            ENTITY entity = itemSource.get();
-            readNextOrNull( properties, entity );
+            readNextOrNull( firstPropertyId, entity );
             return entity;
         }
         catch ( IOException e )
@@ -106,28 +120,7 @@ abstract class InputEntityReader<ENTITY extends InputEntity> extends Prefetching
         }
     }
 
-    protected abstract void readNextOrNull( Object properties, ENTITY into ) throws IOException;
-
-    private Object readProperties() throws IOException
-    {
-        short count = channel.getShort();
-        switch ( count )
-        {
-        // This is a special value denoting the end of the stream. This is done like this since
-        // properties are the first thing read for every entity.
-        case END_OF_ENTITIES: return null;
-        case HAS_FIRST_PROPERTY_ID: return channel.getLong();
-        case 0: return InputEntity.NO_PROPERTIES;
-        default:
-            Object[] properties = new Object[count*2];
-            for ( int i = 0; i < properties.length; i++ )
-            {
-                properties[i++] = readToken();
-                properties[i] = readValue();
-            }
-            return properties;
-        }
-    }
+    protected abstract void readNextOrNull( Long firstPropertyId, ENTITY into ) throws IOException;
 
     protected String readToken() throws IOException
     {

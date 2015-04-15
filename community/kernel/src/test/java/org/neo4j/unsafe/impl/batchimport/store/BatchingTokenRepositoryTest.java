@@ -22,6 +22,7 @@ package org.neo4j.unsafe.impl.batchimport.store;
 import org.junit.Test;
 
 import org.neo4j.kernel.impl.store.NodeLabelsField;
+import org.neo4j.unsafe.impl.batchimport.input.GrowableArray;
 import org.neo4j.unsafe.impl.batchimport.store.BatchingTokenRepository.BatchingLabelTokenRepository;
 
 import static org.junit.Assert.assertArrayEquals;
@@ -36,7 +37,7 @@ public class BatchingTokenRepositoryTest
         BatchingLabelTokenRepository repo = new BatchingLabelTokenRepository( null, 0 );
 
         // WHEN
-        long[] ids = repo.getOrCreateIds( new String[] {"One", "Two", "One"} );
+        long[] ids = repo.getOrCreateIds( labels( "One", "Two", "One" ) );
 
         // THEN
         assertTrue( NodeLabelsField.isSane( ids ) );
@@ -54,10 +55,17 @@ public class BatchingTokenRepositoryTest
         };
 
         // WHEN
-        long[] ids = repo.getOrCreateIds( new String[] {"Two", "One", "Three"} );
+        long[] ids = repo.getOrCreateIds( labels( "Two", "One", "Three" ) );
 
         // THEN
         assertArrayEquals( expected, ids );
         assertTrue( NodeLabelsField.isSane( ids ) );
+    }
+
+    private GrowableArray<String> labels( String... names )
+    {
+        GrowableArray<String> array = new GrowableArray<>( String.class, names.length );
+        array.addAll( names );
+        return array;
     }
 }

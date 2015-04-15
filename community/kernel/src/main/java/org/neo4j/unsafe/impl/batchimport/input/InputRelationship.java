@@ -38,14 +38,17 @@ public class InputRelationship extends InputEntity
     private Group startNodeGroup;
     private Group endNodeGroup;
 
+    /**
+     * Initializes everything except {@link #properties()} which is designed to be accessed and modified externally.
+     */
     public InputRelationship initialize(
             String sourceDescription, long lineNumber, long position,
-            Object[] properties, Long firstPropertyId,
+            Long firstPropertyId,
             Group startNodeGroups, Object startNode,
             Group endNodeGroups, Object endNode,
             String type, Integer typeId )
     {
-        super.initialize( sourceDescription, lineNumber, position, properties, firstPropertyId );
+        super.initialize( sourceDescription, lineNumber, position, firstPropertyId );
         this.startNodeGroup = startNodeGroups;
         this.startNode = startNode;
         this.endNodeGroup = endNodeGroups;

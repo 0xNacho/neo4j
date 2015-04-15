@@ -83,7 +83,7 @@ public class InputEntityDeserializer<ENTITY extends InputEntity>
             }
 
             // When we have everything, create an input entity out of it
-            ENTITY entity = deserialization.materialize( itemSource.get() );
+            ENTITY entity = deserialization.materialize();
 
             // If there are more values on this line, ignore them
             // TODO perhaps log about them?
@@ -100,14 +100,11 @@ public class InputEntityDeserializer<ENTITY extends InputEntity>
         {
             throw new InputException( "Unable to read more data from input stream", e );
         }
-        finally
-        {
-            deserialization.clear();
-        }
     }
 
     private boolean deserializeNextFromSource() throws IOException
     {
+        deserialization.prepare( itemSource.get() );
         Header.Entry[] entries = header.entries();
         int fieldIndex = 0;
         try
