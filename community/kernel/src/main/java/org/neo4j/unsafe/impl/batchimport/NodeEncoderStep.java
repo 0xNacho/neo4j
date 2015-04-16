@@ -21,6 +21,7 @@ package org.neo4j.unsafe.impl.batchimport;
 
 import java.util.Collections;
 
+import org.neo4j.function.Factory;
 import org.neo4j.kernel.impl.store.InlineNodeLabels;
 import org.neo4j.kernel.impl.store.NodeStore;
 import org.neo4j.kernel.impl.store.record.DynamicRecord;
@@ -46,6 +47,14 @@ public final class NodeEncoderStep extends ProcessorStep<Batch<InputNode,NodeRec
     private final IdGenerator idGenerator;
     private final NodeStore nodeStore;
     private final BatchingLabelTokenRepository labelHolder;
+    private final RecycleStation<NodeRecord> nodeRecords = new RecycleStation<>( new Factory<NodeRecord>()
+    {
+        @Override
+        public NodeRecord newInstance()
+        {
+            return new NodeRecord( -1 );
+        }
+    } );
 
     public NodeEncoderStep( StageControl control, Configuration config,
             IdMapper idMapper, IdGenerator idGenerator,
@@ -64,7 +73,7 @@ public final class NodeEncoderStep extends ProcessorStep<Batch<InputNode,NodeRec
     protected void process( Batch<InputNode,NodeRecord> batch, BatchSender<Batch<InputNode,NodeRecord>> sender )
     {
         InputNode[] input = batch.input;
-        batch.records = new NodeRecord[input.length];
+        batch.records = nodeRecords.getBatch( input.length );
         for ( int i = 0; i < input.length; i++ )
         {
             InputNode batchNode = input[i];
@@ -75,21 +84,33 @@ public final class NodeEncoderStep extends ProcessorStep<Batch<InputNode,NodeRec
                 // later on, that's all. Anonymous nodes have null id.
                 idMapper.put( batchNode.id(), nodeId, batchNode.group() );
             }
-            NodeRecord nodeRecord = batch.records[i] = new NodeRecord( nodeId, false,
-                    NO_NEXT_RELATIONSHIP.intValue(), NO_NEXT_PROPERTY.intValue() );
-            nodeRecord.setInUse( true );
+
+            NodeRecord record = batch.records[i];
+            record.setId( nodeId );
+            record.setDense( false );
+            record.setNextRel( NO_NEXT_RELATIONSHIP.intValue() );
+            record.setNextProp( NO_NEXT_PROPERTY.intValue() );
+            record.setInUse( true );
 
             // Labels
             if ( batchNode.hasLabelField() )
             {
-                nodeRecord.setLabelField( batchNode.labelField(), Collections.<DynamicRecord>emptyList() );
+                record.setLabelField( batchNode.labelField(), Collections.<DynamicRecord>emptyList() );
             }
             else
             {
                 long[] labels = labelHolder.getOrCreateIds( batchNode.labels() );
-                InlineNodeLabels.putSorted( nodeRecord, labels, null, nodeStore.getDynamicLabelStore() );
+                InlineNodeLabels.putSorted( record, labels, null, nodeStore.getDynamicLabelStore() );
             }
         }
         sender.send( batch );
+    }
+
+    @Override
+    public void recycled( Batch<InputNode,NodeRecord> batch )
+    {
+        // Recycle the NodeRecord[] from the batch, but send it on so that more can be recycled from it
+        nodeRecords.recycled( batch.records );
+        super.recycled( batch );
     }
 }

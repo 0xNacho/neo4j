@@ -19,6 +19,8 @@
  */
 package org.neo4j.unsafe.impl.batchimport;
 
+import java.lang.reflect.Array;
+import java.util.Arrays;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Supplier;
@@ -26,6 +28,9 @@ import java.util.function.Supplier;
 import org.neo4j.function.Factory;
 import org.neo4j.unsafe.impl.batchimport.staging.RecycleAware;
 
+/**
+ * An advise is to use either {@link #get()} OR {@link #getBatch(int)}.
+ */
 public class RecycleStation<T> implements RecycleAware<T[]>, Supplier<T>
 {
     private final Factory<T> factory;
@@ -57,5 +62,33 @@ public class RecycleStation<T> implements RecycleAware<T[]>, Supplier<T>
             return current[cursor++];
         }
         return factory.newInstance();
+    }
+
+    @SuppressWarnings( "unchecked" )
+    public T[] getBatch( int size )
+    {
+        T[] batch = batches.poll();
+        if ( batch == null )
+        {
+            T first = factory.newInstance();
+            batch = (T[]) Array.newInstance( first.getClass(), size );
+            batch[0] = first;
+            for ( int i = 1; i < batch.length; i++ )
+            {
+                batch[i] = factory.newInstance();
+            }
+            return batch;
+        }
+
+        if ( batch.length == size )
+        {
+            return batch;
+        }
+        else if ( size < batch.length )
+        {
+            return Arrays.copyOf( batch, size );
+        }
+        throw new IllegalArgumentException( "Requested a batch of size " + size +
+                ", but the batches handled in here are of size " + batch.length );
     }
 }
