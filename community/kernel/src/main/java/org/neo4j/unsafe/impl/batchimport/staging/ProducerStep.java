@@ -66,10 +66,9 @@ public abstract class ProducerStep<OUT> extends AbstractStep<Void,OUT>
     /**
      * Forms batches out of some sort of data stream and sends these batches downstream.
      */
-    @SuppressWarnings( "unchecked" )
     protected void process()
     {
-        Object batch = null;
+        OUT batch = null;
         long startTime = currentTimeMillis();
         while ( (batch = nextBatchOrNull( doneBatches.get(), batchSize )) != null )
         {
@@ -85,5 +84,5 @@ public abstract class ProducerStep<OUT> extends AbstractStep<Void,OUT>
      * @param batchSize number of items to grab from its data stream (whatever a subclass defines as a data stream).
      * @return the batch object to send downstream, or null if the data stream came to an end.
      */
-    protected abstract Object nextBatchOrNull( long ticket, int batchSize );
+    protected abstract OUT nextBatchOrNull( long ticket, int batchSize );
 }

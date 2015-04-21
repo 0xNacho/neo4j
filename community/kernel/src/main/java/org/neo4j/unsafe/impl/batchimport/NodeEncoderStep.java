@@ -21,7 +21,6 @@ package org.neo4j.unsafe.impl.batchimport;
 
 import java.util.Collections;
 
-import org.neo4j.function.Factory;
 import org.neo4j.kernel.impl.store.InlineNodeLabels;
 import org.neo4j.kernel.impl.store.NodeStore;
 import org.neo4j.kernel.impl.store.record.DynamicRecord;
@@ -29,6 +28,7 @@ import org.neo4j.kernel.impl.store.record.NodeRecord;
 import org.neo4j.unsafe.impl.batchimport.cache.idmapping.IdGenerator;
 import org.neo4j.unsafe.impl.batchimport.cache.idmapping.IdMapper;
 import org.neo4j.unsafe.impl.batchimport.input.InputNode;
+import org.neo4j.unsafe.impl.batchimport.recycling.RecycleStation;
 import org.neo4j.unsafe.impl.batchimport.staging.BatchSender;
 import org.neo4j.unsafe.impl.batchimport.staging.ProcessorStep;
 import org.neo4j.unsafe.impl.batchimport.staging.StageControl;
@@ -37,6 +37,7 @@ import org.neo4j.unsafe.impl.batchimport.store.BatchingTokenRepository.BatchingL
 
 import static org.neo4j.kernel.impl.store.record.Record.NO_NEXT_PROPERTY;
 import static org.neo4j.kernel.impl.store.record.Record.NO_NEXT_RELATIONSHIP;
+import static org.neo4j.unsafe.impl.batchimport.recycling.Recycling.NODE_RECORDS;
 
 /**
  * Creates {@link NodeRecord nodes} with labels from input.
@@ -47,14 +48,7 @@ public final class NodeEncoderStep extends ProcessorStep<Batch<InputNode,NodeRec
     private final IdGenerator idGenerator;
     private final NodeStore nodeStore;
     private final BatchingLabelTokenRepository labelHolder;
-    private final RecycleStation<NodeRecord> nodeRecords = new RecycleStation<>( new Factory<NodeRecord>()
-    {
-        @Override
-        public NodeRecord newInstance()
-        {
-            return new NodeRecord( -1 );
-        }
-    } );
+    private final RecycleStation<NodeRecord> nodeRecords = new RecycleStation<>( NODE_RECORDS );
 
     public NodeEncoderStep( StageControl control, Configuration config,
             IdMapper idMapper, IdGenerator idGenerator,

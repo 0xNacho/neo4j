@@ -43,8 +43,8 @@ public abstract class AbstractStep<IN,OUT> implements Step<IN,OUT>
 {
     private final StageControl control;
     private volatile String name;
-    @SuppressWarnings( "rawtypes" )
-    protected volatile Step downstream, upstream;
+    protected volatile Step<OUT,?> downstream;
+    protected volatile Step<?,IN> upstream;
     private volatile boolean endOfUpstream;
     protected volatile Throwable panic;
     private volatile boolean completed;
@@ -296,6 +296,7 @@ public abstract class AbstractStep<IN,OUT> implements Step<IN,OUT>
     /**
      * Called by a downstream step when something is to be recycled.
      */
+    @SuppressWarnings( { "unchecked", "rawtypes" } )
     @Override
     public void recycled( OUT fromDownstream )
     {
@@ -303,7 +304,7 @@ public abstract class AbstractStep<IN,OUT> implements Step<IN,OUT>
         // should be grateful for the opportunity to take care of and reuse the objects coming in here
         if ( upstream != null )
         {
-            upstream.recycled( fromDownstream );
+            ((Step)upstream).recycled( fromDownstream );
         }
     }
 

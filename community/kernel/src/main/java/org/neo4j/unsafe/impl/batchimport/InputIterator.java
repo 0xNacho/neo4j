@@ -25,7 +25,7 @@ import org.neo4j.csv.reader.Readables;
 import org.neo4j.csv.reader.SourceTraceability;
 import org.neo4j.graphdb.ResourceIterator;
 import org.neo4j.unsafe.impl.batchimport.input.Input;
-import org.neo4j.unsafe.impl.batchimport.staging.RecycleAware;
+import org.neo4j.unsafe.impl.batchimport.recycling.RecycleAware;
 
 /**
  * A {@link ResourceIterator} with added methods suitable for {@link Input} into a {@link BatchImporter}.

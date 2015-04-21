@@ -22,20 +22,24 @@ package org.neo4j.unsafe.impl.batchimport;
 import org.neo4j.kernel.impl.store.RelationshipStore;
 import org.neo4j.kernel.impl.store.record.RecordLoad;
 import org.neo4j.kernel.impl.store.record.RelationshipRecord;
+import org.neo4j.unsafe.impl.batchimport.recycling.RecycleStation;
 import org.neo4j.unsafe.impl.batchimport.staging.IoProducerStep;
 import org.neo4j.unsafe.impl.batchimport.staging.StageControl;
 
 import static java.lang.Math.min;
 
+import static org.neo4j.unsafe.impl.batchimport.recycling.Recycling.RELATIONSHIP_RECORDS;
+
 /**
  * Reads from {@link RelationshipStore} backwards and produces batches of {@link RelationshipRecord} for others
  * to process.
  */
-public class ReadRelationshipRecordsBackwardsStep extends IoProducerStep
+public class ReadRelationshipRecordsBackwardsStep extends IoProducerStep<RelationshipRecord[]>
 {
     private final RelationshipStore store;
     private final long highId;
     private long id;
+    private final RecycleStation<RelationshipRecord> records = new RecycleStation<>( RELATIONSHIP_RECORDS );
 
     public ReadRelationshipRecordsBackwardsStep( StageControl control, Configuration config,
             RelationshipStore store )
@@ -46,13 +50,12 @@ public class ReadRelationshipRecordsBackwardsStep extends IoProducerStep
     }
 
     @Override
-    protected Object nextBatchOrNull( long ticket, int batchSize )
+    protected RelationshipRecord[] nextBatchOrNull( long ticket, int batchSize )
     {
         int size = (int) min( batchSize, id );
-        RelationshipRecord[] batch = new RelationshipRecord[size];
+        RelationshipRecord[] batch = records.getBatch( size );
         for ( int i = 0; i < size; i++ )
         {
-            batch[i] = new RelationshipRecord( --id );
             store.fillRecord( batch[i].getId(), batch[i], RecordLoad.CHECK );
         }
         return size > 0 ? batch : null;
@@ -62,5 +65,11 @@ public class ReadRelationshipRecordsBackwardsStep extends IoProducerStep
     protected long position()
     {
         return (highId-id) * RelationshipStore.RECORD_SIZE;
+    }
+
+    @Override
+    public void recycled( RelationshipRecord[] fromDownstream )
+    {
+        records.recycled( fromDownstream );
     }
 }

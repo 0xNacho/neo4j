@@ -62,7 +62,7 @@ public class UpdateRecordsStep<RECORD extends AbstractBaseRecord>
 
     @SuppressWarnings( "unchecked" )
     @Override
-    protected void process( RECORD[] batch, BatchSender sender )
+    protected void process( RECORD[] batch, BatchSender<Void> sender )
     {
         for ( RECORD record : batch )
         {
@@ -74,6 +74,7 @@ public class UpdateRecordsStep<RECORD extends AbstractBaseRecord>
             store.updateRecord( record );
         }
         recordsUpdated += batch.length;
+        doRecycle( batch );
     }
 
     @Override

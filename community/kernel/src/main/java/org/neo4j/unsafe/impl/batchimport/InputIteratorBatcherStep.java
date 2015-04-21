@@ -19,38 +19,61 @@
  */
 package org.neo4j.unsafe.impl.batchimport;
 
-import org.neo4j.unsafe.impl.batchimport.staging.IteratorBatcherStep;
-import org.neo4j.unsafe.impl.batchimport.staging.RecycleAware;
+import java.lang.reflect.Array;
+import java.util.Arrays;
+
+import org.neo4j.unsafe.impl.batchimport.input.InputEntity;
+import org.neo4j.unsafe.impl.batchimport.recycling.RecycleAware;
+import org.neo4j.unsafe.impl.batchimport.staging.IoProducerStep;
 import org.neo4j.unsafe.impl.batchimport.staging.StageControl;
 
 /**
- * {@link IteratorBatcherStep} that is tailored to the {@link BatchImporter} as it produces {@link Batch}
- * objects.
+ * Takes an {@link InputIterator} and chops it up into {@link Batch} instances.
  */
-public class InputIteratorBatcherStep<T> extends IteratorBatcherStep<T>
+public class InputIteratorBatcherStep<INPUT extends InputEntity> extends IoProducerStep<Batch<INPUT,?>>
 {
-    private final RecycleAware<T[]> recycler;
+    private final InputIterator<INPUT> data;
+    private final Class<INPUT> itemClass;
+    private final RecycleAware<INPUT[]> recycler;
 
     public InputIteratorBatcherStep( StageControl control, Configuration config,
-            InputIterator<T> data, Class<T> itemClass )
+            InputIterator<INPUT> data, Class<INPUT> itemClass )
     {
-        super( control, config, data, itemClass );
+        super( control, config );
+        this.data = data;
+        this.itemClass = itemClass;
         this.recycler = data;
     }
 
-    @SuppressWarnings( { "unchecked", "rawtypes" } )
     @Override
-    protected Object nextBatchOrNull( long ticket, int batchSize )
+    protected Batch<INPUT,?> nextBatchOrNull( long ticket, int batchSize )
     {
-        Object batch = super.nextBatchOrNull( ticket, batchSize );
-        return batch != null ? new Batch( (Object[]) batch ) : null;
+        if ( !data.hasNext() )
+        {
+            return null;
+        }
+
+        @SuppressWarnings( "unchecked" )
+        INPUT[] batch = (INPUT[]) Array.newInstance( itemClass, batchSize );
+        int i = 0;
+        for ( ; i < batchSize && data.hasNext(); i++ )
+        {
+            batch[i] = data.next();
+        }
+        // shrink
+        batch = i == batchSize ? batch : Arrays.copyOf( batch, i );
+        return new Batch<>( batch );
     }
 
-    @SuppressWarnings( { "rawtypes", "unchecked" } )
     @Override
-    public void recycled( T fromDownstream )
+    protected long position()
     {
-        Batch batch = (Batch)fromDownstream;
-        recycler.recycled( (T[]) batch.input );
+        return data.position();
+    }
+
+    @Override
+    public void recycled( Batch<INPUT,?> fromDownstream )
+    {
+        recycler.recycled( fromDownstream.input );
     }
 }

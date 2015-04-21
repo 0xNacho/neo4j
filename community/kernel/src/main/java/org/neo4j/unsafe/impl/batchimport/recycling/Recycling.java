@@ -17,9 +17,29 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.neo4j.unsafe.impl.batchimport.staging;
+package org.neo4j.unsafe.impl.batchimport.recycling;
 
-public interface RecycleAware<T>
+import org.neo4j.function.Factory;
+import org.neo4j.kernel.impl.store.record.NodeRecord;
+import org.neo4j.kernel.impl.store.record.RelationshipRecord;
+
+public class Recycling
 {
-    void recycled( T object );
+    public static final Factory<NodeRecord> NODE_RECORDS = new Factory<NodeRecord>()
+    {
+        @Override
+        public NodeRecord newInstance()
+        {
+            return new NodeRecord( -1 );
+        }
+    };
+
+    public static final Factory<RelationshipRecord> RELATIONSHIP_RECORDS = new Factory<RelationshipRecord>()
+    {
+        @Override
+        public RelationshipRecord newInstance()
+        {
+            return new RelationshipRecord( -1 );
+        }
+    };
 }

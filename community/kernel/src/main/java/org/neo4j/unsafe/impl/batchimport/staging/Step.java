@@ -20,6 +20,7 @@
 package org.neo4j.unsafe.impl.batchimport.staging;
 
 import org.neo4j.unsafe.impl.batchimport.Parallelizable;
+import org.neo4j.unsafe.impl.batchimport.recycling.RecycleAware;
 import org.neo4j.unsafe.impl.batchimport.stats.StepStats;
 
 /**

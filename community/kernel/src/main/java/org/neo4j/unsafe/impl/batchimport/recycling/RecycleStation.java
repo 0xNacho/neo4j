@@ -17,7 +17,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.neo4j.unsafe.impl.batchimport;
+package org.neo4j.unsafe.impl.batchimport.recycling;
 
 import java.lang.reflect.Array;
 import java.util.Arrays;
@@ -26,7 +26,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Supplier;
 
 import org.neo4j.function.Factory;
-import org.neo4j.unsafe.impl.batchimport.staging.RecycleAware;
 
 /**
  * An advise is to use either {@link #get()} OR {@link #getBatch(int)}.

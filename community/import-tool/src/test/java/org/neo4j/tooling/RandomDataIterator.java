@@ -27,11 +27,11 @@ import org.neo4j.function.Function;
 import org.neo4j.helpers.collection.PrefetchingIterator;
 import org.neo4j.test.Randoms;
 import org.neo4j.unsafe.impl.batchimport.InputIterator;
-import org.neo4j.unsafe.impl.batchimport.RecycleStation;
 import org.neo4j.unsafe.impl.batchimport.input.InputEntity;
 import org.neo4j.unsafe.impl.batchimport.input.csv.Deserialization;
 import org.neo4j.unsafe.impl.batchimport.input.csv.Header;
 import org.neo4j.unsafe.impl.batchimport.input.csv.Header.Entry;
+import org.neo4j.unsafe.impl.batchimport.recycling.RecycleStation;
 
 import static java.lang.Math.abs;
 
