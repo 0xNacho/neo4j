@@ -71,4 +71,9 @@ public class ExecutionMonitors
     {
         return INVISIBLE;
     }
+
+    public static ExecutionMonitor multiple( ExecutionMonitor... monitors )
+    {
+        return new MultiExecutionMonitor( monitors );
+    }
 }

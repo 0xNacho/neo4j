@@ -604,6 +604,7 @@ public class ParallelBatchImporterTest
                                         group, nodeId, null, null );
                                 node.properties().addAll( randomProperties( randoms, nodeId ) );
                                 node.labels().addAll( randoms.selection( TOKENS, 0, TOKENS.length, true ) );
+                                return node;
                             }
                             finally
                             {
