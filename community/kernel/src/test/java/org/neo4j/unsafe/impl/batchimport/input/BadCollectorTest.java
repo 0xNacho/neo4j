@@ -33,7 +33,9 @@ import org.neo4j.io.fs.FileSystemAbstraction;
 import static junit.framework.TestCase.fail;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+
 import static org.neo4j.unsafe.impl.batchimport.input.BadCollectorTest.InputRelationshipBuilder.inputRelationship;
+import static org.neo4j.unsafe.impl.batchimport.input.Group.GLOBAL;
 
 public class BadCollectorTest
 {
@@ -191,17 +193,14 @@ public class BadCollectorTest
 
     static class InputRelationshipBuilder
     {
-
-        private String sourceDescription = "foo";
-        private int lineNumber = 1;
-        ;
-        private int position = 1;
-        private Object[] properties = new Object[]{};
-        private long firstPropertyId = -1l;
-        private Object startNode = null;
-        private Object endNode = null;
-        private String friend = "FRIEND";
-        private int typeId = 1;
+        private final String sourceDescription = "foo";
+        private final int lineNumber = 1;
+        private final int position = 1;
+        private final long firstPropertyId = -1l;
+        private final Object startNode = null;
+        private final Object endNode = null;
+        private final String friend = "FRIEND";
+        private final int typeId = 1;
 
         public static InputRelationshipBuilder inputRelationship()
         {
@@ -210,8 +209,8 @@ public class BadCollectorTest
 
         InputRelationship build()
         {
-            return new InputRelationship( sourceDescription, lineNumber, position,
-                    properties, firstPropertyId, startNode, endNode, friend, typeId );
+            return new InputRelationship().initialize( sourceDescription, lineNumber, position,
+                    firstPropertyId, GLOBAL, startNode, GLOBAL, endNode, friend, typeId );
         }
     }
 
