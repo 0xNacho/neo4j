@@ -33,7 +33,7 @@ import static java.util.Arrays.copyOf;
 /**
  * Builds {@link InputNode} from CSV data.
  */
-public class InputNodeDeserialization extends InputEntityDeserialization<InputNode>
+public class InputNodeBuilder extends InputEntityBuilder<InputNode>
 {
     private final Header header;
     private final Groups groups;
@@ -44,7 +44,7 @@ public class InputNodeDeserialization extends InputEntityDeserialization<InputNo
     private String[] labels = new String[10];
     private int labelsCursor;
 
-    public InputNodeDeserialization( SourceTraceability source, Header header, Groups groups, boolean idsAreExternal )
+    public InputNodeBuilder( SourceTraceability source, Header header, Groups groups, boolean idsAreExternal )
     {
         super( source );
         this.header = header;

@@ -27,7 +27,7 @@ import org.neo4j.helpers.collection.PrefetchingIterator;
 import org.neo4j.test.Randoms;
 import org.neo4j.unsafe.impl.batchimport.InputIterator;
 import org.neo4j.unsafe.impl.batchimport.input.InputEntity;
-import org.neo4j.unsafe.impl.batchimport.input.csv.Deserialization;
+import org.neo4j.unsafe.impl.batchimport.input.csv.Builder;
 import org.neo4j.unsafe.impl.batchimport.input.csv.Header;
 import org.neo4j.unsafe.impl.batchimport.input.csv.Header.Entry;
 
@@ -42,7 +42,7 @@ public class RandomDataIterator<T> extends PrefetchingIterator<T> implements Inp
     private final long limit;
     private final Random random;
     private final Randoms randoms;
-    private final Deserialization<T> deserialization;
+    private final Builder<T> deserialization;
     private final long nodeCount;
     private final Distribution<String> labels;
     private final Distribution<String> relationshipTypes;
@@ -52,7 +52,7 @@ public class RandomDataIterator<T> extends PrefetchingIterator<T> implements Inp
     private long position;
 
     public RandomDataIterator( Header header, long limit, Random random,
-            Function<SourceTraceability,Deserialization<T>> deserialization, long nodeCount,
+            Function<SourceTraceability,Builder<T>> deserialization, long nodeCount,
             int labelCount, int relationshipTypeCount )
     {
         this.header = header;

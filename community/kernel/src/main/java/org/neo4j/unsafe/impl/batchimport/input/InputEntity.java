@@ -36,7 +36,7 @@ public abstract class InputEntity implements SourceTraceability
     public static final Object[] NO_PROPERTIES = new Object[0];
     public static final String[] NO_LABELS = new String[0];
 
-    private Object[] properties;
+    private final Object[] properties;
     private final Long firstPropertyId;
     private final String sourceDescription;
     private final long lineNumber;
@@ -58,80 +58,6 @@ public abstract class InputEntity implements SourceTraceability
     public Object[] properties()
     {
         return properties;
-    }
-
-    /**
-     * Adds properties to existing properties in this entity. Properties that exist
-     * @param keyValuePairs
-     */
-    public void updateProperties( UpdateBehaviour behaviour, Object... keyValuePairs )
-    {
-        assert keyValuePairs.length % 2 == 0 : Arrays.toString( keyValuePairs );
-
-        // There were no properties before, just set these and be done
-        if ( properties == null || properties.length == 0 )
-        {
-            setProperties( keyValuePairs );
-            return;
-        }
-
-        // We need to look at existing properties
-        // First make room for any new properties
-        int newLength = collectiveNumberOfKeys( properties, keyValuePairs ) * 2;
-        properties = newLength == properties.length ? properties : Arrays.copyOf( properties, newLength );
-        for ( int i = 0; i < keyValuePairs.length; i++ )
-        {
-            Object key = keyValuePairs[i++];
-            Object value = keyValuePairs[i];
-            updateProperty( key, value, behaviour );
-        }
-    }
-
-    private int collectiveNumberOfKeys( Object[] properties, Object[] otherProperties )
-    {
-        int collidingKeys = 0;
-        for ( int i = 0; i < properties.length; i += 2 )
-        {
-            Object key = properties[i];
-            for ( int j = 0; j < otherProperties.length; j += 2 )
-            {
-                Object otherKey = otherProperties[j];
-                if ( otherKey.equals( key ) )
-                {
-                    collidingKeys++;
-                    break;
-                }
-            }
-        }
-        return properties.length/2 + otherProperties.length/2 - collidingKeys;
-    }
-
-    private void updateProperty( Object key, Object value, UpdateBehaviour behaviour )
-    {
-        int free = 0;
-        for ( int i = 0; i < properties.length; i++ )
-        {
-            Object existingKey = properties[i++];
-            if ( existingKey == null )
-            {
-                free = i-1;
-                break;
-            }
-            if ( existingKey.equals( key ) )
-            {   // update
-                properties[i] = behaviour.merge( properties[i], value );
-                return;
-            }
-        }
-
-        // Add
-        properties[free++] = key;
-        properties[free] = value;
-    }
-
-    public void setProperties( Object... keyValuePairs )
-    {
-        properties = keyValuePairs;
     }
 
     public boolean hasFirstPropertyId()

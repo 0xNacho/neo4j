@@ -24,14 +24,14 @@ import java.lang.reflect.Array;
 import org.neo4j.csv.reader.SourceTraceability;
 import org.neo4j.function.Function;
 import org.neo4j.unsafe.impl.batchimport.input.csv.Configuration;
-import org.neo4j.unsafe.impl.batchimport.input.csv.Deserialization;
+import org.neo4j.unsafe.impl.batchimport.input.csv.Builder;
 import org.neo4j.unsafe.impl.batchimport.input.csv.Header.Entry;
 
 /**
- * {@link Deserialization} that writes the values to a {@link StringBuilder}, suitable for piping the
+ * {@link Builder} that writes the values to a {@link StringBuilder}, suitable for piping the
  * data straight down to a .csv file.
  */
-class StringDeserialization implements Deserialization<String>
+class StringDeserialization implements Builder<String>
 {
     private final StringBuilder builder = new StringBuilder();
     private final Configuration config;
@@ -125,12 +125,12 @@ class StringDeserialization implements Deserialization<String>
         builder.delete( 0, builder.length() );
     }
 
-    public static Function<SourceTraceability,Deserialization<String>> factory( final Configuration config )
+    public static Function<SourceTraceability,Builder<String>> factory( final Configuration config )
     {
-        return new Function<SourceTraceability,Deserialization<String>>()
+        return new Function<SourceTraceability,Builder<String>>()
         {
             @Override
-            public Deserialization<String> apply( SourceTraceability from ) throws RuntimeException
+            public Builder<String> apply( SourceTraceability from ) throws RuntimeException
             {
                 return new StringDeserialization( config );
             }

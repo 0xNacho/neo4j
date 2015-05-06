@@ -35,10 +35,10 @@ import org.neo4j.unsafe.impl.batchimport.input.Input;
 import org.neo4j.unsafe.impl.batchimport.input.InputNode;
 import org.neo4j.unsafe.impl.batchimport.input.InputRelationship;
 import org.neo4j.unsafe.impl.batchimport.input.csv.Configuration;
-import org.neo4j.unsafe.impl.batchimport.input.csv.Deserialization;
+import org.neo4j.unsafe.impl.batchimport.input.csv.Builder;
 import org.neo4j.unsafe.impl.batchimport.input.csv.Header;
 import org.neo4j.unsafe.impl.batchimport.input.csv.IdType;
-import org.neo4j.unsafe.impl.batchimport.input.csv.InputNodeDeserialization;
+import org.neo4j.unsafe.impl.batchimport.input.csv.InputNodeBuilder;
 import org.neo4j.unsafe.impl.batchimport.input.csv.InputRelationshipDeserialization;
 
 /**
@@ -53,18 +53,18 @@ public class CsvDataGeneratorInput extends CsvDataGenerator<InputNode,InputRelat
             int numberOfLabels, int numberOfRelationshipTypes )
     {
         super( nodeHeader, relationshipHeader, config, nodes, relationships,
-                new Function<SourceTraceability,Deserialization<InputNode>>()
+                new Function<SourceTraceability,Builder<InputNode>>()
                 {
                     @Override
-                    public Deserialization<InputNode> apply( SourceTraceability source ) throws RuntimeException
+                    public Builder<InputNode> apply( SourceTraceability source ) throws RuntimeException
                     {
-                        return new InputNodeDeserialization( source, nodeHeader, groups, idType.idsAreExternal() );
+                        return new InputNodeBuilder( source, nodeHeader, groups, idType.idsAreExternal() );
                     }
                 },
-                new Function<SourceTraceability,Deserialization<InputRelationship>>()
+                new Function<SourceTraceability,Builder<InputRelationship>>()
                 {
                     @Override
-                    public Deserialization<InputRelationship> apply( SourceTraceability from ) throws RuntimeException
+                    public Builder<InputRelationship> apply( SourceTraceability from ) throws RuntimeException
                     {
                         return new InputRelationshipDeserialization( from, relationshipHeader, groups );
                     }

@@ -86,7 +86,7 @@ abstract class InputGroupsDeserializer<ENTITY extends InputEntity>
     }
 
     protected abstract InputEntityDeserializer<ENTITY> entityDeserializer( CharSeeker dataStream, Header dataHeader,
-            Function<ENTITY,ENTITY> decorator );
+            Function<Builder<ENTITY>,Builder<ENTITY>> decorator );
 
     @Override
     public void close()

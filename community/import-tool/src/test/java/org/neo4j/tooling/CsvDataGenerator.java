@@ -34,7 +34,7 @@ import org.neo4j.helpers.Args;
 import org.neo4j.helpers.progress.ProgressListener;
 import org.neo4j.unsafe.impl.batchimport.InputIterator;
 import org.neo4j.unsafe.impl.batchimport.input.csv.Configuration;
-import org.neo4j.unsafe.impl.batchimport.input.csv.Deserialization;
+import org.neo4j.unsafe.impl.batchimport.input.csv.Builder;
 import org.neo4j.unsafe.impl.batchimport.input.csv.Header;
 import org.neo4j.unsafe.impl.batchimport.input.csv.Header.Entry;
 import org.neo4j.unsafe.impl.batchimport.input.csv.IdType;
@@ -56,15 +56,15 @@ public class CsvDataGenerator<NODEFORMAT,RELFORMAT>
     private final Configuration config;
     private final long nodes;
     private final long relationships;
-    private final Function<SourceTraceability,Deserialization<NODEFORMAT>> nodeDeserialization;
-    private final Function<SourceTraceability,Deserialization<RELFORMAT>> relDeserialization;
+    private final Function<SourceTraceability,Builder<NODEFORMAT>> nodeDeserialization;
+    private final Function<SourceTraceability,Builder<RELFORMAT>> relDeserialization;
     private final int numberOfLabels;
     private final int numberOfRelationshipTypes;
 
     public CsvDataGenerator( Header nodeHeader, Header relationshipHeader, Configuration config,
             long nodes, long relationships,
-            Function<SourceTraceability,Deserialization<NODEFORMAT>> nodeDeserialization,
-            Function<SourceTraceability,Deserialization<RELFORMAT>> relDeserialization,
+            Function<SourceTraceability,Builder<NODEFORMAT>> nodeDeserialization,
+            Function<SourceTraceability,Builder<RELFORMAT>> relDeserialization,
             int numberOfLabels, int numberOfRelationshipTypes )
     {
         this.nodeHeader = nodeHeader;
@@ -148,7 +148,7 @@ public class CsvDataGenerator<NODEFORMAT,RELFORMAT>
         Header relationshipHeader = bareboneRelationshipHeader( idType, extractors );
 
         ProgressListener progress = textual( System.out ).singlePart( "Generating", nodeCount + relationshipCount );
-        Function<SourceTraceability,Deserialization<String>> deserialization = StringDeserialization.factory( config );
+        Function<SourceTraceability,Builder<String>> deserialization = StringDeserialization.factory( config );
         CsvDataGenerator<String,String> generator = new CsvDataGenerator<>(
                 nodeHeader, relationshipHeader,
                 config, nodeCount, relationshipCount,

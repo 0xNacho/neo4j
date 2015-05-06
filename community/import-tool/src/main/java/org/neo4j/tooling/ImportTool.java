@@ -53,6 +53,7 @@ import org.neo4j.unsafe.impl.batchimport.cache.idmapping.string.DuplicateInputId
 import org.neo4j.unsafe.impl.batchimport.input.Input;
 import org.neo4j.unsafe.impl.batchimport.input.InputNode;
 import org.neo4j.unsafe.impl.batchimport.input.InputRelationship;
+import org.neo4j.unsafe.impl.batchimport.input.csv.Builder;
 import org.neo4j.unsafe.impl.batchimport.input.csv.Configuration;
 import org.neo4j.unsafe.impl.batchimport.input.csv.CsvInput;
 import org.neo4j.unsafe.impl.batchimport.input.csv.DataFactory;
@@ -61,6 +62,7 @@ import org.neo4j.unsafe.impl.batchimport.staging.ExecutionMonitors;
 
 import static java.lang.System.out;
 import static java.nio.charset.Charset.defaultCharset;
+
 import static org.neo4j.graphdb.factory.GraphDatabaseSettings.store_dir;
 import static org.neo4j.helpers.Exceptions.launderedException;
 import static org.neo4j.helpers.collection.MapUtil.stringMap;
@@ -473,7 +475,7 @@ public class ImportTool
             @Override
             protected DataFactory<InputNode> underlyingObjectToObject( Option<File[]> input )
             {
-                Function<InputNode,InputNode> decorator = input.metadata() != null
+                Function<Builder<InputNode>,Builder<InputNode>> decorator = input.metadata() != null
                         ? additiveLabels( input.metadata().split( ":" ) )
                         : NO_NODE_DECORATOR;
                 return data( decorator, encoding, input.value() );

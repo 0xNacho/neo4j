@@ -28,7 +28,7 @@ import org.neo4j.unsafe.impl.batchimport.input.csv.Header.Entry;
 /**
  * Builds {@link InputRelationship} from CSV data.
  */
-public class InputRelationshipDeserialization extends InputEntityDeserialization<InputRelationship>
+public class InputRelationshipDeserialization extends InputEntityBuilder<InputRelationship>
 {
     private final Header header;
     private final Groups groups;

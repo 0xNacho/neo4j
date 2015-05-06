@@ -57,7 +57,7 @@ public class InputGroupsDeserializerTest
         {
             @Override
             protected InputEntityDeserializer<InputNode> entityDeserializer( CharSeeker dataStream, Header dataHeader,
-                    Function<InputNode,InputNode> decorator )
+                    Function<Builder<InputNode>,Builder<InputNode>> decorator )
             {
                 // This is the point where the currentInput field in InputGroupsDeserializer was null
                 // so ensure that's no longer the case, just by poking those source methods right here and now.

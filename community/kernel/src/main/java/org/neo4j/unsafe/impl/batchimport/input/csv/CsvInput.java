@@ -113,11 +113,12 @@ public class CsvInput implements Input
                 {
                     @Override
                     protected InputEntityDeserializer<InputNode> entityDeserializer( CharSeeker dataStream,
-                            Header dataHeader, Function<InputNode,InputNode> decorator )
+                            Header dataHeader, Function<Builder<InputNode>,Builder<InputNode>> decorator )
                     {
+                        Builder<InputNode> builder =
+                                new InputNodeBuilder( dataStream, dataHeader, groups, idType.idsAreExternal() );
                         return new InputEntityDeserializer<>( dataHeader, dataStream, config.delimiter(),
-                                new InputNodeDeserialization( dataStream, dataHeader, groups, idType.idsAreExternal() ),
-                                decorator, Validators.<InputNode>emptyValidator() );
+                                decorator.apply( builder ), Validators.<InputNode>emptyValidator() );
                     }
                 };
             }
@@ -143,11 +144,12 @@ public class CsvInput implements Input
                 {
                     @Override
                     protected InputEntityDeserializer<InputRelationship> entityDeserializer( CharSeeker dataStream,
-                              Header dataHeader, Function<InputRelationship,InputRelationship> decorator )
+                              Header dataHeader, Function<Builder<InputRelationship>,Builder<InputRelationship>> decorator )
                     {
+                        Builder<InputRelationship> builder =
+                                new InputRelationshipDeserialization( dataStream, dataHeader, groups );
                         return new InputEntityDeserializer<>( dataHeader, dataStream, config.delimiter(),
-                                new InputRelationshipDeserialization( dataStream, dataHeader, groups ),
-                                decorator, new Validator<InputRelationship>()
+                                decorator.apply( builder ), new Validator<InputRelationship>()
                                 {
                                     @Override
                                     public void validate( InputRelationship entity )

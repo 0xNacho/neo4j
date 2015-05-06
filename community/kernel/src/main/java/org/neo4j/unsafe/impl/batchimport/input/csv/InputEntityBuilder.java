@@ -27,18 +27,16 @@ import org.neo4j.unsafe.impl.batchimport.input.InputEntity;
 import org.neo4j.unsafe.impl.batchimport.input.csv.Header.Entry;
 
 /**
- * Temporary data when building an {@link InputEntity}. Reusable for building multiple instances.
- *
- * @see InputEntity
+ * Gathers data about, and build, {@link InputEntity} or derivative. Reusable for building multiple instances.
  */
-public abstract class InputEntityDeserialization<ENTITY extends InputEntity> implements Deserialization<ENTITY>
+public abstract class InputEntityBuilder<ENTITY extends InputEntity> implements Builder<ENTITY>
 {
     protected final SourceTraceability source;
 
     private Object[] properties = new Object[10*2];
     private int propertiesCursor;
 
-    public InputEntityDeserialization( SourceTraceability source )
+    public InputEntityBuilder( SourceTraceability source )
     {
         this.source = source;
     }

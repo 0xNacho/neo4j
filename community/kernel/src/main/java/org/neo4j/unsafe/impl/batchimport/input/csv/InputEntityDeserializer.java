@@ -24,7 +24,6 @@ import java.io.IOException;
 import org.neo4j.csv.reader.CharSeeker;
 import org.neo4j.csv.reader.Extractors;
 import org.neo4j.csv.reader.Mark;
-import org.neo4j.function.Function;
 import org.neo4j.helpers.Exceptions;
 import org.neo4j.helpers.collection.PrefetchingIterator;
 import org.neo4j.kernel.impl.util.Validator;
@@ -46,25 +45,22 @@ public class InputEntityDeserializer<ENTITY extends InputEntity>
     private final CharSeeker data;
     private final Mark mark = new Mark();
     private final int delimiter;
-    private final Function<ENTITY,ENTITY> decorator;
-    private final Deserialization<ENTITY> deserialization;
+    private final Builder<ENTITY> builder;
     private final Validator<ENTITY> validator;
 
     InputEntityDeserializer( Header header, CharSeeker data, int delimiter,
-            Deserialization<ENTITY> deserialization, Function<ENTITY,ENTITY> decorator,
-            Validator<ENTITY> validator )
+            Builder<ENTITY> builder, Validator<ENTITY> validator )
     {
         this.header = header;
         this.data = data;
         this.delimiter = delimiter;
-        this.deserialization = deserialization;
-        this.decorator = decorator;
+        this.builder = builder;
         this.validator = validator;
     }
 
     public void initialize()
     {
-        deserialization.initialize();
+        builder.initialize();
     }
 
     @Override
@@ -79,7 +75,7 @@ public class InputEntityDeserializer<ENTITY extends InputEntity>
             }
 
             // When we have everything, create an input entity out of it
-            ENTITY entity = deserialization.materialize();
+            ENTITY entity = builder.materialize();
 
             // If there are more values on this line, ignore them
             // TODO perhaps log about them?
@@ -88,7 +84,6 @@ public class InputEntityDeserializer<ENTITY extends InputEntity>
                 data.seek( mark, delimiter );
             }
 
-            entity = decorator.apply( entity );
             validator.validate( entity );
             return entity;
         }
@@ -98,7 +93,7 @@ public class InputEntityDeserializer<ENTITY extends InputEntity>
         }
         finally
         {
-            deserialization.clear();
+            builder.clear();
         }
     }
 
@@ -127,7 +122,7 @@ public class InputEntityDeserializer<ENTITY extends InputEntity>
                 {
                     Object value = data.tryExtract( mark, entry.extractor() )
                             ? entry.extractor().value() : null;
-                    deserialization.handle( entry, value );
+                    builder.handle( entry, value );
                 }
 
                 if ( mark.isEndOfLine() )

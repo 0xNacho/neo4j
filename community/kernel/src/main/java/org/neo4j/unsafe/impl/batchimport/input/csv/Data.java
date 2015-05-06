@@ -31,5 +31,5 @@ public interface Data<ENTITY extends InputEntity>
 {
     CharSeeker stream();
 
-    Function<ENTITY,ENTITY> decorator();
+    Function<Builder<ENTITY>,Builder<ENTITY>> decorator();
 }

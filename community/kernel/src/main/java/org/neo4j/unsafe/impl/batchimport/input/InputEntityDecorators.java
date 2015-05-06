@@ -22,6 +22,7 @@ package org.neo4j.unsafe.impl.batchimport.input;
 import org.neo4j.function.Function;
 import org.neo4j.function.Functions;
 import org.neo4j.helpers.ArrayUtil;
+import org.neo4j.unsafe.impl.batchimport.input.csv.Builder;
 
 /**
  * Common {@link InputEntity} decorators, able to provide defaults or overrides.
@@ -31,29 +32,37 @@ public class InputEntityDecorators
     /**
      * Ensures that all {@link InputNode input nodes} will at least have the given set of labels.
      */
-    public static Function<InputNode,InputNode> additiveLabels( final String[] labelNamesToAdd )
+    public static Function<Builder<InputNode>,Builder<InputNode>> additiveLabels( final String[] labelNamesToAdd )
     {
         if ( labelNamesToAdd == null || labelNamesToAdd.length == 0 )
         {
             return Functions.identity();
         }
 
-        return new Function<InputNode,InputNode>()
+        return new Function<Builder<InputNode>,Builder<InputNode>>()
         {
             @Override
-            public InputNode apply( InputNode node )
+            public Builder<InputNode> apply( final Builder<InputNode> from ) throws RuntimeException
             {
-                if ( node.hasLabelField() )
+                return new Builder.Decorator<InputNode>( from )
                 {
-                    return node;
-                }
+                    @Override
+                    public InputNode materialize()
+                    {
+                        InputNode node = from.materialize();
+                        if ( node.hasLabelField() )
+                        {
+                            return node;
+                        }
 
-                String[] union = ArrayUtil.union( node.labels(), labelNamesToAdd );
-                if ( union != node.labels() )
-                {
-                    node.setLabels( union );
-                }
-                return node;
+                        String[] union = ArrayUtil.union( node.labels(), labelNamesToAdd );
+                        if ( union != node.labels() )
+                        {
+                            node.setLabels( union );
+                        }
+                        return node;
+                    }
+                };
             }
         };
     }
@@ -62,37 +71,46 @@ public class InputEntityDecorators
      * Ensures that {@link InputRelationship input relationships} without a specified relationship type will get
      * the specified default relationship type.
      */
-    public static Function<InputRelationship,InputRelationship> defaultRelationshipType( final String defaultType )
+    public static Function<Builder<InputRelationship>,Builder<InputRelationship>> defaultRelationshipType(
+            final String defaultType )
     {
         if ( defaultType == null )
         {
             return Functions.identity();
         }
 
-        return new Function<InputRelationship,InputRelationship>()
+        return new Function<Builder<InputRelationship>,Builder<InputRelationship>>()
         {
             @Override
-            public InputRelationship apply( InputRelationship relationship )
+            public Builder<InputRelationship> apply( final Builder<InputRelationship> from ) throws RuntimeException
             {
-                if ( relationship.type() == null && !relationship.hasTypeId() )
+                return new Builder.Decorator<InputRelationship>( from )
                 {
-                    relationship.setType( defaultType );
-                }
-
-                return relationship;
+                    @Override
+                    public InputRelationship materialize()
+                    {
+                        InputRelationship relationship = from.materialize();
+                        if ( relationship.type() == null && !relationship.hasTypeId() )
+                        {
+                            relationship.setType( defaultType );
+                        }
+                        return relationship;
+                    }
+                };
             }
         };
     }
 
-    public static <ENTITY extends InputEntity> Function<ENTITY,ENTITY> decorators(
-            final Function<ENTITY,ENTITY>... decorators )
+    @SafeVarargs
+    public static <ENTITY extends InputEntity> Function<Builder<ENTITY>,Builder<ENTITY>> decorators(
+            final Function<Builder<ENTITY>,Builder<ENTITY>>... decorators )
     {
-        return new Function<ENTITY,ENTITY>()
+        return new Function<Builder<ENTITY>,Builder<ENTITY>>()
         {
             @Override
-            public ENTITY apply( ENTITY from ) throws RuntimeException
+            public Builder<ENTITY> apply( Builder<ENTITY> from ) throws RuntimeException
             {
-                for ( Function<ENTITY,ENTITY> decorator : decorators )
+                for ( Function<Builder<ENTITY>,Builder<ENTITY>> decorator : decorators )
                 {
                     from = decorator.apply( from );
                 }
@@ -101,6 +119,8 @@ public class InputEntityDecorators
         };
     }
 
-    public static final Function<InputNode,InputNode> NO_NODE_DECORATOR = Functions.identity();
-    public static final Function<InputRelationship,InputRelationship> NO_RELATIONSHIP_DECORATOR = Functions.identity();
+    public static final Function<Builder<InputNode>,Builder<InputNode>> NO_NODE_DECORATOR =
+            Functions.identity();
+    public static final Function<Builder<InputRelationship>,Builder<InputRelationship>> NO_RELATIONSHIP_DECORATOR =
+            Functions.identity();
 }

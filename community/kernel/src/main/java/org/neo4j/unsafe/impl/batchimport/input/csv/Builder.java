@@ -19,6 +19,8 @@
  */
 package org.neo4j.unsafe.impl.batchimport.input.csv;
 
+import org.neo4j.unsafe.impl.batchimport.input.csv.Header.Entry;
+
 /**
  * Manages deserialization of one or more entry values, together forming some sort of entity.
  * It has mutable state and the usage pattern should be:
@@ -29,11 +31,11 @@ package org.neo4j.unsafe.impl.batchimport.input.csv;
  * <li>{@link #clear()} to prepare for the next entity</li>
  * </ol>
  */
-public interface Deserialization<ENTITY>
+public interface Builder<ENTITY>
 {
     /**
-     * Called before any other call. Introduced to reduce complexity in error handling where too
-     * much happened in constructors and so resources weren't even assigned when error struck and
+     * Called once before any other call and after the constructor. Introduced to reduce complexity in error handling
+     * where too much happened in constructors and so resources weren't even assigned when error struck and
      * cleanup would be tricky and involve duplication.
      */
     void initialize();
@@ -54,4 +56,56 @@ public interface Deserialization<ENTITY>
      * Clears the mutable state, preparing for the next entity.
      */
     void clear();
+
+    abstract class Adapter<ENTITY> implements Builder<ENTITY>
+    {
+        @Override
+        public void clear()
+        {   // Nothing to clear
+        }
+
+        @Override
+        public void initialize()
+        {   // Nothing to initialize
+        }
+
+        @Override
+        public void handle( Entry entry, Object value )
+        {   // Nothing to do
+        }
+    }
+
+    abstract class Decorator<ENTITY> implements Builder<ENTITY>
+    {
+        private final Builder<ENTITY> actual;
+
+        public Decorator( Builder<ENTITY> actual )
+        {
+            this.actual = actual;
+        }
+
+        @Override
+        public void handle( Entry entry, Object value )
+        {
+            actual.handle( entry, value );
+        }
+
+        @Override
+        public ENTITY materialize()
+        {
+            return actual.materialize();
+        }
+
+        @Override
+        public void initialize()
+        {
+            actual.initialize();
+        }
+
+        @Override
+        public void clear()
+        {
+            actual.clear();
+        }
+    }
 }

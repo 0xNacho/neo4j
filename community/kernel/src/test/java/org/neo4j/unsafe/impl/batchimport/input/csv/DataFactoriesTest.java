@@ -31,7 +31,6 @@ import org.neo4j.csv.reader.CharSeeker;
 import org.neo4j.csv.reader.Extractor;
 import org.neo4j.csv.reader.Extractors;
 import org.neo4j.function.Factory;
-import org.neo4j.function.Functions;
 import org.neo4j.unsafe.impl.batchimport.input.DuplicateHeaderException;
 import org.neo4j.unsafe.impl.batchimport.input.InputException;
 import org.neo4j.unsafe.impl.batchimport.input.InputNode;
@@ -47,6 +46,7 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.neo4j.csv.reader.Readables.sources;
 import static org.neo4j.csv.reader.Readables.wrap;
 import static org.neo4j.helpers.collection.IteratorUtil.array;
+import static org.neo4j.unsafe.impl.batchimport.input.InputEntityDecorators.NO_NODE_DECORATOR;
 import static org.neo4j.unsafe.impl.batchimport.input.csv.DataFactories.data;
 import static org.neo4j.unsafe.impl.batchimport.input.csv.DataFactories.defaultFormatNodeFileHeader;
 
@@ -206,7 +206,7 @@ public class DataFactoriesTest
         // GIVEN
         final Reader firstSource = new StringReader( "id:ID\tname:String\tbirth_date:long" );
         final Reader secondSource = new StringReader( "0\tThe node\t123456789" );
-        DataFactory<InputNode> dataFactory = data( Functions.<InputNode>identity(), new Factory<CharReadable>()
+        DataFactory<InputNode> dataFactory = data( NO_NODE_DECORATOR, new Factory<CharReadable>()
         {
             @Override
             public CharReadable newInstance()

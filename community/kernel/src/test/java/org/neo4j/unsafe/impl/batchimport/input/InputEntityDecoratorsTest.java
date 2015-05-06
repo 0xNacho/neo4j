@@ -24,6 +24,7 @@ import org.mockito.InOrder;
 
 import org.neo4j.function.Function;
 import org.neo4j.helpers.ArrayUtil;
+import org.neo4j.unsafe.impl.batchimport.input.csv.Builder;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -42,13 +43,13 @@ public class InputEntityDecoratorsTest
     {
         // GIVEN
         String defaultType = "TYPE";
-        Function<InputRelationship,InputRelationship> decorator =
+        Function<Builder<InputRelationship>,Builder<InputRelationship>> decorator =
                 InputEntityDecorators.defaultRelationshipType( defaultType );
 
         // WHEN
         InputRelationship relationship = new InputRelationship( "source", 1, 0, InputEntity.NO_PROPERTIES, null,
                 "start", "end", null, null );
-        relationship = decorator.apply( relationship );
+        relationship = decorator.apply( singleEntityBuilder( relationship ) ).materialize();
 
         // THEN
         assertEquals( defaultType, relationship.type() );
@@ -59,14 +60,14 @@ public class InputEntityDecoratorsTest
     {
         // GIVEN
         String defaultType = "TYPE";
-        Function<InputRelationship,InputRelationship> decorator =
+        Function<Builder<InputRelationship>,Builder<InputRelationship>> decorator =
                 InputEntityDecorators.defaultRelationshipType( defaultType );
 
         // WHEN
         String customType = "CUSTOM_TYPE";
         InputRelationship relationship = new InputRelationship( "source", 1, 0, InputEntity.NO_PROPERTIES, null,
                 "start", "end", customType, null );
-        relationship = decorator.apply( relationship );
+        relationship = decorator.apply( singleEntityBuilder( relationship ) ).materialize();
 
         // THEN
         assertEquals( customType, relationship.type() );
@@ -77,14 +78,14 @@ public class InputEntityDecoratorsTest
     {
         // GIVEN
         String defaultType = "TYPE";
-        Function<InputRelationship,InputRelationship> decorator =
+        Function<Builder<InputRelationship>,Builder<InputRelationship>> decorator =
                 InputEntityDecorators.defaultRelationshipType( defaultType );
 
         // WHEN
         Integer typeId = 5;
         InputRelationship relationship = new InputRelationship( "source", 1, 0, InputEntity.NO_PROPERTIES, null,
                 "start", "end", null, typeId );
-        relationship = decorator.apply( relationship );
+        relationship = decorator.apply( singleEntityBuilder( relationship ) ).materialize();
 
         // THEN
         assertEquals( null, relationship.type() );
@@ -96,11 +97,11 @@ public class InputEntityDecoratorsTest
     {
         // GIVEN
         String[] toAdd = new String[] {"Add1", "Add2"};
-        Function<InputNode,InputNode> decorator = InputEntityDecorators.additiveLabels( toAdd );
+        Function<Builder<InputNode>,Builder<InputNode>> decorator = InputEntityDecorators.additiveLabels( toAdd );
 
         // WHEN
         InputNode node = new InputNode( "source", 1, 0, "id", InputEntity.NO_PROPERTIES, null, null, null );
-        node = decorator.apply( node );
+        node = decorator.apply( singleEntityBuilder( node ) ).materialize();
 
         // THEN
         assertArrayEquals( toAdd, node.labels() );
@@ -111,12 +112,12 @@ public class InputEntityDecoratorsTest
     {
         // GIVEN
         String[] toAdd = new String[] {"Add1", "Add2"};
-        Function<InputNode,InputNode> decorator = InputEntityDecorators.additiveLabels( toAdd );
+        Function<Builder<InputNode>,Builder<InputNode>> decorator = InputEntityDecorators.additiveLabels( toAdd );
 
         // WHEN
         String[] nodeLabels = new String[] {"SomeOther"};
         InputNode node = new InputNode( "source", 1, 0, "id", InputEntity.NO_PROPERTIES, null, nodeLabels, null );
-        node = decorator.apply( node );
+        node = decorator.apply( singleEntityBuilder( node ) ).materialize();
 
         // THEN
         assertEquals( asSet( ArrayUtil.union( toAdd, nodeLabels ) ), asSet( node.labels() ) );
@@ -127,12 +128,12 @@ public class InputEntityDecoratorsTest
     {
         // GIVEN
         String[] toAdd = new String[] {"Add1", "Add2"};
-        Function<InputNode,InputNode> decorator = InputEntityDecorators.additiveLabels( toAdd );
+        Function<Builder<InputNode>,Builder<InputNode>> decorator = InputEntityDecorators.additiveLabels( toAdd );
 
         // WHEN
         long labelField = 123L;
         InputNode node = new InputNode( "source", 1, 0, "id", InputEntity.NO_PROPERTIES, null, null, labelField );
-        node = decorator.apply( node );
+        node = decorator.apply( singleEntityBuilder( node ) ).materialize();
 
         // THEN
         assertNull( node.labels() );
@@ -143,12 +144,13 @@ public class InputEntityDecoratorsTest
     public void shouldCramMultipleDecoratorsIntoOne() throws Exception
     {
         // GIVEN
-        Function<InputNode,InputNode> decorator1 = spy( new IdentityDecorator() );
-        Function<InputNode,InputNode> decorator2 = spy( new IdentityDecorator() );
-        Function<InputNode,InputNode> multi = InputEntityDecorators.decorators( decorator1, decorator2 );
+        Function<Builder<InputNode>,Builder<InputNode>> decorator1 = spy( new IdentityDecorator() );
+        Function<Builder<InputNode>,Builder<InputNode>> decorator2 = spy( new IdentityDecorator() );
+        Function<Builder<InputNode>,Builder<InputNode>> multi = InputEntityDecorators.decorators( decorator1, decorator2 );
 
         // WHEN
-        InputNode node = mock( InputNode.class );
+        @SuppressWarnings( "unchecked" )
+        Builder<InputNode> node = mock( Builder.class );
         multi.apply( node );
 
         // THEN
@@ -158,10 +160,22 @@ public class InputEntityDecoratorsTest
         order.verifyNoMoreInteractions();
     }
 
-    private static class IdentityDecorator implements Function<InputNode,InputNode>
+    private <ENTITY> Builder<ENTITY> singleEntityBuilder( final ENTITY entity )
+    {
+        return new Builder.Adapter<ENTITY>()
+        {
+            @Override
+            public ENTITY materialize()
+            {
+                return entity;
+            }
+        };
+    }
+
+    private static class IdentityDecorator implements Function<Builder<InputNode>,Builder<InputNode>>
     {
         @Override
-        public InputNode apply( InputNode from ) throws RuntimeException
+        public Builder<InputNode> apply( Builder<InputNode> from ) throws RuntimeException
         {
             return from;
         }
