@@ -33,6 +33,7 @@ import org.neo4j.kernel.api.properties.DefinedProperty;
 import org.neo4j.kernel.api.properties.Property;
 import org.neo4j.kernel.impl.api.KernelStatement;
 import org.neo4j.kernel.impl.api.RelationshipVisitor;
+import org.neo4j.kernel.impl.api.cursor.NodeCursor;
 import org.neo4j.kernel.impl.api.store.RelationshipIterator;
 import org.neo4j.kernel.impl.util.register.NeoRegister;
 import org.neo4j.register.Register;
@@ -160,4 +161,5 @@ public interface EntityReadOperations
                                  RelationshipVisitor<? extends RuntimeException> visitor )
             throws EntityNotFoundException;
 
+    NodeCursor nodeCursor( KernelStatement state, long nodeId ) throws EntityNotFoundException;
 }

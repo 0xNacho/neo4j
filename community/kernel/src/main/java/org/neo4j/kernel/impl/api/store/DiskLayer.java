@@ -58,6 +58,7 @@ import org.neo4j.kernel.impl.api.DegreeVisitor;
 import org.neo4j.kernel.impl.api.KernelStatement;
 import org.neo4j.kernel.impl.api.RelationshipVisitor;
 import org.neo4j.kernel.impl.api.StoreRelationshipIterable;
+import org.neo4j.kernel.impl.api.cursor.NodeCursor;
 import org.neo4j.kernel.impl.api.index.IndexingService;
 import org.neo4j.kernel.impl.core.IteratingPropertyReceiver;
 import org.neo4j.kernel.impl.core.LabelTokenHolder;
@@ -1019,5 +1020,11 @@ public class DiskLayer implements StoreReadLayer
             throw new UnsupportedOperationException( "not implemented" );
         }
         return counts.relationshipCount( startLabelId, typeId, endLabelId, newDoubleLongRegister() ).readSecond();
+    }
+
+    @Override
+    public NodeCursor nodeCursor( long nodeId ) throws EntityNotFoundException
+    {
+        return new StoreNodeCursor( nodeStore, neoStore.getPropertyStore(), relationshipStore, nodeId );
     }
 }

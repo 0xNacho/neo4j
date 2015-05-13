@@ -33,6 +33,7 @@ import org.neo4j.kernel.api.index.IndexDescriptor;
 import org.neo4j.kernel.api.properties.DefinedProperty;
 import org.neo4j.kernel.api.properties.Property;
 import org.neo4j.kernel.guard.Guard;
+import org.neo4j.kernel.impl.api.cursor.NodeCursor;
 import org.neo4j.kernel.impl.api.operations.EntityReadOperations;
 import org.neo4j.kernel.impl.api.operations.EntityWriteOperations;
 import org.neo4j.kernel.impl.api.store.RelationshipIterator;
@@ -385,5 +386,11 @@ public class GuardingStatementOperations implements
             guard.check();
             visitor.visit( relId, type, startNode, endNode );
         }
+    }
+
+    @Override
+    public NodeCursor nodeCursor( KernelStatement state, long nodeId ) throws EntityNotFoundException
+    {
+        return entityReadDelegate.nodeCursor( state, nodeId );
     }
 }

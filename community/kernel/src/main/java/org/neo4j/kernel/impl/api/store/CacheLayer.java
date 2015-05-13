@@ -63,6 +63,7 @@ import org.neo4j.kernel.api.properties.PropertyKeyIdIterator;
 import org.neo4j.kernel.impl.api.DegreeVisitor;
 import org.neo4j.kernel.impl.api.KernelStatement;
 import org.neo4j.kernel.impl.api.RelationshipVisitor;
+import org.neo4j.kernel.impl.api.cursor.NodeCursor;
 import org.neo4j.kernel.impl.api.index.IndexingService;
 import org.neo4j.kernel.impl.core.Token;
 import org.neo4j.kernel.impl.store.SchemaStorage;
@@ -525,5 +526,11 @@ public class CacheLayer implements StoreReadLayer
     public void releaseRelationship( long id )
     {
         diskLayer.releaseRelationship( id );
+    }
+
+    @Override
+    public NodeCursor nodeCursor( long nodeId ) throws EntityNotFoundException
+    {
+        return diskLayer.nodeCursor( nodeId );
     }
 }

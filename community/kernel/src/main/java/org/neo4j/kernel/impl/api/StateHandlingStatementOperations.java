@@ -57,6 +57,7 @@ import org.neo4j.kernel.api.properties.Property;
 import org.neo4j.kernel.api.properties.PropertyKeyIdIterator;
 import org.neo4j.kernel.api.txstate.ReadableTxState;
 import org.neo4j.kernel.api.txstate.TransactionState;
+import org.neo4j.kernel.impl.api.cursor.NodeCursor;
 import org.neo4j.kernel.impl.api.operations.CountsOperations;
 import org.neo4j.kernel.impl.api.operations.EntityOperations;
 import org.neo4j.kernel.impl.api.operations.KeyReadOperations;
@@ -1480,4 +1481,17 @@ public class StateHandlingStatementOperations implements
         return legacyIndexStore.getAllRelationshipIndexNames();
     }
     // </Legacy index>
+
+    @Override
+    public NodeCursor nodeCursor( KernelStatement state, long nodeId ) throws EntityNotFoundException
+    {
+        // TODO for now just disregard transaction state
+        final TransactionState txState = state.txState();
+        if ( txState.hasChanges() )
+        {
+            throw new UnsupportedOperationException();
+        }
+
+        return storeLayer.nodeCursor( nodeId );
+    }
 }

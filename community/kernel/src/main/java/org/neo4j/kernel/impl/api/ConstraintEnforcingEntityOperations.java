@@ -35,6 +35,7 @@ import org.neo4j.kernel.api.exceptions.schema.UniqueConstraintViolationKernelExc
 import org.neo4j.kernel.api.index.IndexDescriptor;
 import org.neo4j.kernel.api.properties.DefinedProperty;
 import org.neo4j.kernel.api.properties.Property;
+import org.neo4j.kernel.impl.api.cursor.NodeCursor;
 import org.neo4j.kernel.impl.api.operations.EntityOperations;
 import org.neo4j.kernel.impl.api.operations.EntityReadOperations;
 import org.neo4j.kernel.impl.api.operations.EntityWriteOperations;
@@ -424,5 +425,11 @@ public class ConstraintEnforcingEntityOperations implements EntityOperations
             throws EntityNotFoundException
     {
         return entityReadOperations.nodeGetRelationships( statement, nodeId, direction, types, visitor );
+    }
+
+    @Override
+    public NodeCursor nodeCursor( KernelStatement state, long nodeId ) throws EntityNotFoundException
+    {
+        return entityReadOperations.nodeCursor( state, nodeId );
     }
 }
