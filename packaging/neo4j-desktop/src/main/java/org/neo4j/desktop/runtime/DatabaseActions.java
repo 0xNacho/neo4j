@@ -35,6 +35,7 @@ import org.neo4j.server.AbstractNeoServer;
 import org.neo4j.server.CommunityNeoServer;
 import org.neo4j.server.ServerStartupException;
 import org.neo4j.server.configuration.ConfigurationBuilder;
+
 import static org.neo4j.kernel.logging.DefaultLogging.createDefaultLogging;
 
 /**
@@ -46,7 +47,7 @@ public class DatabaseActions
     private final DesktopModel model;
     private AbstractNeoServer server;
     private Logging logging;
-    private LifeSupport life = new LifeSupport();
+    private LifeSupport life;
 
     public DatabaseActions( DesktopModel model )
     {
@@ -60,6 +61,7 @@ public class DatabaseActions
             throw new UnableToStartServerException( "Already started" );
         }
 
+        life = new LifeSupport();
         ConfigurationBuilder configurator = model.getServerConfigurator();
         Monitors monitors = new Monitors();
         logging = life.add( createDefaultLogging( configurator.getDatabaseTuningProperties(), monitors ) );
