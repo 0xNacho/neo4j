@@ -24,11 +24,11 @@ import org.neo4j.function.Function;
 /**
  * Processes {@link RawMaterial} into batches of the specified type.
  */
-public interface Processor<T> extends Function<RawMaterial,T[]>
+public interface Processor<MATERIAL extends RawMaterial,T> extends Function<MATERIAL,T[]>
 {
     /**
      * Processes raw material into something more useful, an array of the type this processor specifies.
      */
     @Override
-    T[] apply( RawMaterial from ) throws RuntimeException;
+    T[] apply( MATERIAL material ) throws RuntimeException;
 }

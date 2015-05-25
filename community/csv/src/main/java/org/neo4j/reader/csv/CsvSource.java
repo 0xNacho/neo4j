@@ -23,17 +23,13 @@ import java.io.IOException;
 import java.util.Deque;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
-import org.neo4j.reader.RawMaterial;
 import org.neo4j.reader.Source;
 
-public class CsvSource implements Source
+public class CsvSource implements Source<CsvRawMaterial>
 {
     // Source that is being read from
     private final Reader reader;
     private final int bufferSize;
-
-    // State during reading
-    private long nextId;
 
     // Keeping track of returned RawMaterial, to reduce object churn
     private final Deque<char[]> returnedRawMaterial = new ConcurrentLinkedDeque<>();
@@ -45,7 +41,7 @@ public class CsvSource implements Source
     }
 
     @Override
-    public RawMaterial next() throws IOException
+    public CsvRawMaterial next() throws IOException
     {
         char[] buffer = returnedRawMaterial.poll();
         if ( buffer == null )
@@ -73,7 +69,7 @@ public class CsvSource implements Source
         {   // We couldn't completely fill the buffer, this means that we're at the end of a data source, we're good.
         }
 
-        return new CsvRawMaterial( nextId++, buffer, read, returnedRawMaterial );
+        return new CsvRawMaterial( buffer, read, returnedRawMaterial );
     }
 
     private int findLastNewline( char[] buffer )
