@@ -53,11 +53,12 @@ public class CsvSource implements Source<CsvRawMaterial>
         if ( read == bufferSize )
         {   // We read data into the whole buffer, we're most likely not at the end so seek backwards to
             // the last newline character and reset the reader to that position.
-            int charactersToBackUp = findLastNewline( buffer );
-            if ( charactersToBackUp > -1 )
+            int newlineOffset = offsetOfLastNewline( buffer );
+            if ( newlineOffset > -1 )
             {   // We found a newline character some characters back
-                reader.goBack( charactersToBackUp );
-                read -= charactersToBackUp;
+                int offset = newlineOffset + 1;
+                reader.unread( buffer, offset, read-offset );
+                read = newlineOffset;
             }
             else
             {   // There was no newline character, isn't that weird?
@@ -69,16 +70,26 @@ public class CsvSource implements Source<CsvRawMaterial>
         {   // We couldn't completely fill the buffer, this means that we're at the end of a data source, we're good.
         }
 
-        return new CsvRawMaterial( buffer, read, returnedRawMaterial );
+        if ( read <= 0 )
+        {
+            return null;
+        }
+        return new CsvRawMaterial( buffer, read, reader.toString(), returnedRawMaterial );
     }
 
-    private int findLastNewline( char[] buffer )
+    @Override
+    public void close() throws IOException
     {
-        for ( int i = buffer.length-1, stepsBack = 0; i >= 0; i--, stepsBack++ )
+        reader.close();
+    }
+
+    private int offsetOfLastNewline( char[] buffer )
+    {
+        for ( int i = buffer.length-1; i >= 0; i-- )
         {
-            if ( buffer[i] == '\n' ) // TODO check for \r too?
+            if ( buffer[i] == '\n' )
             {
-                return stepsBack;
+                return i;
             }
         }
         return -1;

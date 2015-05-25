@@ -43,6 +43,7 @@ import org.neo4j.unsafe.impl.batchimport.input.csv.Type;
 import static java.lang.System.currentTimeMillis;
 
 import static org.neo4j.helpers.progress.ProgressMonitorFactory.textual;
+import static org.neo4j.kernel.configuration.Config.parseLongWithUnit;
 
 /**
  * Utility for generating a nodes.csv and relationships.csv, with random data structured according
@@ -136,8 +137,8 @@ public class CsvDataGenerator<NODEFORMAT,RELFORMAT>
     public static void main( String[] arguments ) throws IOException
     {
         Args args = Args.parse( arguments );
-        int nodeCount = args.getNumber( "nodes", null ).intValue();
-        int relationshipCount = args.getNumber( "relationships", null ).intValue();
+        long nodeCount = parseLongWithUnit( args.get( "nodes" ) );
+        long relationshipCount = parseLongWithUnit( args.get( "relationships" ) );
         int labelCount = args.getNumber( "labels", 4 ).intValue();
         int relationshipTypeCount = args.getNumber( "relationship-types", 4 ).intValue();
 

@@ -27,12 +27,14 @@ public class CsvRawMaterial implements RawMaterial
 {
     private final char[] buffer;
     private final int length;
+    private final String sourceDescription;
     private final Deque<char[]> recycleStation;
 
-    public CsvRawMaterial( char[] buffer, int length, Deque<char[]> recycleStation )
+    public CsvRawMaterial( char[] buffer, int length, String sourceDescription, Deque<char[]> recycleStation )
     {
         this.buffer = buffer;
         this.length = length;
+        this.sourceDescription = sourceDescription;
         this.recycleStation = recycleStation;
     }
 
@@ -44,6 +46,11 @@ public class CsvRawMaterial implements RawMaterial
     public int getLength()
     {
         return length;
+    }
+
+    public String getSourceDescription()
+    {
+        return sourceDescription;
     }
 
     @Override
