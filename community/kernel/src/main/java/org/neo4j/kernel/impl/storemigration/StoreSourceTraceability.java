@@ -26,7 +26,7 @@ import org.neo4j.unsafe.impl.batchimport.BatchImporter;
  * Provides source information when reading from a neo4j store. Mostly for store migration purposes
  * where {@link BatchImporter} is used to port the data.
  */
-class StoreSourceTraceability implements SourceTraceability
+public class StoreSourceTraceability implements SourceTraceability
 {
     private final String description;
     private final int recordSize;

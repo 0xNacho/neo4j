@@ -41,8 +41,6 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verifyZeroInteractions;
 
 import static org.neo4j.csv.reader.Readables.sources;
 import static org.neo4j.csv.reader.Readables.wrap;
@@ -177,27 +175,6 @@ public class DataFactoriesTest
                 entry( "one", Type.PROPERTY, extractors.string() ),
                 entry( "two", Type.PROPERTY, extractors.string() ) ), header.entries() );
         seeker.close();
-    }
-
-    @Test
-    public void shouldParseHeaderFromSeparateReader() throws Exception
-    {
-        // GIVEN
-        CharSeeker dataSeeker = mock( CharSeeker.class );
-        Header.Factory headerFactory =
-                defaultFormatNodeFileHeader( wrap( new StringReader( "id:ID\tname:String\tbirth_date:long" ) ) );
-        Extractors extractors = new Extractors( ';' );
-
-        // WHEN
-        Header header = headerFactory.create( dataSeeker, TABS, IdType.ACTUAL );
-
-        // THEN
-        assertArrayEquals( array(
-                entry( "id", Type.ID, extractors.long_() ),
-                entry( "name", Type.PROPERTY, extractors.string() ),
-                entry( "birth_date", Type.PROPERTY, extractors.long_() ) ), header.entries() );
-        verifyZeroInteractions( dataSeeker );
-        dataSeeker.close();
     }
 
     @Test

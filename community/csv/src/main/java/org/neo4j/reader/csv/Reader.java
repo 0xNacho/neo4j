@@ -19,12 +19,13 @@
  */
 package org.neo4j.reader.csv;
 
+import java.io.Closeable;
 import java.io.IOException;
 
 /**
  * Simplified, re-purposed {@link java.io.Reader} basically.
  */
-public interface Reader
+public interface Reader extends Closeable
 {
     /**
      * Read into the buffer.
@@ -37,9 +38,6 @@ public interface Reader
 
     /**
      * Go back the specified number of characters, so that they will be read the next call to {@link #read(char[])}.
-     *
-     * @param chars number of characters to go back.
-     * @throws IOException if there was a problem going back.
      */
-    void goBack( int chars ) throws IOException;
+    void unread( char[] chars, int offset, int length ) throws IOException;
 }

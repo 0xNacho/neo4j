@@ -243,6 +243,12 @@ public class Extractors
         {
             return toString;
         }
+
+        @Override
+        public Extractor<T> clone()
+        {
+            throw new UnsupportedOperationException();
+        }
     }
 
     private static abstract class AbstractSingleValueExtractor<T> extends AbstractExtractor<T>
@@ -306,6 +312,12 @@ public class Extractors
         {
             return value;
         }
+
+        @Override
+        public Extractor<String> clone()
+        {
+            return new StringExtractor();
+        }
     }
 
     public static class LongExtractor extends AbstractSingleValueExtractor<Long>
@@ -343,6 +355,12 @@ public class Extractors
         public long longValue()
         {
             return value;
+        }
+
+        @Override
+        public Extractor<Long> clone()
+        {
+            return new LongExtractor();
         }
     }
 
@@ -382,6 +400,12 @@ public class Extractors
         {
             return value;
         }
+
+        @Override
+        public Extractor<Integer> clone()
+        {
+            return new IntExtractor();
+        }
     }
 
     public static class ShortExtractor extends AbstractSingleValueExtractor<Short>
@@ -420,6 +444,12 @@ public class Extractors
         {
             return value;
         }
+
+        @Override
+        public Extractor<Short> clone()
+        {
+            return new ShortExtractor();
+        }
     }
 
     public static class ByteExtractor extends AbstractSingleValueExtractor<Byte>
@@ -457,6 +487,12 @@ public class Extractors
         public int byteValue()
         {
             return value;
+        }
+
+        @Override
+        public Extractor<Byte> clone()
+        {
+            return new ByteExtractor();
         }
     }
 
@@ -499,6 +535,12 @@ public class Extractors
         {
             return value;
         }
+
+        @Override
+        public Extractor<Boolean> clone()
+        {
+            return new BooleanExtractor();
+        }
     }
 
     public static class CharExtractor extends AbstractSingleValueExtractor<Character>
@@ -537,6 +579,12 @@ public class Extractors
         {
             return value;
         }
+
+        @Override
+        public Extractor<Character> clone()
+        {
+            return new CharExtractor();
+        }
     }
 
     public static class FloatExtractor extends AbstractSingleValueExtractor<Float>
@@ -571,6 +619,12 @@ public class Extractors
         public float floatValue()
         {
             return value;
+        }
+
+        @Override
+        public Extractor<Float> clone()
+        {
+            return new FloatExtractor();
         }
     }
 
@@ -607,17 +661,25 @@ public class Extractors
         {
             return value;
         }
+
+        @Override
+        public Extractor<Double> clone()
+        {
+            return new DoubleExtractor();
+        }
     }
 
     private static abstract class ArrayExtractor<T> extends AbstractExtractor<T>
     {
         protected final char arrayDelimiter;
+        protected final Class<?> componentType;
         protected T value;
 
         ArrayExtractor( char arrayDelimiter, Class<?> componentType )
         {
             super( componentType.getSimpleName() + "[]" );
             this.arrayDelimiter = arrayDelimiter;
+            this.componentType = componentType;
         }
 
         @Override
@@ -694,6 +756,12 @@ public class Extractors
                 charIndex += numberOfChars;
             }
         }
+
+        @Override
+        public Extractor<String[]> clone()
+        {
+            return new StringArrayExtractor( arrayDelimiter );
+        }
     }
 
     private static class ByteArrayExtractor extends ArrayExtractor<byte[]>
@@ -716,6 +784,12 @@ public class Extractors
                 value[arrayIndex] = safeCastLongToByte( extractLong( data, offset+charIndex, numberOfChars ) );
                 charIndex += numberOfChars;
             }
+        }
+
+        @Override
+        public Extractor<byte[]> clone()
+        {
+            return new ByteArrayExtractor( arrayDelimiter );
         }
     }
 
@@ -740,6 +814,12 @@ public class Extractors
                 charIndex += numberOfChars;
             }
         }
+
+        @Override
+        public Extractor<short[]> clone()
+        {
+            return new ShortArrayExtractor( arrayDelimiter );
+        }
     }
 
     private static class IntArrayExtractor extends ArrayExtractor<int[]>
@@ -763,6 +843,12 @@ public class Extractors
                 charIndex += numberOfChars;
             }
         }
+
+        @Override
+        public Extractor<int[]> clone()
+        {
+            return new IntArrayExtractor( arrayDelimiter );
+        }
     }
 
     private static class LongArrayExtractor extends ArrayExtractor<long[]>
@@ -783,6 +869,12 @@ public class Extractors
                 value[arrayIndex] = extractLong( data, offset+charIndex, numberOfChars );
                 charIndex += numberOfChars;
             }
+        }
+
+        @Override
+        public Extractor<long[]> clone()
+        {
+            return new LongArrayExtractor( arrayDelimiter );
         }
     }
 
@@ -808,6 +900,12 @@ public class Extractors
                 charIndex += numberOfChars;
             }
         }
+
+        @Override
+        public Extractor<float[]> clone()
+        {
+            return new FloatArrayExtractor( arrayDelimiter );
+        }
     }
 
     private static class DoubleArrayExtractor extends ArrayExtractor<double[]>
@@ -832,6 +930,12 @@ public class Extractors
                 charIndex += numberOfChars;
             }
         }
+
+        @Override
+        public Extractor<double[]> clone()
+        {
+            return new DoubleArrayExtractor( arrayDelimiter );
+        }
     }
 
     private static class BooleanArrayExtractor extends ArrayExtractor<boolean[]>
@@ -854,6 +958,12 @@ public class Extractors
                 value[arrayIndex] = extractBoolean( data, offset+charIndex, numberOfChars );
                 charIndex += numberOfChars;
             }
+        }
+
+        @Override
+        public Extractor<boolean[]> clone()
+        {
+            return new BooleanArrayExtractor( arrayDelimiter );
         }
     }
 

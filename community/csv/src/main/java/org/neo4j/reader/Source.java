@@ -19,9 +19,10 @@
  */
 package org.neo4j.reader;
 
+import java.io.Closeable;
 import java.io.IOException;
 
-public interface Source<MATERIAL extends RawMaterial>
+public interface Source<MATERIAL extends RawMaterial> extends Closeable
 {
     MATERIAL next() throws IOException;
 }
