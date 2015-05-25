@@ -17,11 +17,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.neo4j.reader;
+package org.neo4j.reader.csv;
 
-import java.io.IOException;
+import org.neo4j.reader.Processor;
+import org.neo4j.reader.RawMaterial;
 
-public interface Source<MATERIAL extends RawMaterial>
+public class SomethingCsvProcessor implements Processor<CsvRawMaterial>
 {
-    MATERIAL next() throws IOException;
+    @Override
+    public CsvRawMaterial[] apply( RawMaterial material ) throws RuntimeException
+    {
+        return null;
+    }
 }

@@ -25,23 +25,15 @@ import org.neo4j.reader.RawMaterial;
 
 public class CsvRawMaterial implements RawMaterial
 {
-    private final long id;
     private final char[] buffer;
     private final int length;
     private final Deque<char[]> recycleStation;
 
-    public CsvRawMaterial( long id, char[] buffer, int length, Deque<char[]> recycleStation )
+    public CsvRawMaterial( char[] buffer, int length, Deque<char[]> recycleStation )
     {
-        this.id = id;
         this.buffer = buffer;
         this.length = length;
         this.recycleStation = recycleStation;
-    }
-
-    @Override
-    public long id()
-    {
-        return id;
     }
 
     public char[] getBuffer()

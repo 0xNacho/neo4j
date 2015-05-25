@@ -26,11 +26,6 @@ package org.neo4j.reader;
 public interface RawMaterial extends AutoCloseable
 {
     /**
-     * Used to keep track of order if there are multiple {@link Processor processors} refining material.
-     */
-    long id();
-
-    /**
      * Called by {@link Processor} when processing is done.
      */
     @Override
