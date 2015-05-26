@@ -29,60 +29,43 @@ import static org.neo4j.csv.reader.Mark.END_OF_LINE_CHARACTER;
 
 /**
  * Much like a {@link BufferedReader} for a {@link Reader}.
- *
- * TODOOOOOOOOOOOOOO copy-pasted version, just for testing stuff
- * This difference in this one from {@link BufferedCharSeeker} is that it doesn't fetch more data itself,
- * but can be given more. It's just assumed that the data given to it is aligned so that the last character
- * of the data is the last character of a field, a whole line even.
  */
-public class ControlledBufferedCharSeeker implements CharSeeker
+public abstract class AbstractCharSeeker implements CharSeeker
 {
     private static final char EOL_CHAR = '\n';
     private static final char EOL_CHAR_2 = '\r';
     private static final char EOF_CHAR = (char) -1;
     private static final char BACK_SLASH = '\\';
 
-    private char[] buffer;
+    protected char[] buffer;
 
     // index into the buffer character array to read the next time nextChar() is called
-    private int bufferPos;
+    protected int bufferPos;
     // last index (effectively length) of characters in use in the buffer
-    private int bufferEnd;
+    protected int bufferEnd;
     // bufferPos denoting the start of this current line that we're reading
-    private int lineStartPos;
+    protected int lineStartPos;
     // bufferPos when we started reading the current field
-    private int seekStartPos;
+    protected int seekStartPos;
     // 1-based value of which logical line we're reading a.t.m.
-    private int lineNumber;
+    protected int lineNumber;
     // flag to know if we've read to the end
-    private boolean eof;
+    protected boolean eof;
     // char to recognize as quote start/end
-    private final char quoteChar;
+    protected final char quoteChar;
     // this absolute position + bufferPos is the current position in the source we're reading
-    private long absoluteBufferStartPosition;
-    private String sourceDescription;
-    private final boolean multilineFields;
+    protected long absoluteBufferStartPosition;
+    protected String sourceDescription;
+    protected final boolean multilineFields;
 
-    public ControlledBufferedCharSeeker( Configuration config )
+    public AbstractCharSeeker( Configuration config )
     {
         this.quoteChar = config.quotationCharacter();
-        this.lineStartPos = this.bufferPos;
-        assert !config.multilineFields();
         this.multilineFields = config.multilineFields();
     }
 
-    public void giveData( char[] data, int length, String newSourceDescription )
-    {
-        absoluteBufferStartPosition += buffer != null ? bufferEnd : 0;
-        buffer = data;
-        bufferEnd = length;
-        bufferPos = 0;
-        sourceDescription = newSourceDescription;
-        eof = false;
-    }
-
     @Override
-    public boolean seek( Mark mark, int untilChar )
+    public boolean seek( Mark mark, int untilChar ) throws IOException
     {
         if ( eof )
         {   // We're at the end
@@ -199,7 +182,7 @@ public class ControlledBufferedCharSeeker implements CharSeeker
         return ch == EOL_CHAR || ch == EOL_CHAR_2;
     }
 
-    private int peekChar( int skippedChars )
+    private int peekChar( int skippedChars ) throws IOException
     {
         int ch = nextChar( skippedChars );
         try
@@ -240,10 +223,10 @@ public class ControlledBufferedCharSeeker implements CharSeeker
         return extractor.extract( buffer, (int)(from), (int)(to-from), mark.isQuoted() );
     }
 
-    private int nextChar( int skippedChars )
+    private int nextChar( int skippedChars ) throws IOException
     {
         int ch;
-        if ( bufferPos < bufferEnd )
+        if ( bufferPos < bufferEnd || readMoreIntoBuffer() )
         {
             ch = buffer[bufferPos];
         }
@@ -261,10 +244,7 @@ public class ControlledBufferedCharSeeker implements CharSeeker
         return ch;
     }
 
-    @Override
-    public void close() throws IOException
-    {   // Nothing to close
-    }
+    protected abstract boolean readMoreIntoBuffer() throws IOException;
 
     @Override
     public long position()
