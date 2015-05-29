@@ -204,7 +204,7 @@ public class StoreRelationshipIterable implements PrimitiveLongIterable
         private final RelationshipGroupStore groupStore;
         private long relationshipGroupId;
         private final RelationshipGroupRecord groupRecord = new RelationshipGroupRecord( -1, -1 );
-        private int groupChainCursor = GROUP_CHAINS.length;
+        private int groupChainCursor;
         private long nextRelId;
 
         DenseIterator( NodeRecord nodeRecord, RelationshipGroupStore groupStore,
@@ -221,10 +221,10 @@ public class StoreRelationshipIterable implements PrimitiveLongIterable
         {
             while ( relationshipGroupId != Record.NO_NEXT_RELATIONSHIP.intValue() )
             {
-                if ( groupChainCursor == GROUP_CHAINS.length )
+                boolean isTheCurrentGroupLoaded = groupRecord != null && groupRecord.getId() == relationshipGroupId;
+                if ( !isTheCurrentGroupLoaded )
                 {
-                    boolean exists = groupStore.fillRecord( relationshipGroupId, groupRecord, RecordLoad.CHECK );
-                    if ( !exists )
+                    if ( !groupStore.fillRecord( relationshipGroupId, groupRecord, RecordLoad.CHECK ) )
                     {
                         relationshipGroupId = groupRecord.getNext();
                         continue;
@@ -238,7 +238,7 @@ public class StoreRelationshipIterable implements PrimitiveLongIterable
                     if ( correctType )
                     {
                         // Go to the next chain (direction) within this group
-                        while ( groupChainCursor < GROUP_CHAINS.length )
+                        while ( groupChainCursor < GROUP_CHAINS_EXHAUSTED )
                         {
                             GroupChain groupChain = GROUP_CHAINS[groupChainCursor++];
                             long chainStart = groupChain.chainStart( groupRecord );
@@ -252,10 +252,9 @@ public class StoreRelationshipIterable implements PrimitiveLongIterable
                 }
                 finally
                 {
-                    if ( groupChainCursor == GROUP_CHAINS.length || !correctType )
+                    if ( groupChainCursor == GROUP_CHAINS_EXHAUSTED || !correctType )
                     {
                         relationshipGroupId = groupRecord.getNext();
-                        groupChainCursor = GROUP_CHAINS.length;
                     }
                 }
             }
@@ -341,4 +340,5 @@ public class StoreRelationshipIterable implements PrimitiveLongIterable
     }
 
     private static final GroupChain[] GROUP_CHAINS = GroupChain.values();
+    private static final int GROUP_CHAINS_EXHAUSTED = GROUP_CHAINS.length;
 }
