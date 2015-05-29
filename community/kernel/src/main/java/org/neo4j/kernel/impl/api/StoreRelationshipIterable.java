@@ -219,10 +219,14 @@ public class StoreRelationshipIterable implements PrimitiveLongIterable
 
         private long nextChainStart()
         {
+            if ( groupChainCursor == GROUP_CHAINS_EXHAUSTED )
+            {
+                relationshipGroupId = groupRecord.getNext();
+            }
             while ( relationshipGroupId != Record.NO_NEXT_RELATIONSHIP.intValue() )
             {
-                boolean isTheCurrentGroupLoaded = groupRecord != null && groupRecord.getId() == relationshipGroupId;
-                if ( !isTheCurrentGroupLoaded )
+                boolean isIterableRecord = groupRecord.getId() == relationshipGroupId;
+                if ( !isIterableRecord )
                 {
                     if ( !groupStore.fillRecord( relationshipGroupId, groupRecord, RecordLoad.CHECK ) )
                     {
@@ -233,29 +237,23 @@ public class StoreRelationshipIterable implements PrimitiveLongIterable
                 }
 
                 boolean correctType = type.test( groupRecord.getType() );
-                try
+                if ( correctType )
                 {
-                    if ( correctType )
+                    // Go to the next chain (direction) within this group
+                    while ( groupChainCursor < GROUP_CHAINS_EXHAUSTED )
                     {
-                        // Go to the next chain (direction) within this group
-                        while ( groupChainCursor < GROUP_CHAINS_EXHAUSTED )
+                        GroupChain groupChain = GROUP_CHAINS[groupChainCursor++];
+                        long chainStart = groupChain.chainStart( groupRecord );
+                        if ( chainStart != Record.NO_NEXT_RELATIONSHIP.intValue()
+                                && (direction == Direction.BOTH || groupChain.matchesDirection( direction )) )
                         {
-                            GroupChain groupChain = GROUP_CHAINS[groupChainCursor++];
-                            long chainStart = groupChain.chainStart( groupRecord );
-                            if ( chainStart != Record.NO_NEXT_RELATIONSHIP.intValue() &&
-                                    (direction == Direction.BOTH || groupChain.matchesDirection( direction ) ) )
-                            {
-                                return chainStart;
-                            }
+                            return chainStart;
                         }
                     }
                 }
-                finally
+                else
                 {
-                    if ( groupChainCursor == GROUP_CHAINS_EXHAUSTED || !correctType )
-                    {
-                        relationshipGroupId = groupRecord.getNext();
-                    }
+                    relationshipGroupId = groupRecord.getNext();
                 }
             }
             return Record.NO_NEXT_RELATIONSHIP.intValue();
