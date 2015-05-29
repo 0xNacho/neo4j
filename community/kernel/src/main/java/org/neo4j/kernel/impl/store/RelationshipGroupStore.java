@@ -30,9 +30,10 @@ import org.neo4j.kernel.IdGeneratorFactory;
 import org.neo4j.kernel.IdType;
 import org.neo4j.kernel.configuration.Config;
 import org.neo4j.kernel.impl.store.record.Record;
+import org.neo4j.kernel.impl.store.record.RecordLoad;
 import org.neo4j.kernel.impl.store.record.RelationshipGroupRecord;
-import org.neo4j.logging.LogProvider;
 import org.neo4j.kernel.monitoring.Monitors;
+import org.neo4j.logging.LogProvider;
 
 import static org.neo4j.io.pagecache.PagedFile.PF_EXCLUSIVE_LOCK;
 import static org.neo4j.io.pagecache.PagedFile.PF_SHARED_LOCK;
@@ -64,30 +65,47 @@ public class RelationshipGroupStore extends AbstractRecordStore<RelationshipGrou
                 fileSystemAbstraction, logProvider, versionMismatchHandler, monitors );
     }
 
-    @Override
-    public RelationshipGroupRecord getRecord( long id )
+    public boolean fillRecord( long id, RelationshipGroupRecord record, RecordLoad loadMode )
     {
         try ( PageCursor cursor = storeFile.io( pageIdForRecord( id ), PF_SHARED_LOCK ) )
         {
+            boolean success = false;
             if ( cursor.next() )
             {
-                RelationshipGroupRecord record;
                 do
                 {
-                    record = getRecord( id, cursor );
+                    success = getRecord( id, cursor, record );
                 } while ( cursor.shouldRetry() );
+            }
 
-                if ( record != null )
+            if ( !success )
+            {
+                if ( loadMode == RecordLoad.NORMAL )
                 {
-                    return record;
+                    throw new InvalidRecordException( "RelationshipGroupRecord[" + id + "] not in use" );
+                }
+                else if ( loadMode == RecordLoad.CHECK )
+                {
+                    return false;
                 }
             }
-            throw new InvalidRecordException( "Record[" + id + "] not in use" );
+            return true;
         }
         catch ( IOException e )
         {
             throw new UnderlyingStorageException( e );
         }
+    }
+
+    @Override
+    public RelationshipGroupRecord getRecord( long id )
+    {
+        RelationshipGroupRecord record = new RelationshipGroupRecord( id, -1 );
+        if ( fillRecord( id, record, RecordLoad.NORMAL ) )
+        {
+            return record;
+        }
+        throw new InvalidRecordException( "Record[" + id + "] not in use" );
     }
 
     @Override
@@ -112,7 +130,7 @@ public class RelationshipGroupStore extends AbstractRecordStore<RelationshipGrou
         }
     }
 
-    private RelationshipGroupRecord getRecord( long id, PageCursor cursor )
+    private boolean getRecord( long id, PageCursor cursor, RelationshipGroupRecord record )
     {
         cursor.setOffset( offsetForId( id ) );
 
@@ -121,10 +139,6 @@ public class RelationshipGroupStore extends AbstractRecordStore<RelationshipGrou
         // [ xxx,    ] high firstOut bits
         long inUseByte = cursor.getByte();
         boolean inUse = (inUseByte&0x1) > 0;
-        if ( !inUse )
-        {
-            return null;
-        }
 
         // [    ,xxx ] high firstIn bits
         // [ xxx,    ] high firstLoop bits
@@ -142,14 +156,15 @@ public class RelationshipGroupStore extends AbstractRecordStore<RelationshipGrou
         long nextInMod = (highByte & 0xE) << 31;
         long nextLoopMod = (highByte & 0x70) << 28;
 
-        RelationshipGroupRecord record = new RelationshipGroupRecord( id, type );
+        record.setId( id );
+        record.setType( type );
         record.setInUse( inUse );
         record.setNext( longFromIntAndMod( nextLowBits, nextMod ) );
         record.setFirstOut( longFromIntAndMod( nextOutLowBits, nextOutMod ) );
         record.setFirstIn( longFromIntAndMod( nextInLowBits, nextInMod ) );
         record.setFirstLoop( longFromIntAndMod( nextLoopLowBits, nextLoopMod ) );
         record.setOwningNode( owningNode );
-        return record;
+        return inUse;
     }
 
     @Override
@@ -210,27 +225,9 @@ public class RelationshipGroupStore extends AbstractRecordStore<RelationshipGrou
     @Override
     public RelationshipGroupRecord forceGetRecord( long id )
     {
-        try ( PageCursor cursor = storeFile.io( pageIdForRecord( id ), PF_SHARED_LOCK ) )
-        {
-            if ( cursor.next() )
-            {
-                RelationshipGroupRecord record;
-                do
-                {
-                    record = getRecord( id, cursor );
-                } while ( cursor.shouldRetry() );
-
-                if ( record != null )
-                {
-                    return record;
-                }
-            }
-            return new RelationshipGroupRecord( id, -1 );
-        }
-        catch ( IOException e )
-        {
-            return new RelationshipGroupRecord( id, -1 );
-        }
+        RelationshipGroupRecord record = new RelationshipGroupRecord( id, -1 );
+        fillRecord( id, record, RecordLoad.FORCE );
+        return record;
     }
 
     @Override

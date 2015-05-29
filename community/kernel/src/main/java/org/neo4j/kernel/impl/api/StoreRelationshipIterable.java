@@ -177,13 +177,15 @@ public class StoreRelationshipIterable implements PrimitiveLongIterable
         {
             while ( nextRelId != Record.NO_NEXT_RELATIONSHIP.intValue() )
             {
-                relationshipStore.fillRecord( nextRelId, relationship, RecordLoad.NORMAL );
                 try
                 {
-                    // Filter by type and direction
-                    if ( type.test( relationship.getType() ) && directionMatches( nodeId, relationship ) )
+                    if ( relationshipStore.fillChainRecord( nextRelId, relationship ) )
                     {
-                        return next( nextRelId );
+                        // Filter by type and direction
+                        if ( type.test( relationship.getType() ) && directionMatches( nodeId, relationship ) )
+                        {
+                            return next( nextRelId );
+                        }
                     }
                 }
                 finally
@@ -200,8 +202,9 @@ public class StoreRelationshipIterable implements PrimitiveLongIterable
     {
         private final long nodeId;
         private final RelationshipGroupStore groupStore;
-        private RelationshipGroupRecord groupRecord;
-        private int groupChainIndex;
+        private long relationshipGroupId;
+        private final RelationshipGroupRecord groupRecord = new RelationshipGroupRecord( -1, -1 );
+        private int groupChainCursor = GROUP_CHAINS.length;
         private long nextRelId;
 
         DenseIterator( NodeRecord nodeRecord, RelationshipGroupStore groupStore,
@@ -210,34 +213,51 @@ public class StoreRelationshipIterable implements PrimitiveLongIterable
             super( relationshipStore, type, direction );
             this.groupStore = groupStore;
             this.nodeId = nodeRecord.getId();
-            // Apparently returns null if !inUse
-            this.groupRecord = groupStore.getRecord( nodeRecord.getNextRel() );
+            this.relationshipGroupId = nodeRecord.getNextRel();
             this.nextRelId = nextChainStart();
         }
 
         private long nextChainStart()
         {
-            while ( groupRecord != null )
+            while ( relationshipGroupId != Record.NO_NEXT_RELATIONSHIP.intValue() )
             {
-                if ( type.test( groupRecord.getType() ) )
+                if ( groupChainCursor == GROUP_CHAINS.length )
                 {
-                    // Go to the next chain (direction) within this group
-                    while ( groupChainIndex < GROUP_CHAINS.length )
+                    boolean exists = groupStore.fillRecord( relationshipGroupId, groupRecord, RecordLoad.CHECK );
+                    if ( !exists )
                     {
-                        GroupChain groupChain = GROUP_CHAINS[groupChainIndex++];
-                        long chainStart = groupChain.chainStart( groupRecord );
-                        if ( chainStart != Record.NO_NEXT_RELATIONSHIP.intValue() &&
-                                (direction == Direction.BOTH || groupChain.matchesDirection( direction ) ) )
+                        relationshipGroupId = groupRecord.getNext();
+                        continue;
+                    }
+                    groupChainCursor = 0;
+                }
+
+                boolean correctType = type.test( groupRecord.getType() );
+                try
+                {
+                    if ( correctType )
+                    {
+                        // Go to the next chain (direction) within this group
+                        while ( groupChainCursor < GROUP_CHAINS.length )
                         {
-                            return chainStart;
+                            GroupChain groupChain = GROUP_CHAINS[groupChainCursor++];
+                            long chainStart = groupChain.chainStart( groupRecord );
+                            if ( chainStart != Record.NO_NEXT_RELATIONSHIP.intValue() &&
+                                    (direction == Direction.BOTH || groupChain.matchesDirection( direction ) ) )
+                            {
+                                return chainStart;
+                            }
                         }
                     }
                 }
-
-                // Go to the next group
-                groupRecord = groupRecord.getNext() != Record.NO_NEXT_RELATIONSHIP.intValue() ?
-                        groupStore.getRecord( groupRecord.getNext() ) : null;
-                groupChainIndex = 0;
+                finally
+                {
+                    if ( groupChainCursor == GROUP_CHAINS.length || !correctType )
+                    {
+                        relationshipGroupId = groupRecord.getNext();
+                        groupChainCursor = GROUP_CHAINS.length;
+                    }
+                }
             }
             return Record.NO_NEXT_RELATIONSHIP.intValue();
         }
@@ -247,10 +267,12 @@ public class StoreRelationshipIterable implements PrimitiveLongIterable
         {
             while ( nextRelId != Record.NO_NEXT_RELATIONSHIP.intValue() )
             {
-                relationshipStore.fillRecord( nextRelId, relationship, RecordLoad.NORMAL );
                 try
                 {
-                    return next( nextRelId );
+                    if ( relationshipStore.fillChainRecord( nextRelId, relationship ) )
+                    {
+                        return next( nextRelId );
+                    }
                 }
                 finally
                 {
