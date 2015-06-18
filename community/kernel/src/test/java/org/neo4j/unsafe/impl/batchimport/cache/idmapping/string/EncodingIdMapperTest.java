@@ -34,6 +34,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.neo4j.function.Factory;
@@ -47,6 +49,7 @@ import org.neo4j.unsafe.impl.batchimport.InputIterator;
 import org.neo4j.unsafe.impl.batchimport.cache.NumberArrayFactory;
 import org.neo4j.unsafe.impl.batchimport.cache.idmapping.IdMapper;
 import org.neo4j.unsafe.impl.batchimport.cache.idmapping.string.EncodingIdMapper.Monitor;
+import org.neo4j.unsafe.impl.batchimport.cache.idmapping.string.ParallelSort.Comparator;
 import org.neo4j.unsafe.impl.batchimport.input.Collector;
 import org.neo4j.unsafe.impl.batchimport.input.Group;
 import org.neo4j.unsafe.impl.batchimport.input.Groups;
@@ -56,6 +59,7 @@ import org.neo4j.unsafe.impl.batchimport.input.SimpleInputIteratorWrapper;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
@@ -548,9 +552,116 @@ public class EncodingIdMapperTest
         }
     }
 
+    @Test
+    public void shouldMakeAnotherSortingAttemptOnStackOverflowError() throws Exception
+    {
+        // GIVEN
+        final AtomicBoolean triggered = new AtomicBoolean();
+        Comparator comparatorThatMayStackOverflowSometimes = new Comparator()
+        {
+            private final AtomicInteger eta = new AtomicInteger( 3 );
+
+            @Override
+            public boolean lt( long left, long pivot )
+            {
+                maybeTriggerStackOverflow();
+                return ParallelSort.DEFAULT.lt( left, pivot );
+            }
+
+            @Override
+            public boolean ge( long right, long pivot )
+            {
+                maybeTriggerStackOverflow();
+                return ParallelSort.DEFAULT.ge( right, pivot );
+            }
+
+            private void maybeTriggerStackOverflow()
+            {
+                if ( eta.decrementAndGet() == 0 )
+                {
+                    triggered.set( true );
+                    throw new StackOverflowError();
+                }
+            }
+        };
+        IdMapper mapper = mapper( new LongEncoder(), Radix.LONG, NO_MONITOR, comparatorThatMayStackOverflowSometimes );
+        List<Object> ids = ids( 2L, 1L, 10L, 5L, 342L, 21L, 34L, 100L, 211L, 234L, 4567L, 4578L, 2328L, 578L );
+        {
+            long actualId = 0;
+            for ( Object id : ids )
+            {
+                mapper.put( id, actualId++, GLOBAL );
+            }
+        }
+
+        // WHEN
+        mapper.prepare( SimpleInputIteratorWrapper.wrap( "source", ids ), mock( Collector.class ), NONE );
+
+        // THEN
+        {
+            long actualId = 0;
+            for ( Object id : ids )
+            {
+                assertEquals( actualId++, mapper.get( id, GLOBAL ) );
+            }
+            assertTrue( triggered.get() );
+        }
+    }
+
+    @Test
+    public void shouldEventuallyThrowUnderlyingStackOverflowErrorOnTooManyAttempts() throws Exception
+    {
+        // GIVEN
+        final String errorMessage = "The fake one";
+        Comparator comparatorThatMayStackOverflowSometimes = new Comparator()
+        {
+            @Override
+            public boolean lt( long left, long pivot )
+            {
+                throw new StackOverflowError( errorMessage );
+            }
+
+            @Override
+            public boolean ge( long right, long pivot )
+            {
+                throw new StackOverflowError( errorMessage );
+            }
+        };
+        IdMapper mapper = mapper( new LongEncoder(), Radix.LONG, NO_MONITOR, comparatorThatMayStackOverflowSometimes );
+        List<Object> ids = ids( 2L, 1L, 10L, 5L, 342L, 21L, 34L, 100L, 211L, 234L, 4567L, 4578L, 2328L, 578L );
+        {
+            long actualId = 0;
+            for ( Object id : ids )
+            {
+                mapper.put( id, actualId++, GLOBAL );
+            }
+        }
+
+        // WHEN
+        try
+        {
+            mapper.prepare( SimpleInputIteratorWrapper.wrap( "source", ids ), mock( Collector.class ), NONE );
+            fail( "Shouldn't succeed" );
+        }
+        catch ( StackOverflowError e )
+        {
+            assertEquals( errorMessage, e.getMessage() );
+        }
+    }
+
+    private List<Object> ids( Object... ids )
+    {
+        return Arrays.asList( ids );
+    }
+
     private IdMapper mapper( Encoder encoder, Factory<Radix> radix, Monitor monitor )
     {
-        return new EncodingIdMapper( NumberArrayFactory.HEAP, encoder, radix, monitor, 1_000, processors );
+        return mapper( encoder, radix, monitor, ParallelSort.DEFAULT );
+    }
+
+    private IdMapper mapper( Encoder encoder, Factory<Radix> radix, Monitor monitor, Comparator comparator )
+    {
+        return new EncodingIdMapper( NumberArrayFactory.HEAP, encoder, radix, monitor, 1_000, processors, comparator );
     }
 
     private class ValueGenerator implements InputIterable<Object>
